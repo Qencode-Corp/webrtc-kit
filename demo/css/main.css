@@ -59,11 +59,12 @@ button{
 
 .web-socket-url{
     margin: 10px 0;
+    text-align: left;
 }
 
 .web-socket-url input{
     width: 100%;
-    margin: 0;
+    margin: 5px 0px;
     padding: 0 14px;
     line-height: 30px;
     box-sizing: border-box;
@@ -77,4 +78,11 @@ button{
 
 .web-socket-url input:focus{
     border: 1px solid #7e7e7e;
+}
+
+.web-socket-url label{
+    color: #cfcfcf;
+    font-weight: 500;
+    font-family: arial;    
+    font-size: 14px;
 }
