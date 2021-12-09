@@ -14,7 +14,7 @@ qencodeWebRTC.attachMedia(document.getElementById('userVideo'));
 
 // Get media stream from user device and start stream
 qencodeWebRTC.getUserMedia({
-    audio: false,
+    audio: true,
     video: true
 }).then(function () {
     // Got device stream and start streaming
