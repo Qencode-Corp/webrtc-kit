@@ -30,53 +30,39 @@
     <script src="./js/QencodeWebRTC.min.js"></script>
     <script>
 
-        let webSocketUrl = ""   
 
-        let config = {
-            callbacks: {
-                error: function (error) {
-                    console.log("error: ", error)
-                },
-                connected: function (event) {
-                    console.log("connected: ", event)
-                },
-                connectionClosed: function (type, event) {
-                    console.log("connection closed type: ", type)
-                    console.log("connection closed event: ", event)
-                },
-                iceStateChange: function (state) {
-                    console.log("ice state change: ", state)
-                }
-            }
-        }        
+        let qencodeWebRTC = QencodeWebRTC.create();
 
-        let qencodeWebRTC = QencodeWebRTC.create(config);
-
-        qencodeWebRTC.attachMedia(document.getElementById('userCam'));
+        qencodeWebRTC.attachMedia(document.getElementById('userCam'));    
 
         let connectBtn = document.querySelector('#connect')
-        let disconnectBtn = document.querySelector('#disconect')
+        let disconnectBtn = document.querySelector('#disconect')        
 
         connectBtn.addEventListener('click', () => {
-            
-            let clientWebSocketUrl = document.getElementById('webSocketUrl').value
-            console.log("clientWebSocketUrl: ", clientWebSocketUrl)
-
-            if(clientWebSocketUrl){
-                webSocketUrl = clientWebSocketUrl
-            }     
 
             qencodeWebRTC.getUserMedia({
-                audio: false,
+                audio: true,
                 video: true
             }).then(function (stream) {
-                qencodeWebRTC.startStreaming(webSocketUrl)            
-            });
-        })
 
+                let webSocketUrl = "" 
+
+                let clientWebSocketUrl = document.getElementById('webSocketUrl').value
+                console.log("clientWebSocketUrl: ", clientWebSocketUrl)
+
+                if(clientWebSocketUrl){
+                    webSocketUrl = clientWebSocketUrl
+                }                   
+
+                // Or set your OvenMediaEngine's WebRTC Provider URL
+                qencodeWebRTC.startStreaming(webSocketUrl)
+            });                
+
+        })      
+        
         disconnectBtn.addEventListener('click', () => {
             qencodeWebRTC.remove();
-        })           
+        })                   
 
     </script>
 </body>
