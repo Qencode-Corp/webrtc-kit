@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js" integrity="sha512-ZuOjyqq409+q6uc49UiBF3fTeyRyP8Qs0Jf/7FxH5LfhqBMzrR5cwbpDA4BgzSo884w6q/+oNdIeHenOqhISGw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <title>WebRTC Demo</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Client webcam</h1>
+    
+        <video id="userCam" autoplay playsinline muted></video>
+
+        <div class="web-socket-url">
+          <input id="webSocketUrl" type="text" value="">  
+        </div>
+        
+        <div>
+            <button id="connect">Connect</button>
+            <button id="disconect">Disconect</button>        
+        </div>        
+    </div>   
+
+    <script src="./js/QencodeWebRTC.min.js"></script>
+    <script>
+
+        let webSocketUrl = ""   
+
+        let config = {
+            callbacks: {
+                error: function (error) {
+                    console.log("error: ", error)
+                },
+                connected: function (event) {
+                    console.log("connected: ", event)
+                },
+                connectionClosed: function (type, event) {
+                    console.log("connection closed type: ", type)
+                    console.log("connection closed event: ", event)
+                },
+                iceStateChange: function (state) {
+                    console.log("ice state change: ", state)
+                }
+            }
+        }        
+
+        let qencodeWebRTC = QencodeWebRTC.create(config);
+
+        qencodeWebRTC.attachMedia(document.getElementById('userCam'));
+
+        let connectBtn = document.querySelector('#connect')
+        let disconnectBtn = document.querySelector('#disconect')
+
+        connectBtn.addEventListener('click', () => {
+            
+            let clientWebSocketUrl = document.getElementById('webSocketUrl').value
+            console.log("clientWebSocketUrl: ", clientWebSocketUrl)
+
+            if(clientWebSocketUrl){
+                webSocketUrl = clientWebSocketUrl
+            }     
+
+            qencodeWebRTC.getUserMedia({
+                audio: false,
+                video: true
+            }).then(function (stream) {
+                qencodeWebRTC.startStreaming(webSocketUrl)            
+            });
+        })
+
+        disconnectBtn.addEventListener('click', () => {
+            qencodeWebRTC.remove();
+        })           
+
+    </script>
+</body>
+
+</html>

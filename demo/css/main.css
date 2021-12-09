@@ -1,0 +1,80 @@
+body{
+    background-color: #1e1e1e;
+}
+
+video{
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    border: 1px solid #515151;
+}
+
+.container{
+    width: 453px;
+    height: 340px;
+    margin: 3% auto;
+    text-align: center;
+}
+
+h1{
+    color: #cfcfcf;
+    
+    font-weight: 500;
+    font-family: arial;     
+}
+
+p{
+    color: #cfcfcf;
+    
+    font-weight: 500;
+    font-family: arial;      
+}
+
+button{
+    margin: 15px auto;
+    background: #515151;
+    color: #cfcfcf;
+    
+    font-size: 15px;
+    font-weight: 500;
+    font-family: arial;    
+
+    padding: 0 30px;
+    outline: none;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: none;
+    border-radius: 5px;
+    min-width: 110px;
+    line-height: 38px; 
+}
+
+.web-socket-url{
+    margin: 10px 0;
+}
+
+.web-socket-url input{
+    width: 100%;
+    margin: 0;
+    padding: 0 14px;
+    line-height: 30px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background: #515151;
+    color: #cfcfcf;
+    border: 0;
+    border-radius: 2px;
+    border: 1px solid #515151;
+}
+
+.web-socket-url input:focus{
+    border: 1px solid #7e7e7e;
+}

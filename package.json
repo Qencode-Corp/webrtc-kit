@@ -1,0 +1,29 @@
+{
+  "name": "webrtckit",
+  "version": "1.0.0",
+  "description": "webrtckit",
+  "main": "dist/QencodeWebRTC.min.js",
+  "scripts": {
+    "start": "webpack serve --open --config webpack.dev.js",
+    "watch": "webpack watch --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qencode-dev/webrtc-kit"
+  },
+  "keywords": [
+    "WebRTC"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/qencode-dev/webrtc-kit/issues"
+  },
+  "homepage": "https://github.com/qencode-dev/webrtc-kit#readme",
+  "devDependencies": {
+    "webpack": "^5.48.0",
+    "webpack-cli": "^4.7.2",
+    "webpack-dev-server": "^3.11.2"
+  }
+}
