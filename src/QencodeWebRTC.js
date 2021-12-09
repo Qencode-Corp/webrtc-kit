@@ -690,6 +690,8 @@ function addMethod(instance) {
 
     instance.startStreaming = function (connectionUrl, connectionConfig) {
 
+        connectionUrl+="?direction=send&transport=tcp"
+
         console.info(logEventHeader, 'Start Streaming');
 
         if (connectionConfig) {
