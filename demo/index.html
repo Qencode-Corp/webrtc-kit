@@ -23,23 +23,85 @@
         </div>
         
         <div>
-            <button id="connect">Connect</button>
-            <button id="disconect">Disconect</button>        
+            <button id="connect">Start Stream</button>
+            <button id="disconect" class="stop" style="display: none;">Stop Stream</button>        
         </div>        
+
+        <p id='log'></p>    
+        <p id='errorMsg'></p>        
     </div>   
 
     <script src="./js/QencodeWebRTC.min.js"></script>
     <script>
 
+        // display video on page load
+        const constraints = window.constraints = {
+        audio: true,
+        video: true
+        };
 
+        function handleSuccess(stream) {
+            const video = document.querySelector('#userCam');
+            const videoTracks = stream.getVideoTracks();
+            console.log('Got stream with constraints:', constraints);
+            console.log(`Using video device: ${videoTracks[0].label}`);
+            let log = document.querySelector('#log');
+            log.innerHTML = `Using video device: ${videoTracks[0].label}`
+            window.stream = stream; // make variable available to browser console
+            video.srcObject = stream;
+
+            // ready to initiate peer connection and start streaming
+            enableStreaming(stream)
+        }
+
+        function handleError(error) {
+        if (error.name === 'ConstraintNotSatisfiedError') {
+            const v = constraints.video;
+            errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+        } else if (error.name === 'PermissionDeniedError') {
+            errorMsg('Permissions have not been granted to use your camera and ' +
+            'microphone, you need to allow the page access to your devices in ' +
+            'order for the demo to work.');
+        }
+        errorMsg(`getUserMedia error: ${error.name}`, error);
+        }
+
+        function errorMsg(msg, error) {
+        const errorElement = document.querySelector('#errorMsg');
+        errorElement.innerHTML += `<p>${msg}</p>`;
+        if (typeof error !== 'undefined') {
+            console.log(error);
+        }
+        }
+
+        async function init() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                handleSuccess(stream);
+            } catch (error) {
+                handleError(error);
+            }
+        }
+
+        function enableStreaming(stream){
+            console.log("User video is ready")
+        }
+
+        init()
+
+
+        // streaming
         let qencodeWebRTC = QencodeWebRTC.create();
 
         qencodeWebRTC.attachMedia(document.getElementById('userCam'));    
 
         let connectBtn = document.querySelector('#connect')
-        let disconnectBtn = document.querySelector('#disconect')        
-
+        let disconnectBtn = document.querySelector('#disconect')   
+             
         connectBtn.addEventListener('click', () => {
+            
+            connectBtn.style.display = "none";
+            disconnectBtn.style.display = "block";
 
             qencodeWebRTC.getUserMedia({
                 audio: true,
@@ -57,12 +119,17 @@
 
                 // Set WebRTC Provider URL
                 qencodeWebRTC.startStreaming(webSocketUrl)
+
             });                
 
         })      
         
         disconnectBtn.addEventListener('click', () => {
-            qencodeWebRTC.remove();
+            connectBtn.style.display = "block";
+            disconnectBtn.style.display = "none";     
+
+            qencodeWebRTC.remove();        
+            init()
         })                   
 
     </script>

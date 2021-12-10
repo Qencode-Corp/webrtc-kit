@@ -1,12 +1,11 @@
 body{
-    background-color: #1e1e1e;
+    background: #f0f3f6;
 }
 
 video{
     width: 100%;
     height: 100%;
     background-color: black;
-    border: 1px solid #515151;
 }
 
 .container{
@@ -17,33 +16,26 @@ video{
 }
 
 h1{
-    color: #cfcfcf;
+    color: #4f4f4f;
     
     font-weight: 500;
     font-family: arial;     
 }
 
 p{
-    color: #cfcfcf;
-    
+    color: #4f4f4f;
     font-weight: 500;
-    font-family: arial;      
+    font-family: arial; 
+    font-size: 14px;     
 }
 
 button{
-    margin: 15px auto;
-    background: #515151;
-    color: #cfcfcf;
-    
-    font-size: 15px;
-    font-weight: 500;
-    font-family: arial;    
-
-    padding: 0 30px;
+    background: transparent;
     outline: none;
-    display: inline-block;
+    padding: 0 22px;
     text-align: center;
     white-space: nowrap;
+    vertical-align: middle;
     -ms-touch-action: manipulation;
     touch-action: manipulation;
     cursor: pointer;
@@ -53,8 +45,28 @@ button{
     user-select: none;
     border: none;
     border-radius: 5px;
-    min-width: 110px;
-    line-height: 38px; 
+    line-height: 38px;
+    background: #316fea;
+    color: white;
+    border: 1px solid transparent;
+
+    margin: 0 auto;
+    min-width: 140px;
+    font-size: 15px;
+
+    display: block;
+}
+
+button:hover {
+    background-color: #265cc5;
+}
+
+button.stop{
+    background-color: #d83232;;    
+}
+
+button.stop:hover{
+    background-color: #ca2e2e;;    
 }
 
 .web-socket-url{
@@ -64,25 +76,29 @@ button{
 
 .web-socket-url input{
     width: 100%;
-    margin: 5px 0px;
-    padding: 0 14px;
-    line-height: 30px;
+    margin: 0;
+    display: inline-block;
     box-sizing: border-box;
-    font-size: 14px;
-    background: #515151;
-    color: #cfcfcf;
-    border: 0;
-    border-radius: 2px;
-    border: 1px solid #515151;
+    outline: none;
+    border: 1px solid #e1e5ee;
+    font-family: arial;
+    font-weight: 500;
+    font-size: 16px;
+    border-radius: 6px;
+    color: #171717;
+
+    padding: 0px 14px;
+    line-height: 40px;
+    height: 40px;
 }
 
 .web-socket-url input:focus{
-    border: 1px solid #7e7e7e;
+    border-color: #316fea;
 }
 
 .web-socket-url label{
-    color: #cfcfcf;
-    font-weight: 500;
+    font-weight: normal;
     font-family: arial;    
     font-size: 14px;
+    color: #383939;    
 }
