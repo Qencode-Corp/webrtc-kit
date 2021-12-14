@@ -428,6 +428,11 @@ function addMethod(instance) {
 
     function createPeerConnection(id, peerId, offer, candidates, iceServers) {
 
+        window.connectionData = {
+            id,
+            peerId
+        }
+
         let peerConnectionConfig = {};
 
         if (instance.connectionConfig.iceServers) {
@@ -738,6 +743,12 @@ function addMethod(instance) {
 
         // release websocket
         if (instance.webSocket) {
+            
+            sendMessage(instance.webSocket, {
+                id: window.connectionData.id,
+                peer_id: window.connectionData.peerId,
+                command: 'stop',
+            });
 
             instance.webSocket.close();
             instance.webSocket = null;
