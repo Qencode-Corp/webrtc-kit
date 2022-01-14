@@ -19,7 +19,23 @@
 
         <div class="web-socket-url">
           <label>Server URL: </label>
-          <input id="webSocketUrl" type="text" value="">  
+          <input id="webSocketUrl" type="text" value="">
+            <script>
+                let params = window.location.search
+                if(params !== '' && params !== undefined && params !== null){
+                    let url = params.replace('?u=', '');
+                    if(url !== '' && url !== undefined && url !== null){
+                        document.getElementById('webSocketUrl').value = url;
+                    }
+                }
+                //let params = new URLSearchParams(window.location.search);
+                // let url = params.get('u')
+                // if(url){
+                //     let el = document.getElementById('webSocketUrl');
+                //     el.value = url;
+                // }
+
+            </script>
         </div>
         
         <div>
