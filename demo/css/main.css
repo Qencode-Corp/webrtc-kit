@@ -29,6 +29,14 @@ p{
     font-size: 14px;     
 }
 
+.error{
+    color: red;
+}
+
+.state{
+    font-weight: 600;
+}
+
 button{
     background: transparent;
     outline: none;
