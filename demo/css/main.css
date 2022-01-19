@@ -70,7 +70,13 @@ button:hover {
 }
 
 button.stop{
-    background-color: #d83232;;    
+    background-color: #d83232; 
+}
+
+button.stop:disabled,
+button.stop:disabled:hover{
+    background-color: #a78181; 
+    cursor: not-allowed;
 }
 
 button.stop:hover{

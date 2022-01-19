@@ -40,41 +40,39 @@
         
         <div>
             <button id="connect">Start Stream</button>
-            <button id="disconect" class="stop" style="display: none;">Stop Stream</button>        
+            <button id="disconect" class="stop" style="display: none;" disabled>Stop Stream</button>        
         </div>        
 
         <p id='log'></p>    
         <p class="state" id='iceState'></p>  
+        <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>   
         <p class="error" id='errorMsg'></p>      
         <p class="error" id='socketError'></p>   
 
-        <div class="buttons-container">
-            <button class="stop" id="stopPeer">Stop Peer</button>
-            <button class="stop" id="stopSocket">Stop Socket</button>      
-        </div>  
     </div>   
 
     <script src="./js/QencodeWebRTC.min.js"></script>
     <script>
 
-        let stopPeer = document.querySelector('#stopPeer')
-        let stopSocket = document.querySelector('#stopSocket')  
 
         let connectBtn = document.querySelector('#connect')
         let disconnectBtn = document.querySelector('#disconect')     
         let error = document.querySelector('#errorMsg')   
         let socketError = document.querySelector('#socketError')    
-        let iceState = document.querySelector('#iceState')       
+        let iceState = document.querySelector('#iceState')  
+        let closingMessage = document.querySelector('#closingMessage')        
         
         const resetButtons = () => {
             connectBtn.style.display = "block";
-            disconnectBtn.style.display = "none";    
+            disconnectBtn.style.display = "none";   
+            disconnectBtn.disabled = true; 
+            closingMessage.style.display = 'none';
         }
 
         // display video on page load
         const constraints = window.constraints = {
-        audio: true,
-        video: true
+            audio: true,
+            video: true
         };
 
         function handleSuccess(stream) {
@@ -185,6 +183,9 @@
                 },
                 iceStateChange: function (state) {
                     iceState.innerHTML = "ICE State: " + state
+                    if(state === 'connected'){
+                        disconnectBtn.disabled = false;
+                    }
                 }
             }
         }        
@@ -227,26 +228,20 @@
 
         })      
         
+        // disconnectBtn.addEventListener('click', () => {
+        //     connectBtn.style.display = "block";
+        //     disconnectBtn.style.display = "none";     
+
+        //     // clear error messages and logs
+        //     error.innerHTML = ''
+        //     socketError.innerHTML = ''
+        //     iceState.innerHTML = ''
+
+        //     qencodeWebRTC.remove();        
+        //     init()
+        // })                   
+
         disconnectBtn.addEventListener('click', () => {
-            connectBtn.style.display = "block";
-            disconnectBtn.style.display = "none";     
-
-            // clear error messages and logs
-            error.innerHTML = ''
-            socketError.innerHTML = ''
-            iceState.innerHTML = ''
-
-            qencodeWebRTC.remove();        
-            init()
-        })                   
-
-
-        stopPeer.addEventListener('click', () => {
-            console.log("Stop Peer Connection")
-            qencodeWebRTC.peerConnection.close();
-        })
-
-        stopSocket.addEventListener('click', () => {
             console.log("Stop Socket Connection")
         
             qencodeWebRTC.webSocket.send(JSON.stringify({
@@ -254,7 +249,21 @@
                 peer_id: window.connectionData.peerId,
                 command: 'stop',
             }));
-        })        
+
+            //qencodeWebRTC.webSocket.send('');                 
+            setTimeout(function () {
+                qencodeWebRTC.webSocket.send('');   
+            }, 1000);  
+
+            // disable button
+            disconnectBtn.disabled = true;
+            // show loading
+            closingMessage.style.display = 'initial'
+        })            
+
+
+
+     
 
     </script>
 </body>
