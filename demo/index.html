@@ -47,10 +47,18 @@
         <p class="state" id='iceState'></p>  
         <p class="error" id='errorMsg'></p>      
         <p class="error" id='socketError'></p>   
+
+        <div class="buttons-container">
+            <button class="stop" id="stopPeer">Stop Peer</button>
+            <button class="stop" id="stopSocket">Stop Socket</button>      
+        </div>  
     </div>   
 
     <script src="./js/QencodeWebRTC.min.js"></script>
     <script>
+
+        let stopPeer = document.querySelector('#stopPeer')
+        let stopSocket = document.querySelector('#stopSocket')  
 
         let connectBtn = document.querySelector('#connect')
         let disconnectBtn = document.querySelector('#disconect')     
@@ -96,11 +104,11 @@
         }
 
         function errorMsg(msg, error) {
-        const errorElement = document.querySelector('#errorMsg');
-        errorElement.innerHTML += `<p>${msg}</p>`;
-        if (typeof error !== 'undefined') {
-            console.log(error);
-        }
+            const errorElement = document.querySelector('#errorMsg');
+            errorElement.innerHTML += `<p>${msg}</p>`;
+            if (typeof error !== 'undefined') {
+                console.log(error);
+            }
         }
 
         async function init() {
@@ -231,6 +239,22 @@
             qencodeWebRTC.remove();        
             init()
         })                   
+
+
+        stopPeer.addEventListener('click', () => {
+            console.log("Stop Peer Connection")
+            qencodeWebRTC.peerConnection.close();
+        })
+
+        stopSocket.addEventListener('click', () => {
+            console.log("Stop Socket Connection")
+        
+            qencodeWebRTC.webSocket.send(JSON.stringify({
+                id: window.connectionData.id,
+                peer_id: window.connectionData.peerId,
+                command: 'stop',
+            }));
+        })        
 
     </script>
 </body>
