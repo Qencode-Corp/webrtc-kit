@@ -138,6 +138,8 @@
                     } else{
                         socketError.innerHTML = "Socket connection error"  
                     }
+                    // if error 
+                    resetButtons();
                 },
                 connected: function (event) {
                     console.log("connected: ", event)
@@ -185,6 +187,9 @@
                     iceState.innerHTML = "ICE State: " + state
                     if(state === 'connected'){
                         disconnectBtn.disabled = false;
+                    }
+                    if(state === 'disconnected'){
+                        resetButtons();
                     }
                 }
             }
