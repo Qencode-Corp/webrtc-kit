@@ -83,12 +83,14 @@ button.stop:hover{
     background-color: #ca2e2e;;    
 }
 
-.web-socket-url{
+.web-socket-url,
+.video-quality{
     margin: 10px 0;
     text-align: left;
 }
 
-.web-socket-url input{
+.web-socket-url input,
+.video-quality select{
     width: 100%;
     margin: 0;
     display: inline-block;
@@ -106,11 +108,13 @@ button.stop:hover{
     height: 40px;
 }
 
-.web-socket-url input:focus{
+.web-socket-url input:focus,
+.video-quality select:focus{
     border-color: #316fea;
 }
 
-.web-socket-url label{
+.web-socket-url label,
+.video-quality label{
     font-weight: normal;
     font-family: arial;    
     font-size: 14px;

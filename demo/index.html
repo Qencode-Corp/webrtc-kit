@@ -17,6 +17,19 @@
     
         <video id="userCam" autoplay playsinline muted></video>
 
+        <div class="video-quality">
+            <label>Video quality: </label>
+            <select id="video_quality" name="quality">
+                <option value="1">QVGA</option>
+                <option value="2" selected>VGA</option>
+                <option value="3">HD</option>
+                <option value="4">Full HD</option>
+                <option value="5">Television 4K</option>
+                <option value="6">Cinema 4K</option>
+                <option value="7">8K</option>
+              </select>            
+        </div>
+
         <div class="web-socket-url">
           <label>Server URL: </label>
           <input id="webSocketUrl" type="text" value="">
@@ -60,7 +73,9 @@
         let error = document.querySelector('#errorMsg')   
         let socketError = document.querySelector('#socketError')    
         let iceState = document.querySelector('#iceState')  
-        let closingMessage = document.querySelector('#closingMessage')        
+        let closingMessage = document.querySelector('#closingMessage')       
+        
+        let videoQualitySelector = document.querySelector('#video_quality')
         
         const resetButtons = () => {
             connectBtn.style.display = "block";
@@ -70,10 +85,18 @@
         }
 
         // display video on page load
-        const constraints = window.constraints = {
+        // const constraints = window.constraints = {
+        //     audio: true,
+        //     video: true
+        // };
+
+        // see https://w3c.github.io/mediacapture-main/getusermedia.html#media-track-constraints
+        // example https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/resolution/js/main.js
+        // default constraints - VGA
+        let constraints = window.constraints = {
             audio: true,
-            video: true
-        };
+            video: {width: {exact: 640}, height: {exact: 480}}
+        };           
 
         function handleSuccess(stream) {
             const video = document.querySelector('#userCam');
@@ -85,20 +108,27 @@
             window.stream = stream; // make variable available to browser console
             video.srcObject = stream;
 
+            let height = stream.getVideoTracks()[0].getSettings().height
+            let width = stream.getVideoTracks()[0].getSettings().width
+            let frameRate = stream.getVideoTracks()[0].getSettings().frameRate    
+            console.log("height: ", height)    
+            console.log("width: ", width)    
+            console.log("frameRate: ", frameRate)        
+
             // ready to initiate peer connection and start streaming
             enableStreaming(stream)
         }
 
         function handleError(error) {
-        if (error.name === 'ConstraintNotSatisfiedError') {
-            const v = constraints.video;
-            errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
-        } else if (error.name === 'PermissionDeniedError') {
-            errorMsg('Permissions have not been granted to use your camera and ' +
-            'microphone, you need to allow the page access to your devices in ' +
-            'order for the demo to work.');
-        }
-        errorMsg(`getUserMedia error: ${error.name}`, error);
+            if (error.name === 'ConstraintNotSatisfiedError') {
+                const v = constraints.video;
+                errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+            } else if (error.name === 'PermissionDeniedError') {
+                errorMsg('Permissions have not been granted to use your camera and ' +
+                'microphone, you need to allow the page access to your devices in ' +
+                'order for the demo to work.');
+            }
+            errorMsg(`getUserMedia error: ${error.name}`, error);
         }
 
         function errorMsg(msg, error) {
@@ -124,6 +154,70 @@
 
         init()
 
+        videoQualitySelector.addEventListener('change', ()=>{
+            let selectedQuality = videoQualitySelector.value
+            
+            switch(selectedQuality) {
+            case "1": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 320}, height: {exact: 240}}
+                };     
+                init()                
+                break
+            case "2": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 640}, height: {exact: 480}}
+                };     
+                init()                
+                break    
+            case "3": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 1280}, height: {exact: 720}}
+                };     
+                init()                
+                break      
+            case "4": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 1920}, height: {exact: 1080}}
+                };     
+                init()                
+                break    
+            case "5": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 3840}, height: {exact: 2160}}
+                };     
+                init()                
+                break    
+            case "6": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 4096}, height: {exact: 2160}}
+                };     
+                init()                
+                break        
+            case "7": 
+                console.log("selectedQuality: ", selectedQuality)
+                constraints = window.constraints = {
+                    audio: true,
+                    video: {width: {exact: 7680}, height: {exact: 4320}}
+                };     
+                init()                
+                break                                                                                          
+            default:
+                break
+            }            
+        })
 
         // streaming
         //let qencodeWebRTC = QencodeWebRTC.create();
