@@ -17,24 +17,6 @@
     
         <video id="userCam" autoplay playsinline muted></video>
 
-        <!-- <div class="video-quality">
-            <label>Video quality: </label>
-            <select id="video_quality" name="quality">
-                <option value="1">QVGA</option>
-                <option value="2" selected>VGA</option>
-                <option value="3">HD</option>
-                <option value="4">Full HD</option>
-                <option value="5">Television 4K</option>
-                <option value="6">Cinema 4K</option>
-                <option value="7">8K</option>
-              </select>            
-        </div> -->
-
-        <div class="video-quality">
-            <label>Video source: </label>
-            <select id="videoSource"></select>
-        </div>
-
         <div class="web-socket-url">
           <label>Server URL: </label>
           <input id="webSocketUrl" type="text" value="">
@@ -80,10 +62,6 @@
         let iceState = document.querySelector('#iceState')  
         let closingMessage = document.querySelector('#closingMessage')       
         
-        let videoQualitySelector = document.querySelector('#video_quality')
-
-        const videoSelect = document.querySelector('select#videoSource');
-        const selectors = [videoSelect];
         
         const resetButtons = () => {
             connectBtn.style.display = "block";
@@ -92,34 +70,33 @@
             closingMessage.style.display = 'none';
         }
 
-        // display video on page load
-        // const constraints = window.constraints = {
-        //     audio: true,
-        //     video: true
-        // };
-
         let constraints = window.constraints = {
             audio: true,
             // video: {
-            //     width: { min: 640, ideal: 1920 },
-            //     height: { min: 400, ideal: 1080 },
-            //     aspectRatio: { ideal: 1.7777777778 }
-            // }
-            video: {
-                width: { min: 640, ideal: 1280 },
-                height: { min: 400, ideal: 720 },
-                aspectRatio: { ideal: 1.7777777778 }
-            }            
-            // video: true
-        };        
-
-        // see https://w3c.github.io/mediacapture-main/getusermedia.html#media-track-constraints
-        // example https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/resolution/js/main.js
-        // default constraints - VGA
-        // let constraints = window.constraints = {
-        //     audio: true,
-        //     video: {width: {exact: 640}, height: {exact: 480}}
-        // };           
+            //     width: {
+            //         min: 1280,
+            //         max: 1280
+            //     },
+            //     height: {
+            //         min: 720,
+            //         max: 720
+            //     }
+            // }              
+            // video: {
+            //     width: {
+            //         min: 300,
+            //         max: 4096,
+            //         ideal: 1280
+            //     },
+            //     height: {
+            //         min: 200,
+            //         max: 2160,
+            //         ideal: 720
+            //     }
+            // }             
+            video: { width: 1280, height: 720 }
+                        
+        };                 
 
         function handleSuccess(stream) {
             const video = document.querySelector('#userCam');
@@ -130,16 +107,6 @@
             log.innerHTML = `Using video device: ${videoTracks[0].label}`
             window.stream = stream; // make variable available to browser console
             video.srcObject = stream;
-
-            let height = videoTracks[0].getSettings().height
-            let width = videoTracks[0].getSettings().width
-            let frameRate = videoTracks[0].getSettings().frameRate    
-            console.log("height: ", height)    
-            console.log("width: ", width)    
-            console.log("frameRate: ", frameRate)        
-
-            // let id = videoTracks[0].id
-            // console.log("id: ", id)
 
             // ready to initiate peer connection and start streaming
             enableStreaming(stream)
@@ -166,36 +133,6 @@
         }
 
         async function init() {
-            // https://webrtc.github.io/samples/src/content/devices/input-output/
-            // https://github.com/webrtc/samples/blob/gh-pages/src/content/devices/input-output/js/main.js
-
-            const videoSource = videoSelect.value;
-            console.log("videoSource: ", videoSource)
-
-            // video: {width: {exact: 1280}, height: {exact: 720}}
-
-            // constraints = window.constraints = {
-            //     audio: true,
-            //     video: {
-            //         // width: { min: 640, ideal: 1920 },
-            //         // height: { min: 400, ideal: 1080 },
-            //         deviceId: videoSource ? {exact: videoSource} : undefined
-            //     }
-            // }; 
-
-            // video: {deviceId: videoSource ? {exact: videoSource} : undefined}
-
-            let newConstraints = {
-                ...constraints
-            }
-
-            let deviceId = videoSource ? {exact: videoSource} : undefined
-            newConstraints.video.deviceId = deviceId
-
-            constraints = window.constraints = newConstraints
-            
-            //console.log("newConstraints: ", newConstraints)
-
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 handleSuccess(stream);
@@ -208,108 +145,9 @@
             console.log("User video is ready")
         }
 
-
-        //
-        function gotDevices(deviceInfos) {
-            // Handles being called several times to update labels. Preserve values.
-            const values = selectors.map(select => select.value);
-            selectors.forEach(select => {
-                while (select.firstChild) {
-                    select.removeChild(select.firstChild);
-                }
-            });
-            for (let i = 0; i !== deviceInfos.length; ++i) {
-                const deviceInfo = deviceInfos[i];
-                const option = document.createElement('option');
-                option.value = deviceInfo.deviceId;
-                if (deviceInfo.kind === 'videoinput') {
-                    option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
-                    videoSelect.appendChild(option);
-                    //console.log("deviceInfo: ", deviceInfo)
-                } else {
-                    console.log('Some other kind of source/device: ', deviceInfo);
-                }
-            }
-            selectors.forEach((select, selectorIndex) => {
-                if (Array.prototype.slice.call(select.childNodes).some(n => n.value === values[selectorIndex])) {
-                    select.value = values[selectorIndex];
-                }
-            });
-
-
-        }       
-
-        navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
-
-        videoSelect.onchange = init;
-        //         
-
-
         init()
 
-
-
-        // videoQualitySelector.addEventListener('change', ()=>{
-        //     let selectedQuality = videoQualitySelector.value
-            
-        //     switch(selectedQuality) {
-        //     case "1": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 320}, height: {exact: 240}}
-        //         };     
-        //         init()                
-        //         break
-        //     case "2": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 640}, height: {exact: 480}}
-        //         };     
-        //         init()                
-        //         break    
-        //     case "3": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 1280}, height: {exact: 720}}
-        //         };     
-        //         init()                
-        //         break      
-        //     case "4": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 1920}, height: {exact: 1080}}
-        //         };     
-        //         init()                
-        //         break    
-        //     case "5": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 3840}, height: {exact: 2160}}
-        //         };     
-        //         init()                
-        //         break    
-        //     case "6": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 4096}, height: {exact: 2160}}
-        //         };     
-        //         init()                
-        //         break        
-        //     case "7": 
-        //         constraints = window.constraints = {
-        //             audio: true,
-        //             video: {width: {exact: 7680}, height: {exact: 4320}}
-        //         };     
-        //         init()                
-        //         break                                                                                          
-        //     default:
-        //         break
-        //     }            
-        // })
-
         // streaming
-        //let qencodeWebRTC = QencodeWebRTC.create();
-
         let qencodeWebRTC = null;
 
         let config = {
@@ -394,10 +232,9 @@
             connectBtn.style.display = "none";
             disconnectBtn.style.display = "block";
 
-            qencodeWebRTC.getUserMedia({
-                audio: true,
-                video: true
-            }).then(function (stream) {
+            console.log("constraints before actual connection: ", constraints)
+
+            qencodeWebRTC.getUserMedia(constraints).then(function (stream) {
 
                 let webSocketUrl = "" 
 
@@ -411,23 +248,10 @@
                 // Set WebRTC Provider URL
                 qencodeWebRTC.startStreaming(webSocketUrl)
 
-            });                
+            });                              
 
         })      
         
-        // disconnectBtn.addEventListener('click', () => {
-        //     connectBtn.style.display = "block";
-        //     disconnectBtn.style.display = "none";     
-
-        //     // clear error messages and logs
-        //     error.innerHTML = ''
-        //     socketError.innerHTML = ''
-        //     iceState.innerHTML = ''
-
-        //     qencodeWebRTC.remove();        
-        //     init()
-        // })                   
-
         disconnectBtn.addEventListener('click', () => {
             console.log("Stop Socket Connection")
         
@@ -436,8 +260,7 @@
                 peer_id: window.connectionData.peerId,
                 command: 'stop',
             }));
-
-            //qencodeWebRTC.webSocket.send('');                 
+              
             setTimeout(function () {
                 qencodeWebRTC.webSocket.send('');   
             }, 1000);  

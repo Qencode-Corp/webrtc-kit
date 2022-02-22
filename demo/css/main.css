@@ -10,7 +10,10 @@ video{
 
 .container{
     width: 453px;
+    width: 100%;
+    max-width: 720px;
     height: 340px;
+    height: auto;
     margin: 3% auto;
     text-align: center;
 }
