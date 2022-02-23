@@ -44,6 +44,7 @@
         </div>        
 
         <p id='log'></p>    
+        <p id='dimensions'></p>  
         <p class="state" id='iceState'></p>  
         <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>   
         <p class="error" id='errorMsg'></p>      
@@ -107,6 +108,14 @@
             log.innerHTML = `Using video device: ${videoTracks[0].label}`
             window.stream = stream; // make variable available to browser console
             video.srcObject = stream;
+
+            let height = videoTracks[0].getSettings().height
+            let width = videoTracks[0].getSettings().width
+            // let frameRate = videoTracks[0].getSettings().frameRate  
+                    
+            
+            let videoDimentionsLog = document.getElementById('dimensions')
+            videoDimentionsLog.innerHTML = `Video dimensions: ${width}x${height}px`
 
             // ready to initiate peer connection and start streaming
             enableStreaming(stream)
