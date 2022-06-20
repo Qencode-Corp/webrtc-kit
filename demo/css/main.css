@@ -40,6 +40,12 @@ p{
     font-weight: 600;
 }
 
+.buttons-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 button{
     background: transparent;
     outline: none;
@@ -61,7 +67,7 @@ button{
     color: white;
     border: 1px solid transparent;
 
-    margin: 0 auto;
+    margin: 0 5px;
     min-width: 140px;
     font-size: 15px;
 
