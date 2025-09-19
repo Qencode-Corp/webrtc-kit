@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js" integrity="sha512-ZuOjyqq409+q6uc49UiBF3fTeyRyP8Qs0Jf/7FxH5LfhqBMzrR5cwbpDA4BgzSo884w6q/+oNdIeHenOqhISGw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <title>WebRTC Demo</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Client webcam</h1>
+    
+        <video id="userCam" autoplay playsinline muted></video>
+
+        <div class="web-socket-url">
+          <label>Server URL: </label>
+          <input id="webSocketUrl" type="text" value="">
+            <script>
+                let params = window.location.search
+                if(params !== '' && params !== undefined && params !== null){
+                    let url = params.replace('?u=', '');
+                    if(url !== '' && url !== undefined && url !== null){
+                        document.getElementById('webSocketUrl').value = url;
+                    }
+                }
+                //let params = new URLSearchParams(window.location.search);
+                // let url = params.get('u')
+                // if(url){
+                //     let el = document.getElementById('webSocketUrl');
+                //     el.value = url;
+                // }
+
+            </script>
+        </div>
+        
+        <div class="buttons-container">
+            <button id="connect">Start Stream</button>
+            <button id="disconect" class="stop" style="display: none;" disabled>Stop Stream</button>        
+        </div>        
+
+        <p id='log'></p>    
+        <p id='dimensions'></p>  
+        <p class="state" id='iceState'></p>  
+        <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>   
+        <p class="error" id='errorMsg'></p>      
+        <p class="error" id='socketError'></p>   
+
+    </div>   
+
+    <script src="./js/QencodeWebRTC.min.js"></script>
+    <script>
+
+
+        /**
+         * Auto-Reconnect (WebRTC sender) — what it does and why
+         * -----------------------------------------------------
+         * Goal: if the page reloads shortly after a stream starts (refresh/crash),
+         * automatically re-create the sender and reconnect without user action.
+         *
+         * How it works (TL;DR):
+         * - When streaming begins we write a small JSON record to sessionStorage:
+         *   key = "qencode-webrtc-autoreconnect"
+         *   {
+         *     wasStreaming: true,
+         *     connectionUrl: <your signaling WS>,
+         *     constraints: { audio, video { width, height, ... } }, // JSON-safe subset
+         *     connectionConfig: { iceServers: [...] }  // optional, JSON-safe subset
+         *     mode: "camera" | "screen",
+         *     reconnectBy: <Date.now() + TTL ms>
+         *   }
+         * - On the next page load we read that record. If it's still "fresh" (now <= reconnectBy),
+         *   we call the **library's** getUserMedia() and then startStreaming() with the same URL.
+         *
+         * Why sessionStorage (not localStorage)?
+         * - sessionStorage is scoped to the tab and dies when the tab closes.
+         * - That keeps us from reconnecting after hours/days or in a different tab/window.
+         *
+         * Why a TTL?
+         * - Prevents accidental late reconnects (e.g., user comes back much later).
+         * - Typical TTL: 10–20s in production (we use a longer TTL in dev for testing).
+         *
+         * Library-specific note (important):
+         * - QencodeWebRTC.startStreaming() expects the lib’s internal "localStream" to be set.
+         * - Therefore, on auto-resume (and in Start) we use **qencodeWebRTC.getUserMedia()**
+         *   instead of navigator.mediaDevices.getUserMedia(). This ensures the library populates
+         *   its internal localStream, avoiding errors like "cannot read getTracks of null".
+         *
+         * Screen-share caveat:
+         * - Browsers require a user gesture for getDisplayMedia(). For mode === "screen"
+         *   we DO NOT auto-start; show a "Resume screen share" button and call
+         *   qencodeWebRTC.getDisplayMedia(...) on click, then startStreaming().
+         *
+         * beforeunload refresh:
+         * - Just before a reload, we rewrite the session with a fresh reconnectBy. This
+         *   increases the chance that a human-triggered refresh lands inside the TTL.
+         *
+         * Failure/cleanup:
+         * - On any fatal signaling/ICE error or explicit Stop, we clear the session key
+         *   so we don’t get stuck in reconnect loops.
+         *
+         * Optional (nice to have):
+         * - Use BroadcastChannel("qencode-webrtc") so only one tab claims auto-reconnect,
+         *   preventing duplicate streams if multiple tabs are open.
+         *
+         * Tuning:
+         * - RECONNECT_TTL_MS = 10_000..20_000 in production; bump temporarily in dev to test.
+         *
+         * Privacy:
+         * - We only store plain JSON (no MediaStream, no tracks, no raw frames).
+         * - Nothing sensitive beyond the signaling URL and media constraints.
+         *
+         * Disable it?
+         * - Remove saveSessionSafe()/clearSession()/loadSessionFresh() helpers and
+         *   skip calling autoResume() on page load.
+         */
+
+
+
+        let currentWebSocketUrl = '';
+
+
+        let connectBtn = document.querySelector('#connect')
+        let disconnectBtn = document.querySelector('#disconect')     
+        let error = document.querySelector('#errorMsg')   
+        let socketError = document.querySelector('#socketError')    
+        let iceState = document.querySelector('#iceState')  
+        let closingMessage = document.querySelector('#closingMessage')      
+        
+        
+
+        // === Auto-reconnect session (safe, JSON-only) ===
+        const RECONNECT_STORAGE_KEY = 'qencode-webrtc-autoreconnect';
+        const RECONNECT_TTL_MS = 15000;
+
+        function saveSessionSafe({ connectionUrl, constraints, connectionConfig, mode = 'camera' }) {
+            try {
+                const safeConstraints = {
+                    audio: typeof constraints?.audio === 'object'
+                        ? { deviceId: constraints.audio.deviceId?.exact || constraints.audio.deviceId }
+                        : !!constraints?.audio,
+                    video: typeof constraints?.video === 'object'
+                        ? {
+                            width: constraints.video.width,
+                            height: constraints.video.height,
+                            frameRate: constraints.video.frameRate,
+                            facingMode: constraints.video.facingMode,
+                            deviceId: constraints.video.deviceId?.exact || constraints.video.deviceId
+                        }
+                        : !!constraints?.video
+                };
+                const safeConfig = connectionConfig?.iceServers
+                ? { iceServers: (connectionConfig.iceServers || []).map(s => ({
+                        urls: s.urls, username: s.username, credential: s.credential
+                    })) }
+                : undefined;
+
+                const payload = {
+                    v: 1,
+                    ts: Date.now(),
+                    reconnectBy: Date.now() + RECONNECT_TTL_MS,
+                    wasStreaming: true,
+                    connectionUrl,
+                    constraints: safeConstraints,
+                    connectionConfig: safeConfig,
+                    mode
+                };
+
+                sessionStorage.setItem(RECONNECT_STORAGE_KEY, JSON.stringify(payload));
+            } catch (e) {
+                console.warn('saveSessionSafe failed:', e);
+            }
+        }
+
+
+        function clearSession() {
+            try { sessionStorage.removeItem(RECONNECT_STORAGE_KEY); } catch {}
+        }
+
+        function loadSessionFresh() {
+            try {
+                const raw = sessionStorage.getItem(RECONNECT_STORAGE_KEY);
+                console.log('[resume] raw:', raw);
+                if (!raw) { console.log('[resume] no raw'); return null; }
+
+                const s = JSON.parse(raw);
+                if (!s || s.wasStreaming !== true) { console.log('[resume] wasStreaming false'); return null; }
+
+                // Ensure number type
+                s.reconnectBy = Number(s.reconnectBy);
+                const now = Date.now();
+                const delta = now - s.reconnectBy;
+
+                // Allow forcing resume via ?forceResume=1 when you want to test
+                const force = new URLSearchParams(location.search).get('forceResume') === '1';
+
+                console.log('[resume] now:', now, 'reconnectBy:', s.reconnectBy, 'deltaMs(now - rb):', delta, 'force:', force);
+
+                if (!force && (Number.isNaN(s.reconnectBy) || now > s.reconnectBy)) {
+                    console.log('[resume] TTL expired or invalid');
+                    return null;
+                }
+                return s;
+            } catch (e) {
+                console.warn('loadSessionFresh error:', e);
+                return null;
+            }
+        }
+            
+        
+        const resetButtons = () => {
+            connectBtn.style.display = "block";
+            disconnectBtn.style.display = "none";   
+            disconnectBtn.disabled = true; 
+            closingMessage.style.display = 'none';
+        }
+
+        let constraints = window.constraints = {
+            audio: true,
+            // video: {
+            //     width: {
+            //         min: 1280,
+            //         max: 1280
+            //     },
+            //     height: {
+            //         min: 720,
+            //         max: 720
+            //     }
+            // }              
+            // video: {
+            //     width: {
+            //         min: 300,
+            //         max: 4096,
+            //         ideal: 1280
+            //     },
+            //     height: {
+            //         min: 200,
+            //         max: 2160,
+            //         ideal: 720
+            //     }
+            // }             
+
+            video: { width: 1280, height: 720 }
+
+            // video: {
+            //     width: {
+            //         min: 300,
+            //         max: 640
+            //     },
+            //     height: {
+            //         min: 200,
+            //         max: 480
+            //     }
+            // }            
+                        
+        };                 
+
+        function handleSuccess(stream) {
+            const video = document.querySelector('#userCam');
+            const videoTracks = stream.getVideoTracks();
+            console.log('Got stream with constraints:', constraints);
+            console.log(`Using video device: ${videoTracks[0].label}`);
+            let log = document.querySelector('#log');
+            log.innerHTML = `Using video device: ${videoTracks[0].label}`
+            window.stream = stream; // make variable available to browser console
+            video.srcObject = stream;
+
+            let height = videoTracks[0].getSettings().height
+            let width = videoTracks[0].getSettings().width
+            // let frameRate = videoTracks[0].getSettings().frameRate  
+                    
+            
+            let videoDimentionsLog = document.getElementById('dimensions')
+            videoDimentionsLog.innerHTML = `Video dimensions: ${width}x${height}px`
+
+            // ready to initiate peer connection and start streaming
+            enableStreaming(stream)
+        }
+
+        function handleError(error) {
+            if (error.name === 'ConstraintNotSatisfiedError') {
+                const v = constraints.video;
+                errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+            } else if (error.name === 'PermissionDeniedError') {
+                errorMsg('Permissions have not been granted to use your camera and ' +
+                'microphone, you need to allow the page access to your devices in ' +
+                'order for the demo to work.');
+            }
+            errorMsg(`getUserMedia error: ${error.name}`, error);
+        }
+
+        function errorMsg(msg, error) {
+            const errorElement = document.querySelector('#errorMsg');
+            errorElement.innerHTML += `<p>${msg}</p>`;
+            if (typeof error !== 'undefined') {
+                console.log(error);
+            }
+        }
+
+        async function init() {
+            if (loadSessionFresh()) { console.log('[init] skip preview; will auto-resume'); return; }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                handleSuccess(stream);
+            } catch (error) {
+                handleError(error);
+            }
+        }
+
+        function enableStreaming(stream){
+            console.log("User video is ready")
+        }
+
+        init()
+
+        // streaming
+        let qencodeWebRTC = null;
+
+        let config = {
+            callbacks: {
+                error: function (error) {
+                    if(typeof(error) === String){
+                      socketError.innerHTML = "Socket connection error: " + error  
+                    } else{
+                        socketError.innerHTML = "Socket connection error"  
+                    }
+                    // if error 
+                    resetButtons();
+                    clearSession();
+                },
+                connected: function (event) {
+                    console.log("connected: ", event)
+                    saveSessionSafe({
+                        connectionUrl: currentWebSocketUrl,
+                        constraints,
+                        connectionConfig: undefined,
+                        mode: 'camera'
+                    });
+                    disconnectBtn.disabled = false;                    
+                },
+                connectionClosed: function (type, event) {
+                    if (type === 'websocket') {
+                        let reason;
+                        if (event.code === 1000)
+                            reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled.";
+                        else if (event.code === 1001)
+                            reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page.";
+                        else if (event.code === 1002)
+                            reason = "An endpoint is terminating the connection due to a protocol error";
+                        else if (event.code === 1003)
+                            reason = "An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).";
+                        else if (event.code === 1004)
+                            reason = "Reserved. The specific meaning might be defined in the future.";
+                        else if (event.code === 1005)
+                            reason = "No status code was actually present.";
+                        else if (event.code === 1006)
+                            reason = "The connection was closed abnormally, e.g., without sending or receiving a Close control frame";
+                        else if (event.code === 1007)
+                            reason = "An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [http://tools.ietf.org/html/rfc3629] data within a text message).";
+                        else if (event.code === 1008)
+                            reason = "An endpoint is terminating the connection because it has received a message that \"violates its policy\". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.";
+                        else if (event.code === 1009)
+                            reason = "An endpoint is terminating the connection because it has received a message that is too big for it to process.";
+                        else if (event.code === 1010)
+                            reason = "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. <br /> Specifically, the extensions that are needed are: " + event.reason;
+                        else if (event.code === 1011)
+                            reason = "A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.";
+                        else if (event.code === 1015)
+                            reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
+                        else
+                            reason = "Unknown reason";
+                        error.innerHTML = 'Web Socket is closed. ' + reason
+                        resetButtons()
+                    }
+                    if (type === 'ice') {
+                        error.innerHTML = 'Peer Connection is closed. State: ' + qencodeWebRTC.peerConnection.iceConnectionState
+                        resetButtons()
+                    }
+                    clearSession();
+                },
+                iceStateChange: function (state) {
+                    iceState.innerHTML = "ICE State: " + state
+                    if(state === 'connected'){
+                        disconnectBtn.disabled = false;
+                    }
+                    if(state === 'disconnected'){
+                        resetButtons();
+                    }
+                }
+            }
+        }        
+
+        qencodeWebRTC = QencodeWebRTC.create(config);
+
+        // wss://live-ebe9d8e9-7d7e-4f2f-bb7c-9cd763d60ed5.qencode.com:3334/qlive/e2f186f9-6d1f-4974-a854-9e8f1868254d?direction=send&transport=tcp
+
+        qencodeWebRTC.attachMedia(document.getElementById('userCam'));    
+
+
+        function autoResume() {
+            const saved = loadSessionFresh();
+            console.log("Auto-resume session:", saved);
+            if (!saved) return;
+
+            // UI state like your Start handler
+            connectBtn.style.display = 'none';
+            disconnectBtn.style.display = 'block';
+
+            if (saved.connectionUrl) {
+                document.getElementById('webSocketUrl').value = saved.connectionUrl;
+            }
+
+            qencodeWebRTC.getUserMedia(saved.constraints || constraints)
+            .then(function (stream) {
+                handleSuccess(stream || qencodeWebRTC.localStream);
+                currentWebSocketUrl = saved.connectionUrl || document.getElementById('webSocketUrl').value.trim();
+                try {
+                    qencodeWebRTC.startStreaming(currentWebSocketUrl);
+                    // refresh TTL so a second quick reload also resumes
+                    saveSessionSafe({
+                        connectionUrl: currentWebSocketUrl,
+                        constraints: saved.constraints || constraints,
+                        connectionConfig: undefined,
+                        mode: saved.mode || 'camera'
+                    });
+                } catch (e) {
+                    clearSession();
+                    connectBtn.style.display = 'block';
+                    disconnectBtn.style.display = 'none';
+                }
+            })
+            .catch(function () {
+                clearSession();
+                connectBtn.style.display = 'block';
+                disconnectBtn.style.display = 'none';
+            });
+
+        }
+
+
+        // register (works whether DOM is already loaded or not)
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', autoResume);
+        } else {
+        autoResume();
+        console.log("Attempting to auto-resume session")
+        }
+
+        window.addEventListener('beforeunload', function () {
+            try {
+                const raw = sessionStorage.getItem(RECONNECT_STORAGE_KEY);
+                if (!raw) return;
+                const s = JSON.parse(raw);
+                // Write a fresh TTL just before the reload
+                saveSessionSafe({
+                    connectionUrl: s.connectionUrl,
+                    constraints: s.constraints,
+                    connectionConfig: s.connectionConfig,
+                    mode: s.mode || 'camera'
+                });
+            } catch {}
+        });
+
+
+             
+        connectBtn.addEventListener('click', () => {
+
+            // clear error messages and logs
+            error.innerHTML = ''
+            socketError.innerHTML = ''
+            iceState.innerHTML = ''
+            
+            connectBtn.style.display = "none";
+            disconnectBtn.style.display = "block";
+
+            console.log("constraints before actual connection: ", constraints)
+
+            qencodeWebRTC.getUserMedia(constraints).then(function (stream) {
+
+                let webSocketUrl = "" 
+
+                let clientWebSocketUrl = document.getElementById('webSocketUrl').value
+                console.log("clientWebSocketUrl: ", clientWebSocketUrl)
+
+                if(clientWebSocketUrl){
+                    webSocketUrl = clientWebSocketUrl
+                }                   
+
+                currentWebSocketUrl = webSocketUrl;
+
+                saveSessionSafe({
+                    connectionUrl: webSocketUrl,
+                    constraints,                 // your existing constraints object
+                    connectionConfig: undefined, // or your ICE config if you pass one
+                    mode: 'camera'
+                });           
+
+                // Set WebRTC Provider URL
+                qencodeWebRTC.startStreaming(webSocketUrl)
+
+            });                              
+
+        })      
+        
+        disconnectBtn.addEventListener('click', () => {
+            console.log("Stop Socket Connection")
+        
+            qencodeWebRTC.webSocket.send(JSON.stringify({
+                id: window.connectionData.id,
+                peer_id: window.connectionData.peerId,
+                command: 'stop',
+            }));
+              
+            setTimeout(function () {
+                qencodeWebRTC.webSocket.send('');   
+            }, 1000);  
+
+            // disable button
+            disconnectBtn.disabled = true;
+            // show loading
+            closingMessage.style.display = 'initial'
+
+            clearSession();
+        })            
+
+
+
+     
+
+    </script>
+</body>
+
+</html>
