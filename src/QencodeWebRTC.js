@@ -3,6 +3,9 @@ const QencodeWebRTC = {};
 const logHeader = 'QencodeWebRTC.js :';
 const logEventHeader = 'QencodeWebRTC.js :';
 
+let pendingRemoteCandidates = [];
+let remoteDescriptionSet = false;
+
 // private methods
 function sendMessage(webSocket, message) {
 
@@ -347,6 +350,9 @@ function addMethod(instance) {
 
             if (message.command === 'offer') {
 
+                pendingRemoteCandidates = [];
+                remoteDescriptionSet = false;                
+
                 // OME returns offer. Start create peer connection.
                 createPeerConnection(
                     message.id,
@@ -357,9 +363,19 @@ function addMethod(instance) {
                 );
             }
 
-            // ✅ New: accept remote trickle candidates
-            if (message.command === 'candidate' && instance.peerConnection && message.candidates?.length) {
-                addIceCandidate(instance.peerConnection, message.candidates);
+            // // ✅ New: accept remote trickle candidates
+            // if (message.command === 'candidate' && instance.peerConnection && message.candidates?.length) {
+            //     addIceCandidate(instance.peerConnection, message.candidates);
+            //     return;
+            // }   
+            
+            // ✅ Accept remote trickle candidates with a small queue
+            if (message.command === 'candidate' && message.candidates?.length) {
+                if (!instance.peerConnection || !remoteDescriptionSet) {
+                    pendingRemoteCandidates.push(...message.candidates);
+                } else {
+                    addIceCandidate(instance.peerConnection, message.candidates);
+                }
                 return;
             }            
         };
@@ -569,6 +585,12 @@ function addMethod(instance) {
 
         peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
             .then(function () {
+
+                remoteDescriptionSet = true;
+                if (pendingRemoteCandidates.length) {
+                    addIceCandidate(instance.peerConnection || peerConnection, pendingRemoteCandidates);
+                    pendingRemoteCandidates = [];
+                }
 
                 peerConnection.createAnswer()
                     .then(function (answer) {
