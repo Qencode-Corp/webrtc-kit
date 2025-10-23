@@ -356,6 +356,12 @@ function addMethod(instance) {
                     message.ice_servers
                 );
             }
+
+            // ✅ New: accept remote trickle candidates
+            if (message.command === 'candidate' && instance.peerConnection && message.candidates?.length) {
+                addIceCandidate(instance.peerConnection, message.candidates);
+                return;
+            }            
         };
 
         webSocket.onerror = function (error) {
@@ -442,7 +448,11 @@ function addMethod(instance) {
 
             if (instance.connectionConfig.iceTransportPolicy) {
 
-                peerConnectionConfig.iceTransportPolicy = instance.connectionConfig.iceTransportPolicy;
+                // peerConnectionConfig.iceTransportPolicy = instance.connectionConfig.iceTransportPolicy;
+
+                // Instead of always forcing relay:
+                peerConnectionConfig.iceTransportPolicy = instance.connectionConfig.iceTransportPolicy || 'all';
+
             }
         } else if (iceServers) {
 
@@ -538,13 +548,13 @@ function addMethod(instance) {
         });
 
 
-        if (checkIOSVersion() >= 15) {
-            const formatNumber = getFormatNumber(offer.sdp, 'H264');
+        // if (checkIOSVersion() >= 15) {
+        //     const formatNumber = getFormatNumber(offer.sdp, 'H264');
 
-            if (formatNumber > 0) {
-                offer.sdp = removeFormat(offer.sdp, formatNumber);
-            }
-        }
+        //     if (formatNumber > 0) {
+        //         offer.sdp = removeFormat(offer.sdp, formatNumber);
+        //     }
+        // }
 
         if (instance.connectionConfig.maxVideoBitrate) {
 
@@ -563,15 +573,15 @@ function addMethod(instance) {
                 peerConnection.createAnswer()
                     .then(function (answer) {
 
-                        if (checkIOSVersion() >= 15) {
+                        // if (checkIOSVersion() >= 15) {
 
-                            const formatNumber = getFormatNumber(answer.sdp, 'H264');
+                        //     const formatNumber = getFormatNumber(answer.sdp, 'H264');
 
-                            if (formatNumber > 0) {
+                        //     if (formatNumber > 0) {
 
-                                answer.sdp = removeFormat(answer.sdp, formatNumber);
-                            }
-                        }
+                        //         answer.sdp = removeFormat(answer.sdp, formatNumber);
+                        //     }
+                        // }
 
                         if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
 
