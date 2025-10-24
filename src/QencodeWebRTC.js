@@ -556,6 +556,33 @@ function addMethod(instance) {
 
         instance.peerConnection = peerConnection;
 
+
+        // ✅ New: ICE restart on failure/disconnect
+        let didIceRestart = false; // one-shot to avoid restart loops
+        peerConnection.oniceconnectionstatechange = () => {
+            const s = peerConnection.iceConnectionState;
+            // keep your existing callback if you have one
+            instance.callbacks?.iceStateChange?.(s);
+
+            if ((s === 'failed' || s === 'disconnected') && !didIceRestart) {
+                didIceRestart = true;
+                try {
+                    if (typeof peerConnection.restartIce === 'function') {
+                        console.log('[ICE] restarting…');
+                        peerConnection.restartIce();
+                    }
+                } catch (e) {
+                    console.warn('restartIce failed:', e);
+                }
+            }
+
+            if (s === 'connected') {
+                // reset the guard once we’re healthy again
+                didIceRestart = false;
+            }
+        };
+
+
         // set local stream
         instance.stream.getTracks().forEach(function (track) {
 
