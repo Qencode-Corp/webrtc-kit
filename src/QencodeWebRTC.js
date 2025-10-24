@@ -515,7 +515,8 @@ function addMethod(instance) {
                 peerConnectionConfig.iceServers.push(regIceServer);
             }
 
-            peerConnectionConfig.iceTransportPolicy = 'relay';
+            // peerConnectionConfig.iceTransportPolicy = 'relay';
+            peerConnectionConfig.iceTransportPolicy = 'all';
         } else {
             // last priority using default ice servers.
 
@@ -754,7 +755,8 @@ function addMethod(instance) {
 
     instance.startStreaming = function (connectionUrl, connectionConfig) {
 
-        connectionUrl+="?direction=send&transport=tcp"
+        //connectionUrl+="?direction=send&transport=tcp"`
+        connectionUrl+="?direction=send"
 
         console.info(logEventHeader, 'Start Streaming');
 
