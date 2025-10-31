@@ -267,7 +267,9 @@
                 }                   
 
                 // Set WebRTC Provider URL
-                qencodeWebRTC.startStreaming(webSocketUrl)
+                qencodeWebRTC.startStreaming(webSocketUrl, {
+                  maxVideoBitrate: 500,
+                })
 
             });                              
 
