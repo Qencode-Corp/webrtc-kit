@@ -534,7 +534,10 @@ function addMethod(instance) {
         instance.stream.getTracks().forEach(function (track) {
 
             console.info(logHeader, 'Add Track To Peer Connection', track);
-            peerConnection.addTrack(track, instance.stream);
+            const sender = peerConnection.addTrack(track, instance.stream);
+            const parameters = sender.getParameters();
+            parameters.encodings[0].degradationPreference = "maintain-resolution";
+            sender.setParameters(parameters);
         });
 
 
