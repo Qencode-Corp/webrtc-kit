@@ -383,6 +383,16 @@ function addMethod(instance) {
               instance.retriesUsed += 1;
               instance.retrying = true; /* Prevent multiple concurrent retries if onerror runs too often. */
               console.log(`Starting retry attempt ${instance.retriesUsed}`);
+              
+              // Close the failed WebSocket before retrying
+              if (webSocket && webSocket.readyState !== WebSocket.CLOSED) {
+                webSocket.onerror = null; // Remove handlers to prevent stale events
+                webSocket.onclose = null;
+                webSocket.onmessage = null;
+                webSocket.onopen = null;
+                webSocket.close();
+              }
+              
               await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
               instance.retrying = false;
             }
