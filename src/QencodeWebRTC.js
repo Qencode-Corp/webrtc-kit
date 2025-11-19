@@ -375,13 +375,16 @@ function addMethod(instance) {
             
             if (
               !instance.removing &&
+              !instance.retrying &&
               Number.isFinite(instance.retryDelay) &&
               Number.isFinite(instance.retryMaxCount) &&
               instance.retriesUsed < instance.retryMaxCount
               ) {
               instance.retriesUsed += 1;
+              instance.retrying = true; /* Prevent multiple concurrent retries if onerror runs too often. */
               console.log(`Starting retry attempt ${instance.retriesUsed}`);
               await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+              instance.retrying = false;
             }
         };
 
