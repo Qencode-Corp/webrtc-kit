@@ -722,7 +722,8 @@ function addMethod(instance) {
 
             instance.connectionConfig = connectionConfig;
         }
-
+        
+        instance.retriesUsed = 0;
         initWebSocket(connectionUrl);
     };
 
