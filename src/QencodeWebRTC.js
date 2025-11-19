@@ -380,6 +380,7 @@ function addMethod(instance) {
               instance.retriesUsed < instance.retryMaxCount
               ) {
               instance.retriesUsed += 1;
+              console.log(`Starting retry attempt ${instance.retriesUsed}`);
               await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
             }
         };
