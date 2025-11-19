@@ -157,6 +157,15 @@ function initConfig(instance, options) {
 
 }
 
+function delayedCall(fn, args, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const result = fn(...args);
+      resolve(result);
+    }, delay);
+  });
+}
+
 function addMethod(instance) {
 
     function errorHandler(error) {
@@ -358,10 +367,20 @@ function addMethod(instance) {
             }
         };
 
-        webSocket.onerror = function (error) {
+        webSocket.onerror = async function (error) {
 
             console.error('webSocket.onerror', error);
             errorHandler(error);
+            instance.retriesUsed |= 0;
+            
+            if (
+              Number.isFinite(instance.retryDelay) &&
+              Number.isFinite(instance.retryMaxCount) &&
+              instance.retriesUsed < instance.retryMaxCount
+              ) {
+              instance.retriesUsed += 1;
+              await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+            }
         };
 
         webSocket.onclose = function (e) {
@@ -767,7 +786,10 @@ QencodeWebRTC.create = function (options) {
 
     console.info(logEventHeader, 'Create WebRTC');
 
-    let instance = {};
+    let instance = {
+      retryMaxCount: 2,
+      retryDelay: 2000,
+    };
 
     instance.removing = false;
 
