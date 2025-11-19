@@ -374,6 +374,7 @@ function addMethod(instance) {
             instance.retriesUsed |= 0;
             
             if (
+              !instance.removing &&
               Number.isFinite(instance.retryDelay) &&
               Number.isFinite(instance.retryMaxCount) &&
               instance.retriesUsed < instance.retryMaxCount
