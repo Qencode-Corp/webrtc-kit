@@ -714,7 +714,7 @@ function addMethod(instance) {
     }
 
     function addIceCandidate(peerConnection, candidates) {
-
+        console.log('addIceCandidate', peerConnection, candidates);
         for (let i = 0; i < candidates.length; i++) {
 
             if (candidates[i] && candidates[i].candidate) {
@@ -727,7 +727,7 @@ function addMethod(instance) {
                     })
                     .catch(function (error) {
 
-                        console.error('peerConnection.addIceCandidate', error);
+                        console.error('peerConnection.addIceCandidate', basicCandidate, error);
                         errorHandler(error);
                     });
             }
