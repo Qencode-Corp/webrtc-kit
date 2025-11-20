@@ -198,11 +198,54 @@ button.stop:hover{
       }
     }
 
+    _onConnect() {
+      console.log("constraints before actual connection: ", constraints)
+
+      qencodeWebRTC.getUserMedia(constraints).then(function (stream) {
+
+        let webSocketUrl = ""
+
+        let clientWebSocketUrl = document.getElementById('webSocketUrl').value
+        console.log("clientWebSocketUrl: ", clientWebSocketUrl)
+
+        if(clientWebSocketUrl){
+          webSocketUrl = clientWebSocketUrl
+        }
+
+        // Set WebRTC Provider URL
+        qencodeWebRTC.startStreaming(webSocketUrl)
+
+      });
+
+    }
+
+    _onDisconnect() {
+      console.log("Stop Socket Connection")
+
+      qencodeWebRTC.webSocket.send(JSON.stringify({
+        id: window.connectionData.id,
+        peer_id: window.connectionData.peerId,
+        command: 'stop',
+      }));
+
+      setTimeout(function () {
+        qencodeWebRTC.webSocket.send('');
+      }, 1000);
+    }
+
     render() {
       return html`
-        <div class="buttons-container">
-          <button id="connect">Start Stream</button>
-          <button id="disconect" class="stop" style="display: none;" disabled>Stop Stream</button>
+        <div>
+          <div class="buttons-container">
+            <button id="connect" @click=${this._onConnect}>Start Stream</button>
+            <button id="disconect" class="stop" @click=${this._onDisconnect} style="display: none;" disabled>Stop Stream</button>
+          </div>
+          <p id='log'></p>
+          <p id='dimensions'></p>
+          <p class="state" id='iceState'></p>
+          <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
+          <p class="error" id='errorMsg'></p>
+          <p class="error" id='socketError'></p>
         </div>
       `;
     }
@@ -238,18 +281,6 @@ button.stop:hover{
         </div>
 
         <hello-box/>
-        <div class="buttons-container">
-            <button id="connect">Start Stream</button>
-            <button id="disconect" class="stop" style="display: none;" disabled>Stop Stream</button>        
-        </div>        
-
-        <p id='log'></p>    
-        <p id='dimensions'></p>  
-        <p class="state" id='iceState'></p>  
-        <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>   
-        <p class="error" id='errorMsg'></p>      
-        <p class="error" id='socketError'></p>   
-
     </div>   
 
     <script src="./js/QencodeWebRTC.min.js"></script>
@@ -387,53 +418,7 @@ button.stop:hover{
 
         qencodeWebRTC = QencodeWebRTC.create(config);
         window.qencodeWebRTC = qencodeWebRTC;
-
-        qencodeWebRTC.attachMedia(document.getElementById('userCam'));    
-
-             
-        connectBtn.addEventListener('click', () => {
-            console.log("constraints before actual connection: ", constraints)
-
-            qencodeWebRTC.getUserMedia(constraints).then(function (stream) {
-
-                let webSocketUrl = "" 
-
-                let clientWebSocketUrl = document.getElementById('webSocketUrl').value
-                console.log("clientWebSocketUrl: ", clientWebSocketUrl)
-
-                if(clientWebSocketUrl){
-                    webSocketUrl = clientWebSocketUrl
-                }                   
-
-                // Set WebRTC Provider URL
-                qencodeWebRTC.startStreaming(webSocketUrl)
-
-            });                              
-
-        })      
-        
-        disconnectBtn.addEventListener('click', () => {
-            console.log("Stop Socket Connection")
-        
-            qencodeWebRTC.webSocket.send(JSON.stringify({
-                id: window.connectionData.id,
-                peer_id: window.connectionData.peerId,
-                command: 'stop',
-            }));
-              
-            setTimeout(function () {
-                qencodeWebRTC.webSocket.send('');   
-            }, 1000);  
-
-            // disable button
-            disconnectBtn.disabled = true;
-            // show loading
-            closingMessage.style.display = 'initial'
-        })            
-
-
-
-     
+        qencodeWebRTC.attachMedia(document.getElementById('userCam'));
 
     </script>
 </body>
