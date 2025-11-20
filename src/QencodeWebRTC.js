@@ -55,9 +55,22 @@ function joinSdpLines(lines) {
 
 /* Just in case. */
 function normalizeSdpObject(offer) {
-  if (offer && Object.hasOwn(offer, 'sdp') && typeof offer?.sdp === 'string') {
-    return offer.sdp.replace(/\r?\n/g, "\r\n");
+  if (offer && typeof offer.sdp === "string") {
+    
+    // Normalize line endings to CRLF
+    let sdp = offer.sdp.replace(/\r?\n/g, "\r\n");
+    
+    // Remove trailing blank lines (including pure CRLF)
+    sdp = sdp.replace(/(\r\n)+$/, "");
+    
+    // Return modified offer object
+    return {
+      ...offer,
+      sdp
+    };
   }
+  
+  return offer;
 }
 
 function getFormatNumber(sdp, format) {
