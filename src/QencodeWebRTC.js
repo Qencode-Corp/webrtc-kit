@@ -437,7 +437,7 @@ function addMethod(instance) {
 
                 for (let j = 3; j < tokens.length; j++) {
 
-                    payloads.push(tokens[j].replace('\r', ''));
+                    payloads.push(tokens[j]);
                 }
 
                 break;
