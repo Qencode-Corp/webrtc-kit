@@ -359,13 +359,16 @@ function addMethod(instance) {
 
         instance.webSocket = webSocket;
         instance.createPeerConnectionCount = 0;
+        instance.offerRequestCount = 0;
+        
+        function requestOffer() {
+          sendMessage(webSocket, {
+            command: 'request_offer'
+          });
+        }
 
         webSocket.onopen = function () {
-
-            // Request offer at the first time.
-            sendMessage(webSocket, {
-                command: 'request_offer'
-            });
+          requestOffer();
         };
 
         webSocket.onmessage = async function (e) {
@@ -393,11 +396,15 @@ function addMethod(instance) {
                 } catch (e) {
                   console.log('createPeerConnection error', e);
                   
+                  if (instance.offerRequestCount < 3) {
+                    requestOffer();
+                  } else {
                     await delayedCall(async () => {
                       if (instance.createPeerConnectionCount === 0) {
                         await onWebsocketError(e)
                       }
                     }, [], 2000)
+                  }
                 }
             }
         };
