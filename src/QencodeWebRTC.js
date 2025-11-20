@@ -657,7 +657,7 @@ function addMethod(instance) {
             }
         };
       
-      peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+      peerConnection.setRemoteDescription(offer)
             .then(function () {
 
                 peerConnection.createAnswer()
