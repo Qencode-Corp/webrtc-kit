@@ -608,7 +608,7 @@ function addMethod(instance) {
 
             offer.sdp = appendFmtp(offer.sdp);
         }
-        console.log('offer ', offer)
+        console.log('offer ', offer, offer.sdp)
       
       normalizeSdpObject(offer);
       
@@ -632,7 +632,7 @@ function addMethod(instance) {
 
                             answer.sdp = appendFmtp(answer.sdp);
                         }
-                        console.log('answer ', answer);
+                        console.log('answer ', answer, answer.sdp);
 
                         peerConnection.setLocalDescription(answer)
                             .then(function () {
