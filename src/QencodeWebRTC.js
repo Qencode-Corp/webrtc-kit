@@ -60,9 +60,6 @@ function normalizeSdpObject(offer) {
     // Normalize line endings to CRLF
     let sdp = offer.sdp.replace(/\r?\n/g, "\r\n");
     
-    // Remove trailing blank lines (including pure CRLF)
-    sdp = sdp.replace(/(\r\n)+$/, "");
-    
     offer.sdp = sdp;
   }
   
