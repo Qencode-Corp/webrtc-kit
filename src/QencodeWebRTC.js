@@ -63,14 +63,9 @@ function normalizeSdpObject(offer) {
     // Remove trailing blank lines (including pure CRLF)
     sdp = sdp.replace(/(\r\n)+$/, "");
     
-    // Return modified offer object
-    return {
-      ...offer,
-      sdp
-    };
+    offer.sdp = sdp;
   }
   
-  return offer;
 }
 
 function getFormatNumber(sdp, format) {
