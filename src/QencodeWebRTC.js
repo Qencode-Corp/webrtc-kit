@@ -681,7 +681,10 @@ function addMethod(instance) {
 
                         peerConnection.setLocalDescription(answer)
                             .then(function () {
-
+                                // Add remote ICE candidates after setRemoteDescription completes
+                                if (candidates) {
+                                    addIceCandidate(peerConnection, candidates);
+                                }
                                 sendMessage(instance.webSocket, {
                                     id: id,
                                     peer_id: peerId,
@@ -706,11 +709,6 @@ function addMethod(instance) {
                 console.error('peerConnection.setRemoteDescription', error);
                 errorHandler(error);
             });
-
-        if (candidates) {
-
-            addIceCandidate(peerConnection, candidates);
-        }
     }
 
     function addIceCandidate(peerConnection, candidates) {
