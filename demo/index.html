@@ -237,11 +237,16 @@ button.stop:hover{
     }
 
     render() {
+      const connected = this.iceConnectionState === 'connected';
+
       return html`
         <div>
           <div class="buttons-container">
-            <button id="connect" @click=${this._onConnect}>Start Stream</button>
-            <button id="disconect" class="stop" @click=${this._onDisconnect} style="display: none;" disabled>Stop Stream</button>
+            ${
+              connected ?
+                html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
+                html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
+            }
           </div>
           <p id='log'></p>
           <p id='dimensions'></p>
