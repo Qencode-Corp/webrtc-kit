@@ -26,6 +26,138 @@ div {
   border-radius: 8px;
   font-family: sans-serif;
 }
+.container{
+    width: 453px;
+    width: 100%;
+    max-width: 720px;
+    height: 340px;
+    height: auto;
+    margin: 3% auto;
+    text-align: center;
+}
+
+h1{
+    color: #4f4f4f;
+
+    font-weight: 500;
+    font-family: arial;
+}
+
+p{
+    color: #4f4f4f;
+    font-weight: 500;
+    font-family: arial;
+    font-size: 14px;
+}
+
+.error{
+    color: red;
+}
+
+.state{
+    font-weight: 600;
+}
+
+.buttons-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button{
+    background: transparent;
+    outline: none;
+    padding: 0 22px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: none;
+    border-radius: 5px;
+    line-height: 38px;
+    background: #316fea;
+    color: white;
+    border: 1px solid transparent;
+
+    margin: 0 5px;
+    min-width: 140px;
+    font-size: 15px;
+
+    display: block;
+}
+
+button:hover {
+    background-color: #265cc5;
+}
+
+button.stop{
+    background-color: #d83232;
+}
+
+button.stop:disabled,
+button.stop:disabled:hover{
+    background-color: #a78181;
+    cursor: not-allowed;
+}
+
+button.stop:hover{
+    background-color: #ca2e2e;;
+}
+
+.web-socket-url,
+.video-quality{
+    margin: 10px 0;
+    text-align: left;
+}
+
+.web-socket-url input,
+.video-quality select{
+    width: 100%;
+    margin: 0;
+    display: inline-block;
+    box-sizing: border-box;
+    outline: none;
+    border: 1px solid #e1e5ee;
+    font-family: arial;
+    font-weight: 500;
+    font-size: 16px;
+    border-radius: 6px;
+    color: #171717;
+
+    padding: 0px 14px;
+    line-height: 40px;
+    height: 40px;
+}
+
+.web-socket-url input:focus,
+.video-quality select:focus{
+    border-color: #316fea;
+}
+
+.web-socket-url label,
+.video-quality label{
+    font-weight: normal;
+    font-family: arial;
+    font-size: 14px;
+    color: #383939;
+}
+
+.buttons-container{
+    display: flex;
+    align-items: center;
+    width: max-content;
+    margin: 0 auto;
+}
+
+.buttons-container > button + button{
+    margin-left: 15px;
+}
 `;
 
     constructor() {
@@ -35,8 +167,11 @@ div {
 
     render() {
       return html`
-            <div></div>
-          `;
+        <div class="buttons-container">
+          <button id="connect">Start Stream</button>
+          <button id="disconect" class="stop" style="display: none;" disabled>Stop Stream</button>
+        </div>
+      `;
     }
   }
 
@@ -45,7 +180,7 @@ div {
 <body>
     <div class="container">
         <h1>Client webcam</h1>
-        <hello-box/>
+
         <video id="userCam" autoplay playsinline muted></video>
 
         <div class="web-socket-url">
@@ -68,7 +203,8 @@ div {
 
             </script>
         </div>
-        
+
+        <hello-box/>
         <div class="buttons-container">
             <button id="connect">Start Stream</button>
             <button id="disconect" class="stop" style="display: none;" disabled>Stop Stream</button>        
