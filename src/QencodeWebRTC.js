@@ -402,11 +402,11 @@ function addMethod(instance) {
                 } catch (e) {
                   console.log('createPeerConnection error', e);
                   
-                    await delayedCall(() => {
+                    await delayedCall(async () => {
                       if (instance.createPeerConnectionCount === 0) {
-                        onWebsocketError(e)
+                        await onWebsocketError(e)
                       }
-                    }, [e], 2000)
+                    }, [], 2000)
                 }
             }
         };
