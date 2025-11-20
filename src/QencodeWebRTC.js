@@ -376,7 +376,7 @@ function addMethod(instance) {
             });
         };
 
-        webSocket.onmessage = function (e) {
+        webSocket.onmessage = async function (e) {
 
             let message = JSON.parse(e.data);
             console.log('webSocket.onmessage', message);
@@ -389,13 +389,24 @@ function addMethod(instance) {
             if (message.command === 'offer') {
 
                 // OME returns offer. Start create peer connection.
-                createPeerConnection(
+                try {
+                  await createPeerConnection(
                     message.id,
                     message.peer_id,
                     message.sdp,
                     message.candidates,
                     message.ice_servers
-                );
+                  );
+                } catch (e) {
+                  console.log('createPeerConnection error', e);
+                  await delayedCall(createPeerConnection, [
+                    message.id,
+                    message.peer_id,
+                    message.sdp,
+                    message.candidates,
+                    message.ice_servers
+                  ], 2000)
+                }
             }
         };
 
@@ -618,73 +629,66 @@ function addMethod(instance) {
             }
         };
 
-        peerConnection.oniceconnectionstatechange = function (e) {
+      peerConnection.oniceconnectionstatechange = function (e) {
 
-            let state = peerConnection.iceConnectionState;
+          let state = peerConnection.iceConnectionState;
 
-            if (instance.callbacks.iceStateChange) {
+          if (instance.callbacks.iceStateChange) {
 
-                console.info(logHeader, 'ICE State', '[' + state + ']');
-                instance.callbacks.iceStateChange(state);
-            }
+              console.info(logHeader, 'ICE State', '[' + state + ']');
+              instance.callbacks.iceStateChange(state);
+          }
 
-            if (state === 'connected') {
+          if (state === 'connected') {
 
-                if (instance.callbacks.connected) {
+              if (instance.callbacks.connected) {
 
-                    console.info(logHeader, 'Iceconnection Connected', e);
-                    instance.callbacks.connected(e);
-                }
-            }
+                  console.info(logHeader, 'Iceconnection Connected', e);
+                  instance.callbacks.connected(e);
+              }
+          }
 
-            if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
 
-                if (instance.callbacks.connectionClosed) {
+              if (instance.callbacks.connectionClosed) {
 
-                    console.error(logHeader, 'Iceconnection Closed', e);
-                    instance.callbacks.connectionClosed('ice', e);
-                }
-            }
-        };
+                  console.error(logHeader, 'Iceconnection Closed', e);
+                  instance.callbacks.connectionClosed('ice', e);
+              }
+          }
+      };
+
+      await peerConnection.setRemoteDescription(offer);
+
+      const answer = await peerConnection.createAnswer();
+
+      if (checkIOSVersion() >= 15) {
+
+          const formatNumber = getFormatNumber(answer.sdp, 'H264');
+
+          if (formatNumber > 0) {
+
+              answer.sdp = removeFormat(answer.sdp, formatNumber);
+          }
+      }
+
+      if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
+          answer.sdp = appendFmtp(answer.sdp);
+      }
+
+      await peerConnection.setLocalDescription(answer);
       
-      try {
-            await peerConnection.setRemoteDescription(offer);
-
-            const answer = await peerConnection.createAnswer();
-
-            if (checkIOSVersion() >= 15) {
-
-                const formatNumber = getFormatNumber(answer.sdp, 'H264');
-
-                if (formatNumber > 0) {
-
-                    answer.sdp = removeFormat(answer.sdp, formatNumber);
-                }
-            }
-
-            if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
-
-                answer.sdp = appendFmtp(answer.sdp);
-            }
-            console.log('answer ', answer, answer.sdp);
-
-            await peerConnection.setLocalDescription(answer);
-            
-            // Add remote ICE candidates after setRemoteDescription completes
-            if (candidates) {
-                await addIceCandidate(peerConnection, candidates);
-            }
-            
-            sendMessage(instance.webSocket, {
-                id: id,
-                peer_id: peerId,
-                command: 'answer',
-                sdp: answer
-            });
-        } catch (error) {
-            console.error('peerConnection error', error);
-            errorHandler(error);
-        }
+      // Add remote ICE candidates after setRemoteDescription completes
+      if (candidates) {
+          await addIceCandidate(peerConnection, candidates);
+      }
+      
+      sendMessage(instance.webSocket, {
+          id: id,
+          peer_id: peerId,
+          command: 'answer',
+          sdp: answer
+      });
     }
 
     async function addIceCandidate(peerConnection, candidates) {
