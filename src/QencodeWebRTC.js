@@ -53,6 +53,13 @@ function joinSdpLines(lines) {
     return lines.join('\r\n');
 }
 
+/* Just in case. */
+function normalizeSdpObject(offer) {
+  if (offer && Object.hasOwn(offer, 'sdp') && typeof offer?.sdp === 'string') {
+    return offer.sdp.replace(/\r?\n/g, "\r\n");
+  }
+}
+
 function getFormatNumber(sdp, format) {
 
     const lines = splitSdpLines(sdp);
@@ -602,8 +609,10 @@ function addMethod(instance) {
             offer.sdp = appendFmtp(offer.sdp);
         }
         console.log('offer ', offer)
-
-        peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+      
+      normalizeSdpObject(offer);
+      
+      peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
             .then(function () {
 
                 peerConnection.createAnswer()
