@@ -10,11 +10,42 @@
     <link rel="stylesheet" href="css/main.css">
     <title>WebRTC Demo</title>
 </head>
+<script type="module">
+  import { LitElement, html, css }
+    from 'https://unpkg.com/lit@3/index.js?module';
 
+  class HelloBox extends LitElement {
+    static properties = {
+      name: { type: String }
+    };
+
+    static styles = css`
+div {
+  padding: 16px;
+  background: #f0f0ff;
+  border-radius: 8px;
+  font-family: sans-serif;
+}
+`;
+
+    constructor() {
+      super();
+      this.name = "world";
+    }
+
+    render() {
+      return html`
+            <div></div>
+          `;
+    }
+  }
+
+  customElements.define('hello-box', HelloBox);
+</script>
 <body>
     <div class="container">
         <h1>Client webcam</h1>
-    
+        <hello-box/>
         <video id="userCam" autoplay playsinline muted></video>
 
         <div class="web-socket-url">
