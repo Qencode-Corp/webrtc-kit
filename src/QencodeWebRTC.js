@@ -186,8 +186,7 @@ function initConfig(instance, options) {
 function delayedCall(fn, args, delay) {
   return new Promise(resolve => {
     setTimeout(() => {
-      const result = fn(...args);
-      resolve(result);
+      Promise.resolve(fn(...args)).then(resolve);
     }, delay);
   });
 }
