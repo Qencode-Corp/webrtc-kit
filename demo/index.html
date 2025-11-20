@@ -244,7 +244,7 @@ button.stop:hover{
           <p id='dimensions'></p>
           <p class="state" id='iceState'>ICE State: ${ window.qencodeWebRTC.iceConnectionState }</p>
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
-          <p class="error" id='errorMsg'></p>
+          <p class="error" id='errorMsg'>${ window.qencodeWebRTC.error }</p>
           <p class="error" id='socketError'></p>
         </div>
       `;
