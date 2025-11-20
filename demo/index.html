@@ -242,7 +242,7 @@ button.stop:hover{
           </div>
           <p id='log'></p>
           <p id='dimensions'></p>
-          <p class="state" id='iceState'></p>
+          <p class="state" id='iceState'>ICE State: ${ window.qencodeWebRTC.iceConnectionState }</p>
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
           <p class="error" id='errorMsg'></p>
           <p class="error" id='socketError'></p>
@@ -406,15 +406,15 @@ button.stop:hover{
                         resetButtons()
                     }
                 },
-                iceStateChange: function (state) {
-                    iceState.innerHTML = "ICE State: " + state
-                    if(state === 'connected'){
-                        disconnectBtn.disabled = false;
-                    }
-                    if(state === 'disconnected'){
-                        resetButtons();
-                    }
-                }
+                // iceStateChange: function (state) {
+                //     iceState.innerHTML = "ICE State: " + state
+                //     if(state === 'connected'){
+                //         disconnectBtn.disabled = false;
+                //     }
+                //     if(state === 'disconnected'){
+                //         resetButtons();
+                //     }
+                // }
             }
         }        
 
