@@ -621,9 +621,10 @@ function addMethod(instance) {
 
             offer.sdp = appendFmtp(offer.sdp);
         }
-        console.log('offer ', offer, offer.sdp)
+        
       
       normalizeSdpObject(offer);
+      console.log('offer ', offer, offer.sdp)
       
       // Set up event handlers BEFORE setRemoteDescription to avoid missing events
       peerConnection.onicecandidate = function (e) {
