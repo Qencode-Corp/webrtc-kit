@@ -183,7 +183,10 @@ button.stop:hover{
         time += 0;
 
         if (time % 15 === 0) {
-          console.log(window.qencodeWebRTC)
+          // console.log(window.qencodeWebRTC)
+          this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
+          this.error = window.qencodeWebRTC.error;
+          this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
         }
         this._rafId = requestAnimationFrame(tick);
       }
@@ -242,10 +245,10 @@ button.stop:hover{
           </div>
           <p id='log'></p>
           <p id='dimensions'></p>
-          <p class="state" id='iceState'>ICE State: ${ window.qencodeWebRTC.iceConnectionState }</p>
+          <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
-          <p class="error" id='errorMsg'>${ window.qencodeWebRTC.error }</p>
-          <p class="error" id='socketError'></p>
+          <p class="error" id='errorMsg'>${ this.error }</p>
+          <p class="error" id='socketError'>${ this.webSocketCloseError }</p>
         </div>
       `;
     }
