@@ -423,12 +423,12 @@ function addMethod(instance) {
             console.log(`Starting retry attempt ${instance.retriesUsed}`);
             
             // Close the failed WebSocket before retrying
-            if (webSocket && webSocket.readyState !== WebSocket.CLOSED) {
-              webSocket.onerror = null; // Remove handlers to prevent stale events
-              webSocket.onclose = null;
-              webSocket.onmessage = null;
-              webSocket.onopen = null;
-              webSocket.close();
+            if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
+              instance.webSocket.onerror = null; // Remove handlers to prevent stale events
+              instance.webSocket.onclose = null;
+              instance.webSocket.onmessage = null;
+              instance.webSocket.onopen = null;
+              instance.webSocket.close();
             }
             
             await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
