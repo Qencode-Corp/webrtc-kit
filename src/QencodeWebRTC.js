@@ -367,6 +367,7 @@ function addMethod(instance) {
 
 
         instance.webSocket = webSocket;
+        instance.createPeerConnectionCount = 0;
 
         webSocket.onopen = function () {
 
@@ -397,49 +398,50 @@ function addMethod(instance) {
                     message.candidates,
                     message.ice_servers
                   );
+                  instance.createPeerConnectionCount += 1;
                 } catch (e) {
                   console.log('createPeerConnection error', e);
-                  await delayedCall(createPeerConnection, [
-                    message.id,
-                    message.peer_id,
-                    message.sdp,
-                    message.candidates,
-                    message.ice_servers
-                  ], 2000)
+                  
+                    await delayedCall(() => {
+                      if (instance.createPeerConnectionCount === 0) {
+                        onWebsocketError(e)
+                      }
+                    }, [e], 2000)
                 }
             }
         };
-
-        webSocket.onerror = async function (error) {
-
-            console.error('webSocket.onerror', error);
-            errorHandler(error);
-            instance.retriesUsed |= 0;
+        
+        async function onWebsocketError(error) {
+          console.error('webSocket.onerror', error);
+          errorHandler(error);
+          instance.retriesUsed |= 0;
+          
+          if (
+            !instance.removing &&
+            !instance.retrying &&
+            Number.isFinite(instance.retryDelay) &&
+            Number.isFinite(instance.retryMaxCount) &&
+            instance.retriesUsed < instance.retryMaxCount
+          ) {
+            instance.retriesUsed += 1;
+            instance.retrying = true; /* Prevent multiple concurrent retries if onerror runs too often. */
+            console.log(`Starting retry attempt ${instance.retriesUsed}`);
             
-            if (
-              !instance.removing &&
-              !instance.retrying &&
-              Number.isFinite(instance.retryDelay) &&
-              Number.isFinite(instance.retryMaxCount) &&
-              instance.retriesUsed < instance.retryMaxCount
-              ) {
-              instance.retriesUsed += 1;
-              instance.retrying = true; /* Prevent multiple concurrent retries if onerror runs too often. */
-              console.log(`Starting retry attempt ${instance.retriesUsed}`);
-              
-              // Close the failed WebSocket before retrying
-              if (webSocket && webSocket.readyState !== WebSocket.CLOSED) {
-                webSocket.onerror = null; // Remove handlers to prevent stale events
-                webSocket.onclose = null;
-                webSocket.onmessage = null;
-                webSocket.onopen = null;
-                webSocket.close();
-              }
-              
-              await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
-              instance.retrying = false;
+            // Close the failed WebSocket before retrying
+            if (webSocket && webSocket.readyState !== WebSocket.CLOSED) {
+              webSocket.onerror = null; // Remove handlers to prevent stale events
+              webSocket.onclose = null;
+              webSocket.onmessage = null;
+              webSocket.onopen = null;
+              webSocket.close();
             }
-        };
+            
+            await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+            instance.retrying = false;
+          }
+        }
+
+        webSocket.onerror = onWebsocketError;
 
         webSocket.onclose = function (e) {
 
