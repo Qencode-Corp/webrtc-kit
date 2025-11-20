@@ -42,9 +42,20 @@ function checkIOSVersion() {
     return 0;
 }
 
+// SDP helper functions to properly handle CRLF line endings (RFC 4566)
+function splitSdpLines(sdp) {
+    // Normalize line endings: split on \r\n or \n, and remove trailing \r from each line
+    return sdp.split(/\r?\n/).map(line => line.replace(/\r$/, ''));
+}
+
+function joinSdpLines(lines) {
+    // Join with CRLF as required by SDP specification (RFC 4566)
+    return lines.join('\r\n');
+}
+
 function getFormatNumber(sdp, format) {
 
-    const lines = sdp.split('\n');
+    const lines = splitSdpLines(sdp);
     let formatNumber = -1;
 
     for (let i = 0; i < lines.length - 1; i++) {
@@ -63,7 +74,7 @@ function getFormatNumber(sdp, format) {
 
 function removeFormat(sdp, formatNumber) {
     let newLines = [];
-    let lines = sdp.split('\n');
+    let lines = splitSdpLines(sdp);
 
     for (let i = 0; i < lines.length; i++) {
 
@@ -76,7 +87,7 @@ function removeFormat(sdp, formatNumber) {
         }
     }
 
-    return newLines.join('\n')
+    return joinSdpLines(newLines)
 }
 
 async function getStreamForDeviceCheck() {
@@ -275,7 +286,7 @@ function addMethod(instance) {
     // From https://webrtchacks.com/limit-webrtc-bandwidth-sdp/
     function setBitrateLimit(sdp, media, bitrate) {
 
-        let lines = sdp.split('\n');
+        let lines = splitSdpLines(sdp);
         let line = -1;
 
         for (let i = 0; i < lines.length; i++) {
@@ -303,7 +314,7 @@ function addMethod(instance) {
 
             lines[line] = 'b=AS:' + bitrate;
 
-            return lines.join('\n');
+            return joinSdpLines(lines);
         }
 
         // Add a new b line
@@ -312,7 +323,7 @@ function addMethod(instance) {
         newLines.push('b=AS:' + bitrate)
         newLines = newLines.concat(lines.slice(line, lines.length))
 
-        return newLines.join('\n')
+        return joinSdpLines(newLines)
     }
 
     function initWebSocket(connectionUrl) {
@@ -415,7 +426,7 @@ function addMethod(instance) {
 
         const fmtpStr = instance.connectionConfig.sdp.appendFmtp;
 
-        const lines = sdp.split('\n');
+        const lines = splitSdpLines(sdp);
         const payloads = [];
 
         for (let i = 0; i < lines.length; i++) {
@@ -451,13 +462,13 @@ function addMethod(instance) {
 
                     if (lines[j].indexOf('a=rtpmap:' + payloads[i]) === 0) {
 
-                        lines[j] += '\na=fmtp:' + payloads[i] + ' ' + fmtpStr;
+                        lines[j] += '\r\na=fmtp:' + payloads[i] + ' ' + fmtpStr;
                     }
                 }
             }
         }
 
-        return lines.join('\n')
+        return joinSdpLines(lines)
     }
 
     function createPeerConnection(id, peerId, offer, candidates, iceServers) {
