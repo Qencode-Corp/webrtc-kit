@@ -85,21 +85,23 @@ function getFormatNumber(sdp, format) {
 }
 
 function removeFormat(sdp, formatNumber) {
-    let newLines = [];
-    let lines = splitSdpLines(sdp);
-
-    for (let i = 0; i < lines.length; i++) {
-
-        if (lines[i].indexOf('m=video') === 0) {
-            newLines.push(lines[i].replace(' ' + formatNumber + '', ''));
-        } else if (lines[i].indexOf(formatNumber + '') > -1) {
-
-        } else {
-            newLines.push(lines[i]);
-        }
+  let newLines = [];
+  let lines = splitSdpLines(sdp);
+  
+  for (let i = 0; i < lines.length; i++) {
+    
+    if (lines[i].indexOf('m=video') === 0) {
+      newLines.push(lines[i].replace(' ' + formatNumber + '', ''));
+    } else if (lines[i].indexOf('a=rtpmap:' + formatNumber) === 0 ||
+      lines[i].indexOf('a=fmtp:' + formatNumber) === 0 ||
+      lines[i].indexOf('a=rtcp-fb:' + formatNumber) === 0) {
+      // Skip only format-specific lines, not any line containing the format number
+    } else {
+      newLines.push(lines[i]);
     }
-
-    return joinSdpLines(newLines)
+  }
+  
+  return joinSdpLines(newLines);
 }
 
 async function getStreamForDeviceCheck() {
