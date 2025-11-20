@@ -365,6 +365,7 @@ function addMethod(instance) {
           sendMessage(webSocket, {
             command: 'request_offer'
           });
+          instance.offerRequestCount += 1;
         }
 
         webSocket.onopen = function () {
