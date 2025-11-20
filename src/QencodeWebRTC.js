@@ -612,6 +612,51 @@ function addMethod(instance) {
       
       normalizeSdpObject(offer);
       
+      // Set up event handlers BEFORE setRemoteDescription to avoid missing events
+      peerConnection.onicecandidate = function (e) {
+
+            if (e.candidate && e.candidate.candidate) {
+
+                console.info(logHeader, 'Candidate Sent', '\n', e.candidate.candidate, '\n', e);
+
+                sendMessage(instance.webSocket, {
+                    id: id,
+                    peer_id: peerId,
+                    command: 'candidate',
+                    candidates: [e.candidate]
+                });
+            }
+        };
+
+        peerConnection.oniceconnectionstatechange = function (e) {
+
+            let state = peerConnection.iceConnectionState;
+
+            if (instance.callbacks.iceStateChange) {
+
+                console.info(logHeader, 'ICE State', '[' + state + ']');
+                instance.callbacks.iceStateChange(state);
+            }
+
+            if (state === 'connected') {
+
+                if (instance.callbacks.connected) {
+
+                    console.info(logHeader, 'Iceconnection Connected', e);
+                    instance.callbacks.connected(e);
+                }
+            }
+
+            if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+
+                if (instance.callbacks.connectionClosed) {
+
+                    console.error(logHeader, 'Iceconnection Closed', e);
+                    instance.callbacks.connectionClosed('ice', e);
+                }
+            }
+        };
+      
       peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
             .then(function () {
 
@@ -665,50 +710,6 @@ function addMethod(instance) {
         if (candidates) {
 
             addIceCandidate(peerConnection, candidates);
-        }
-
-        peerConnection.onicecandidate = function (e) {
-
-            if (e.candidate && e.candidate.candidate) {
-
-                console.info(logHeader, 'Candidate Sent', '\n', e.candidate.candidate, '\n', e);
-
-                sendMessage(instance.webSocket, {
-                    id: id,
-                    peer_id: peerId,
-                    command: 'candidate',
-                    candidates: [e.candidate]
-                });
-            }
-        };
-
-        peerConnection.oniceconnectionstatechange = function (e) {
-
-            let state = peerConnection.iceConnectionState;
-
-            if (instance.callbacks.iceStateChange) {
-
-                console.info(logHeader, 'ICE State', '[' + state + ']');
-                instance.callbacks.iceStateChange(state);
-            }
-
-            if (state === 'connected') {
-
-                if (instance.callbacks.connected) {
-
-                    console.info(logHeader, 'Iceconnection Connected', e);
-                    instance.callbacks.connected(e);
-                }
-            }
-
-            if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-
-                if (instance.callbacks.connectionClosed) {
-
-                    console.error(logHeader, 'Iceconnection Closed', e);
-                    instance.callbacks.connectionClosed('ice', e);
-                }
-            }
         }
     }
 
