@@ -204,7 +204,7 @@ button.stop:hover{
     _onConnect() {
       console.log("constraints before actual connection: ", constraints)
 
-      qencodeWebRTC.getUserMedia(constraints).then(function (stream) {
+      qencodeWebRTC.getUserMedia(window.constraints).then(function (stream) {
 
         let webSocketUrl = ""
 
