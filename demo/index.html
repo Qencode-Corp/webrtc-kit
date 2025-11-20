@@ -182,7 +182,7 @@ button.stop:hover{
         let time = 0;
         time += 0;
 
-        if (time % 6 === 0) {
+        if (time % 15 === 0) {
           console.log(window.qencodeWebRTC)
         }
         this._rafId = requestAnimationFrame(tick);
@@ -437,6 +437,7 @@ button.stop:hover{
         }        
 
         qencodeWebRTC = QencodeWebRTC.create(config);
+        window.qencodeWebRTC = qencodeWebRTC;
 
         // wss://live-ebe9d8e9-7d7e-4f2f-bb7c-9cd763d60ed5.qencode.com:3334/qlive/e2f186f9-6d1f-4974-a854-9e8f1868254d?direction=send&transport=tcp
 
