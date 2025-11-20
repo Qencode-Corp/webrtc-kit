@@ -590,6 +590,7 @@ function addMethod(instance) {
 
             offer.sdp = appendFmtp(offer.sdp);
         }
+        console.log('offer ', offer)
 
         peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
             .then(function () {
@@ -611,6 +612,7 @@ function addMethod(instance) {
 
                             answer.sdp = appendFmtp(answer.sdp);
                         }
+                        console.log('answer ', answer);
 
                         peerConnection.setLocalDescription(answer)
                             .then(function () {
