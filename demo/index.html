@@ -187,6 +187,7 @@ button.stop:hover{
           this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.error = window.qencodeWebRTC.error;
           this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
+          this.connected = window.qencodeWebRTC.iceConnectionState === 'connected';
         }
         this._rafId = requestAnimationFrame(tick);
       }
@@ -237,13 +238,11 @@ button.stop:hover{
     }
 
     render() {
-      const connected = this.iceConnectionState === 'connected';
-
       return html`
         <div>
           <div class="buttons-container">
             ${
-              connected ?
+              this.connected ?
                 html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
                 html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
             }
