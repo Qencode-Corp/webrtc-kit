@@ -170,14 +170,6 @@ function initConfig(instance, options) {
 
     instance.videoElement = null;
     instance.connectionUrl = null;
-
-    if (options && options.callbacks) {
-
-        instance.callbacks = options.callbacks;
-    } else {
-        instance.callbacks = {};
-    }
-
 }
 
 function delayedCall(fn, args, delay) {
@@ -191,11 +183,7 @@ function delayedCall(fn, args, delay) {
 function addMethod(instance) {
 
     function errorHandler(error) {
-
-        if (instance.callbacks.error) {
-
-            instance.callbacks.error(error);
-        }
+        instance.error = error;
     }
 
     function getUserMedia(constraints) {
@@ -446,11 +434,7 @@ function addMethod(instance) {
         webSocket.onclose = function (e) {
 
             if (!instance.removing) {
-
-                if (instance.callbacks.connectionClosed) {
-
-                    instance.callbacks.connectionClosed('websocket', e);
-                }
+              instance.webSocketCloseError = e;
             }
         };
 
@@ -632,31 +616,17 @@ function addMethod(instance) {
         };
 
       peerConnection.oniceconnectionstatechange = function (e) {
-
           let state = peerConnection.iceConnectionState;
 
-          if (instance.callbacks.iceStateChange) {
-
-              console.info(logHeader, 'ICE State', '[' + state + ']');
-              instance.callbacks.iceStateChange(state);
-          }
+          console.info(logHeader, 'ICE State', '[' + state + ']');
+          instance.iceConnectionState = state;
 
           if (state === 'connected') {
-
-              if (instance.callbacks.connected) {
-
-                  console.info(logHeader, 'Iceconnection Connected', e);
-                  instance.callbacks.connected(e);
-              }
+            console.info(logHeader, 'Iceconnection Connected', e);
           }
 
           if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-
-              if (instance.callbacks.connectionClosed) {
-
-                  console.error(logHeader, 'Iceconnection Closed', e);
-                  instance.callbacks.connectionClosed('ice', e);
-              }
+            console.error(logHeader, 'Iceconnection Closed', e);
           }
       };
 
