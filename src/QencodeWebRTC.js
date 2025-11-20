@@ -564,32 +564,7 @@ function addMethod(instance) {
                 peerConnectionConfig.iceTransportPolicy = instance.iceTransportPolicy;
             }
         }
-
-        let advancedSetting = {
-            optional: [
-                {
-                    googHighStartBitrate: {
-                        exact: !0
-                    }
-                },
-                {
-                    googPayloadPadding: {
-                        exact: !0
-                    }
-                },
-                {
-                    googScreencastMinBitrate: {
-                        exact: 500
-                    }
-                },
-                {
-                    enableDscp: {
-                        exact: true
-                    }
-                }
-            ]
-        };
-
+        
         console.info(logHeader, 'Create Peer Connection With Config', peerConnectionConfig);
 
         let peerConnection = new RTCPeerConnection(peerConnectionConfig);
