@@ -491,7 +491,7 @@ function addMethod(instance) {
         return joinSdpLines(lines)
     }
 
-    function createPeerConnection(id, peerId, offer, candidates, iceServers) {
+    async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
 
         window.connectionData = {
             id,
@@ -671,61 +671,47 @@ function addMethod(instance) {
             }
         };
       
-      peerConnection.setRemoteDescription(offer)
-            .then(function () {
+      try {
+            await peerConnection.setRemoteDescription(offer);
 
-                peerConnection.createAnswer()
-                    .then(function (answer) {
+            const answer = await peerConnection.createAnswer();
 
-                        if (checkIOSVersion() >= 15) {
+            if (checkIOSVersion() >= 15) {
 
-                            const formatNumber = getFormatNumber(answer.sdp, 'H264');
+                const formatNumber = getFormatNumber(answer.sdp, 'H264');
 
-                            if (formatNumber > 0) {
+                if (formatNumber > 0) {
 
-                                answer.sdp = removeFormat(answer.sdp, formatNumber);
-                            }
-                        }
+                    answer.sdp = removeFormat(answer.sdp, formatNumber);
+                }
+            }
 
-                        if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
+            if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
 
-                            answer.sdp = appendFmtp(answer.sdp);
-                        }
-                        console.log('answer ', answer, answer.sdp);
+                answer.sdp = appendFmtp(answer.sdp);
+            }
+            console.log('answer ', answer, answer.sdp);
 
-                        peerConnection.setLocalDescription(answer)
-                            .then(function () {
-                                // Add remote ICE candidates after setRemoteDescription completes
-                                if (candidates) {
-                                    addIceCandidate(peerConnection, candidates);
-                                }
-                                sendMessage(instance.webSocket, {
-                                    id: id,
-                                    peer_id: peerId,
-                                    command: 'answer',
-                                    sdp: answer
-                                });
-                            })
-                            .catch(function (error) {
-
-                                console.error('peerConnection.setLocalDescription', error);
-                                errorHandler(error);
-                            });
-                    })
-                    .catch(function (error) {
-
-                        console.error('peerConnection.createAnswer', error);
-                        errorHandler(error);
-                    });
-            })
-            .catch(function (error) {
-
-                console.error('peerConnection.setRemoteDescription', error);
-                errorHandler(error);
+            await peerConnection.setLocalDescription(answer);
+            
+            // Add remote ICE candidates after setRemoteDescription completes
+            if (candidates) {
+                await addIceCandidate(peerConnection, candidates);
+            }
+            
+            sendMessage(instance.webSocket, {
+                id: id,
+                peer_id: peerId,
+                command: 'answer',
+                sdp: answer
             });
+        } catch (error) {
+            console.error('peerConnection error', error);
+            errorHandler(error);
+        }
     }
 
-    function addIceCandidate(peerConnection, candidates) {
+    async function addIceCandidate(peerConnection, candidates) {
         console.log('addIceCandidate', peerConnection, candidates);
         for (let i = 0; i < candidates.length; i++) {
 
@@ -733,15 +719,12 @@ function addMethod(instance) {
 
                 let basicCandidate = candidates[i];
 
-                peerConnection.addIceCandidate(new RTCIceCandidate(basicCandidate))
-                    .then(function () {
-
-                    })
-                    .catch(function (error) {
-
-                        console.error('peerConnection.addIceCandidate', basicCandidate, error);
-                        errorHandler(error);
-                    });
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(basicCandidate));
+                } catch (error) {
+                    console.error('peerConnection.addIceCandidate', basicCandidate, error);
+                    errorHandler(error);
+                }
             }
         }
     }
