@@ -362,7 +362,7 @@ function addMethod(instance) {
         instance.offerRequestCount = 0;
         
         function requestOffer() {
-          sendMessage(webSocket, {
+          sendMessage(instance.webSocket, {
             command: 'request_offer'
           });
           instance.offerRequestCount += 1;
@@ -394,6 +394,7 @@ function addMethod(instance) {
                     message.ice_servers
                   );
                   instance.createPeerConnectionCount += 1;
+                  instance.offerRequestCount = 0;
                 } catch (e) {
                   console.log('createPeerConnection error', e);
                   
