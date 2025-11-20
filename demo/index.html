@@ -248,6 +248,7 @@ button.stop:hover{
           <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
           <p class="error" id='errorMsg'>${ this.error }</p>
+          <p class="error" id='errorMsg2'></p>
           <p class="error" id='socketError'>${ this.webSocketCloseError }</p>
         </div>
       `;
@@ -332,7 +333,7 @@ button.stop:hover{
 
         function errorMsg(msg, error) {
             const document2 = document.querySelector('hello-box').shadowRoot;
-            const errorElement = document2.querySelector('#errorMsg');
+            const errorElement = document2.querySelector('#errorMsg2');
             errorElement.innerHTML += `<p>${msg}</p>`;
             if (typeof error !== 'undefined') {
                 console.log(error);
