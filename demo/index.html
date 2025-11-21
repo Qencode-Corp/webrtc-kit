@@ -254,7 +254,6 @@ button.stop:hover{
       console.log("constraints before actual connection: ", constraints)
 
       qencodeWebRTC.getUserMedia(window.constraints).then(function (stream) {
-
         let webSocketUrl = ""
 
         let clientWebSocketUrl = document.getElementById('webSocketUrl').value
@@ -266,9 +265,7 @@ button.stop:hover{
 
         // Set WebRTC Provider URL
         qencodeWebRTC.startStreaming(webSocketUrl)
-
       });
-
     }
 
     _onDisconnect() {
