@@ -432,9 +432,8 @@ button.stop:hover{
   }
 
   function errorMsg(msg, error) {
-    const document2 = document.querySelector('hello-box').shadowRoot;
-    const errorElement = document2.querySelector('#errorMsg2');
-    errorElement.innerHTML += `<p>${msg}</p>`;
+    const ui = document.querySelector('hello-box');
+    ui.mediaError = msg;
     if (typeof error !== 'undefined') {
       console.log(error);
     }
