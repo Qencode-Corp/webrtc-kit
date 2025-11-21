@@ -267,7 +267,7 @@ button.stop:hover{
                 html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
             }
           </div>
-          ${ this.webSocketActive ? html`<p>Web Socket ReadyState: ${ html`${ this.webSocketReadyState }` }</p>` : null }
+          ${ this.webSocketActive ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
           <p id='log'></p>
           <p id='dimensions'></p>
           <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
