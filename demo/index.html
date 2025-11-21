@@ -28,7 +28,6 @@
       isConnectionClosed: { type: Boolean },
       webSocketActive: { type: Boolean },
       webSocketCloseError: { type: String },
-      webSocketCloseEvent: { type: Object },
       webSocketReadyState: { type: String },
     };
 
@@ -182,7 +181,6 @@ button.stop:hover{
       this.isConnectionClosed = false;
       this.webSocketActive = false;
       this.webSocketCloseError = null;
-      this.webSocketCloseEvent = null;
       this.webSocketReadyState = null;
     }
 
@@ -312,7 +310,7 @@ button.stop:hover{
           <p class="error">${ this.webSocketCloseError }</p>
           <p class="error" id='errorMsg2'></p>
           <p class="error" id='socketError'>
-            ${ this.webSocketCloseEvent }
+            ${ this.webSocketCloseError }
           </p>
         </div>
       `;
