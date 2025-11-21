@@ -434,7 +434,7 @@ function addMethod(instance) {
         webSocket.onclose = function (e) {
 
             if (!instance.removing) {
-              instance.webSocketCloseError = e;
+              instance.webSocketCloseEvent = e;
             }
         };
 

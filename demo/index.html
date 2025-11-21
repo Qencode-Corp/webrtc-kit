@@ -23,7 +23,7 @@
       name: { type: String },
       iceConnectionState: { type: String },
       error: { type: String },
-      webSocketCloseError: { type: Object },
+      webSocketCloseEvent: { type: Object },
       connected: { type: Boolean },
       webSocketActive: { type: Boolean },
       webSocketReadyState: { type: String },
@@ -175,7 +175,7 @@ button.stop:hover{
       this.name = "world";
       this.iceConnectionState = '';
       this.error = '';
-      this.webSocketCloseError = null;
+      this.webSocketCloseEvent = null;
       this.connected = false;
       this.webSocketActive = false;
       this.webSocketReadyState = null;
@@ -213,7 +213,7 @@ button.stop:hover{
             this.error = null;
           }
 
-          this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
+          this.webSocketCloseEvent = window.qencodeWebRTC.webSocketCloseEvent;
           this.connected = window.qencodeWebRTC.iceConnectionState === 'connected';
           const webSocket = window.qencodeWebRTC?.webSocket
           this.webSocketActive = !!webSocket;
@@ -287,7 +287,7 @@ button.stop:hover{
           ${ html`` }
           <p class="error" id='errorMsg'>${ this.error }</p>
           <p class="error" id='errorMsg2'></p>
-          <p class="error" id='socketError'>${ this.webSocketCloseError }</p>
+          <p class="error" id='socketError'>${ this.webSocketCloseEvent }</p>
         </div>
       `;
     }
