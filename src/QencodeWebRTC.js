@@ -150,19 +150,21 @@ function gotDevices(deviceInfos) {
 function initConfig(instance) {
     instance.videoElement = null;
     instance.connectionUrl = null;
+    instance.connectionConfig = {};
     instance.stream = null;
     
     instance.webSocket = null;
     instance.webSocketCloseEvent = null;
+    instance.retryingWebSocket = false;
+    instance.retriesUsed = 0;
+    
     instance.peerConnection = null;
     instance.createPeerConnectionCount = 0;
-    instance.connectionConfig = {};
+    
     instance.status = 'creating';
     instance.error = null;
     
     instance.offerRequestCount = 0;
-    instance.retriesUsed = 0;
-    instance.retrying = false;
 }
 
 function delayedCall(fn, args, delay) {
@@ -395,13 +397,13 @@ function addMethod(instance) {
           
           if (
             !instance.removing &&
-            !instance.retrying &&
+            !instance.retryingWebSocket &&
             Number.isFinite(instance.retryDelay) &&
             Number.isFinite(instance.retryMaxCount) &&
             instance.retriesUsed < instance.retryMaxCount
           ) {
             instance.retriesUsed += 1;
-            instance.retrying = true; /* Prevent multiple concurrent retries if onerror runs too often. */
+            instance.retryingWebSocket = true; /* Prevent multiple concurrent retries if onerror runs too often. */
             console.log(`Starting retry attempt ${instance.retriesUsed}`);
             
             // Close the failed WebSocket before retrying
@@ -414,7 +416,7 @@ function addMethod(instance) {
             }
             
             await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
-            instance.retrying = false;
+            instance.retryingWebSocket = false;
           }
         }
 
