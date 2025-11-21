@@ -366,7 +366,6 @@ function addMethod(instance) {
         webSocket.onmessage = async function (e) {
 
             let message = JSON.parse(e.data);
-            console.log('webSocket.onmessage', message);
 
             if (message.error) {
                 console.error('webSocket.onmessage', message.error);
