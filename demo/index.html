@@ -21,15 +21,15 @@
 
   class HelloBox extends LitElement {
     static properties = {
-      iceConnectionState: { type: String },
       error: { type: String },
-      webSocketCloseEvent: { type: Object },
       iceConnected: { type: Boolean },
+      iceConnectionState: { type: String },
       isConnected: { type: Boolean },
       isConnectionClosed: { type: Boolean },
       webSocketActive: { type: Boolean },
-      webSocketReadyState: { type: String },
       webSocketCloseError: { type: String },
+      webSocketCloseEvent: { type: Object },
+      webSocketReadyState: { type: String },
     };
 
     static styles = css`
@@ -175,15 +175,15 @@ button.stop:hover{
 
     constructor() {
       super();
-      this.iceConnectionState = '';
       this.error = '';
-      this.webSocketCloseEvent = null;
       this.iceConnected = false;
-      this.isConnectionClosed = false;
+      this.iceConnectionState = '';
       this.isConnected = false;
+      this.isConnectionClosed = false;
       this.webSocketActive = false;
-      this.webSocketReadyState = null;
       this.webSocketCloseError = null;
+      this.webSocketCloseEvent = null;
+      this.webSocketReadyState = null;
     }
 
     connectedCallback() {
