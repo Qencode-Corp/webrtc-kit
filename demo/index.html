@@ -205,7 +205,7 @@ button.stop:hover{
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
 
-          if (iceConnectionState === 'connected') { // todo completed
+          if (iceConnectionState === 'connected' || iceConnectionState === 'completed') {
             this.iceConnected = true;
           }
           else if (
