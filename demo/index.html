@@ -203,8 +203,10 @@ button.stop:hover{
           this.error = window.qencodeWebRTC.error;
           this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
           this.connected = window.qencodeWebRTC.iceConnectionState === 'connected';
-          this.webSocketActive = !!window.qencodeWebRTC.webSocket;
-          this.webSocketReadyState = webSocketReadyStates[ window.qencodeWebRTC.webSocket.readyState ];
+          const webSocket = window.qencodeWebRTC?.webSocket
+          this.webSocketActive = !!webSocket;
+          const webSocketReadyState = webSocketReadyStates[ webSocket?.readyState ];
+          this.webSocketReadyState = webSocketReadyState;
         }
         this._rafId = requestAnimationFrame(tick);
       }
@@ -255,7 +257,6 @@ button.stop:hover{
     }
 
     render() {
-      console.log(this.webSocketReadyState)
       return html`
         <div>
           <div class="buttons-container">
@@ -265,7 +266,7 @@ button.stop:hover{
                 html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
             }
           </div>
-          ${ this.webSocketActive ? html`<p>Web Socket Active. ReadyState: ${ html`${ this.webSocketReadyState }` }</p>` : null }
+          ${ this.webSocketActive ? html`<p>Web Socket ReadyState: ${ html`${ this.webSocketReadyState }` }</p>` : null }
           <p id='log'></p>
           <p id='dimensions'></p>
           <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
