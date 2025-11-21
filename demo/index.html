@@ -277,15 +277,10 @@ button.stop:hover{
     }
 
     render() {
-      console.log('error', this.error)
       return html`
         <div>
           <div class="buttons-container">
-            ${
-              this.connected && !this.error ?
-                html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
-                html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
-            }
+            ${ this.mainButton() }
           </div>
           ${ this.webSocketActive ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
           <p id='log'></p>
@@ -299,6 +294,28 @@ button.stop:hover{
           <p class="error" id='socketError'>${ this.webSocketCloseEvent }</p>
         </div>
       `;
+    }
+
+    mainButton() {
+      if (this.connected && !this.error) {
+        return html`
+          <button
+            id="disconect"
+            class="stop"
+            @click=${this._onDisconnect}
+          >
+            Stop Stream
+          </button>`
+      } else {
+        return html`
+          <button
+            id="connect"
+            @click=${this._onConnect}
+          >
+            Start Stream
+          </button>
+        `
+      }
     }
   }
 
