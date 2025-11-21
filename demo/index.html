@@ -344,15 +344,19 @@ button.stop:hover{
               : null
           }
           ${
-            this.mediaError ? html`
-              <p class="error" id='errorMsg2'>
-                ${ this.mediaError }
-              </p>
-            ` : null
+            this.mediaError ?
+              html`
+                <p class="error" id='errorMsg2'>
+                  ${ this.mediaError }
+                </p>
+              ` : null
           }
-          <p class="error" id='socketError'>
-            ${ this.webSocketCloseError }
-          </p>
+          ${ this.webSocketCloseError ?
+            html`
+              <p class="error" id='socketError'>
+                ${ this.webSocketCloseError }
+              </p>
+            ` : null }
         </div>
       `;
     }
