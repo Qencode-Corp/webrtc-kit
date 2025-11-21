@@ -24,7 +24,7 @@
       iceConnectionState: { type: String },
       error: { type: String },
       webSocketCloseEvent: { type: Object },
-      connected: { type: Boolean },
+      iceConnected: { type: Boolean },
       webSocketActive: { type: Boolean },
       webSocketReadyState: { type: String },
       webSocketCloseError: { type: String },
@@ -177,7 +177,7 @@ button.stop:hover{
       this.iceConnectionState = '';
       this.error = '';
       this.webSocketCloseEvent = null;
-      this.connected = false;
+      this.iceConnected = false;
       this.webSocketActive = false;
       this.webSocketReadyState = null;
       this.webSocketCloseError = null;
@@ -206,19 +206,19 @@ button.stop:hover{
           this.iceConnectionState = iceConnectionState;
 
           if (iceConnectionState === 'connected') { // todo completed
-            this.connected = true;
+            this.iceConnected = true;
           }
           else if (
             iceConnectionState === 'failed' ||
             iceConnectionState === 'disconnected' ||
             iceConnectionState === 'closed') {
-            this.connected = false;
+            this.iceConnected = false;
           } else {
             /*
               Trying to take into account all possible values: https://w3c.github.io/webrtc-pc/#rtciceconnectionstate-enum
               "new", "checking"
             */
-            this.connected = false;
+            this.iceConnected = false;
           }
 
           const error = window.qencodeWebRTC.error;
@@ -314,7 +314,7 @@ button.stop:hover{
     }
 
     mainButton() {
-      if (this.connected && !this.error) {
+      if (this.iceConnected && !this.error) {
         return html`
           <button
             id="disconect"
