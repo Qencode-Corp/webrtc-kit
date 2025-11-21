@@ -213,6 +213,10 @@ button.stop:hover{
           this.isConnectionClosed = peerConnection && peerConnection.connectionState === 'failed'
             || peerConnection && peerConnection.connectionState === 'closed';
 
+          if (this.isConnectionClosed) {
+            this.disconnectStarted = false;
+          }
+
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
           this.iceConnected = iceConnectionState === 'connected' || iceConnectionState === 'completed';
