@@ -253,10 +253,10 @@ button.stop:hover{
         <div>
           <div class="buttons-container">
             ${
-        this.connected ?
-          html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
-          html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
-      }
+              this.connected ?
+                html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
+                html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
+            }
           </div>
           ${ this.webSocketActive ? html`<p>Web Socket Active</p>` : null }
           <p id='log'></p>
