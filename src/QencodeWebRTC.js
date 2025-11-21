@@ -159,17 +159,17 @@ function gotDevices(deviceInfos) {
     return devices;
 }
 
-function initConfig(instance, options) {
-
+function initConfig(instance) {
     instance.stream = null;
     instance.webSocket = null;
     instance.peerConnection = null;
     instance.connectionConfig = {};
-
     instance.status = 'creating';
-
     instance.videoElement = null;
     instance.connectionUrl = null;
+    instance.error = null;
+    instance.createPeerConnectionCount = 0;
+    instance.offerRequestCount = 0;
 }
 
 function delayedCall(fn, args, delay) {
@@ -346,8 +346,6 @@ function addMethod(instance) {
 
 
         instance.webSocket = webSocket;
-        instance.createPeerConnectionCount = 0;
-        instance.offerRequestCount = 0;
         
         function requestOffer() {
           sendMessage(instance.webSocket, {
@@ -780,7 +778,7 @@ QencodeWebRTC.create = function (options) {
 
     instance.removing = false;
 
-    initConfig(instance, options);
+    initConfig(instance);
     addMethod(instance);
 
     return instance;
