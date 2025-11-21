@@ -27,6 +27,7 @@
       webSocketCloseEvent: { type: Object },
       iceConnected: { type: Boolean },
       isConnected: { type: Boolean },
+      isConnectionClosed: { type: Boolean },
       webSocketActive: { type: Boolean },
       webSocketReadyState: { type: String },
       webSocketCloseError: { type: String },
@@ -180,6 +181,7 @@ button.stop:hover{
       this.error = '';
       this.webSocketCloseEvent = null;
       this.iceConnected = false;
+      this.isConnectionClosed = false;
       this.isConnected = false;
       this.webSocketActive = false;
       this.webSocketReadyState = null;
@@ -208,6 +210,8 @@ button.stop:hover{
           const peerConnection = window.qencodeWebRTC.peerConnection;
           const isConnected = peerConnection && peerConnection.connectionState === 'connected';
           this.isConnected = isConnected;
+          this.isConnectionClosed = peerConnection && peerConnection.connectionState === 'failed'
+            || peerConnection && peerConnection.connectionState === 'closed';
 
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
@@ -295,12 +299,24 @@ button.stop:hover{
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
           ${ html`` }
           <p class="error" id='errorMsg'>${ this.error }</p>
+          ${
+            this.isConnectionClosed ?
+              html`
+                <p class="error">
+                  Peer Connection is closed. State:
+                  ${ this.iceConnectionState }
+                <p/>
+              `
+              : null
+          }
+
           <p class="error">${ this.webSocketCloseError }</>
           <p class="error" id='errorMsg2'></p>
           <p class="error" id='socketError'>${ this.webSocketCloseEvent }</p>
         </div>
       `;
     }
+    // todo not sure if really in message "Peer Connection is closed..." we need to use iceConnectionState.
 
     mainButton() {
       if (this.isConnected) {
@@ -460,18 +476,7 @@ button.stop:hover{
     return reason;
   }
 
-  let config = {
-    callbacks: {
-      connectionClosed: function (type, event) {
-        if (type === 'ice') {
-          // error.innerHTML = 'Peer Connection is closed. State: ' + qencodeWebRTC.peerConnection.iceConnectionState
-          // resetButtons()
-        }
-      },
-    }
-  }
-
-  qencodeWebRTC = QencodeWebRTC.create(config);
+  qencodeWebRTC = QencodeWebRTC.create();
   window.qencodeWebRTC = qencodeWebRTC;
   qencodeWebRTC.attachMedia(document.getElementById('userCam'));
 

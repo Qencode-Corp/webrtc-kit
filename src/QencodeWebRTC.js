@@ -754,7 +754,7 @@ function addMethod(instance) {
 }
 
 // static methods
-QencodeWebRTC.create = function (options) {
+QencodeWebRTC.create = function () {
 
     console.info(logEventHeader, 'Create WebRTC');
 
