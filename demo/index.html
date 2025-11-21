@@ -274,7 +274,7 @@ button.stop:hover{
         <div>
           <div class="buttons-container">
             ${
-              this.connected ?
+              this.connected && !this.error ?
                 html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
                 html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
             }
