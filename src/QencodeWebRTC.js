@@ -160,15 +160,18 @@ function gotDevices(deviceInfos) {
 }
 
 function initConfig(instance) {
-    instance.stream = null;
-    instance.webSocket = null;
-    instance.peerConnection = null;
-    instance.connectionConfig = {};
-    instance.status = 'creating';
     instance.videoElement = null;
     instance.connectionUrl = null;
-    instance.error = null;
+    instance.stream = null;
+    
+    instance.webSocket = null;
+    instance.webSocketCloseEvent = null;
+    instance.peerConnection = null;
     instance.createPeerConnectionCount = 0;
+    instance.connectionConfig = {};
+    instance.status = 'creating';
+    instance.error = null;
+    
     instance.offerRequestCount = 0;
     instance.retriesUsed = 0;
     instance.retrying = false;
