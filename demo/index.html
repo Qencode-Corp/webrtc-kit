@@ -202,7 +202,22 @@ button.stop:hover{
         time += 1;
 
         if (time % 15 === 0 && window.qencodeWebRTC) {
-          this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
+          const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
+          this.iceConnectionState = iceConnectionState;
+
+          if (iceConnectionState === 'connected') {
+            this.connected = true;
+          }
+          else if (
+            iceConnectionState === 'failed' ||
+            iceConnectionState === 'disconnected' ||
+            iceConnectionState === 'closed') {
+            this.connected = false;
+          } else {
+            /* "new", "connecting" */
+            this.connected = false;
+          }
+
           const error = window.qencodeWebRTC.error;
 
           if (error) {
@@ -222,7 +237,6 @@ button.stop:hover{
             this.webSocketCloseError = null;
           }
 
-          this.connected = window.qencodeWebRTC.iceConnectionState === 'connected';
           const webSocket = window.qencodeWebRTC?.webSocket
           this.webSocketActive = !!webSocket;
           const webSocketReadyState = webSocketReadyStates[ webSocket?.readyState ];
