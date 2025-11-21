@@ -2,13 +2,13 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js" integrity="sha512-ZuOjyqq409+q6uc49UiBF3fTeyRyP8Qs0Jf/7FxH5LfhqBMzrR5cwbpDA4BgzSo884w6q/+oNdIeHenOqhISGw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-    <link rel="stylesheet" href="css/main.css">
-    <title>WebRTC Demo</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js" integrity="sha512-ZuOjyqq409+q6uc49UiBF3fTeyRyP8Qs0Jf/7FxH5LfhqBMzrR5cwbpDA4BgzSo884w6q/+oNdIeHenOqhISGw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <link rel="stylesheet" href="css/main.css">
+  <title>WebRTC Demo</title>
 </head>
 <script type="module">
   import { LitElement, html, css }
@@ -242,10 +242,10 @@ button.stop:hover{
         <div>
           <div class="buttons-container">
             ${
-              this.connected ?
-                html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
-                html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
-            }
+        this.connected ?
+          html`<button id="disconect" class="stop" @click=${this._onDisconnect}>Stop Stream</button>` :
+          html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
+      }
           </div>
           <p id='log'></p>
           <p id='dimensions'></p>
@@ -262,176 +262,176 @@ button.stop:hover{
   customElements.define('hello-box', HelloBox);
 </script>
 <body>
-    <div class="container">
-        <h1>Client webcam</h1>
+<div class="container">
+  <h1>Client webcam</h1>
 
-        <video id="userCam" autoplay playsinline muted></video>
+  <video id="userCam" autoplay playsinline muted></video>
 
-        <div class="web-socket-url">
-          <label>Server URL: </label>
-          <input id="webSocketUrl" type="text" value="">
-            <script>
-                let params = window.location.search
-                if(params !== '' && params !== undefined && params !== null){
-                    let url = params.replace('?u=', '');
-                    if(url !== '' && url !== undefined && url !== null){
-                        document.getElementById('webSocketUrl').value = url;
-                    }
-                }
-                //let params = new URLSearchParams(window.location.search);
-                // let url = params.get('u')
-                // if(url){
-                //     let el = document.getElementById('webSocketUrl');
-                //     el.value = url;
-                // }
-
-            </script>
-        </div>
-
-        <hello-box/>
-    </div>   
-
-    <script src="./js/QencodeWebRTC.min.js"></script>
+  <div class="web-socket-url">
+    <label>Server URL: </label>
+    <input id="webSocketUrl" type="text" value="">
     <script>
-
-        let constraints = window.constraints = {
-            audio: true,
-            video: { width: 1280, height: 720 }
-        };                 
-
-        function handleSuccess(stream) {
-            const document2 = document.querySelector('hello-box').shadowRoot;
-            const video = document.querySelector('#userCam');
-            const videoTracks = stream.getVideoTracks();
-            console.log('Got stream with constraints:', constraints);
-            console.log(`Using video device: ${videoTracks[0].label}`);
-            let log = document2.querySelector('#log');
-            log.innerHTML = `Using video device: ${videoTracks[0].label}`
-            window.stream = stream; // make variable available to browser console
-            video.srcObject = stream;
-
-            let height = videoTracks[0].getSettings().height
-            let width = videoTracks[0].getSettings().width
-            // let frameRate = videoTracks[0].getSettings().frameRate  
-                    
-            
-            let videoDimentionsLog = document2.getElementById('dimensions')
-            console.log('videoDimentionsLog', videoDimentionsLog)
-            videoDimentionsLog.innerHTML = `Video dimensions: ${width}x${height}px`
-
-            // ready to initiate peer connection and start streaming
-            enableStreaming(stream)
+      let params = window.location.search
+      if(params !== '' && params !== undefined && params !== null){
+        let url = params.replace('?u=', '');
+        if(url !== '' && url !== undefined && url !== null){
+          document.getElementById('webSocketUrl').value = url;
         }
-
-        function handleError(error) {
-            if (error.name === 'ConstraintNotSatisfiedError') {
-                const v = constraints.video;
-                errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
-            } else if (error.name === 'PermissionDeniedError') {
-                errorMsg('Permissions have not been granted to use your camera and ' +
-                'microphone, you need to allow the page access to your devices in ' +
-                'order for the demo to work.');
-            }
-            errorMsg(`getUserMedia error: ${error.name}`, error);
-        }
-
-        function errorMsg(msg, error) {
-            const document2 = document.querySelector('hello-box').shadowRoot;
-            const errorElement = document2.querySelector('#errorMsg2');
-            errorElement.innerHTML += `<p>${msg}</p>`;
-            if (typeof error !== 'undefined') {
-                console.log(error);
-            }
-        }
-
-        async function init() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                handleSuccess(stream);
-            } catch (error) {
-                handleError(error);
-            }
-        }
-
-        function enableStreaming(stream){
-            console.log("User video is ready")
-        }
-
-        init()
-
-        // streaming
-        let qencodeWebRTC = null;
-
-        let config = {
-            callbacks: {
-                error: function (error) {
-                    if(typeof(error) === String){
-                      socketError.innerHTML = "Socket connection error: " + error  
-                    } else{
-                        socketError.innerHTML = "Socket connection error"  
-                    }
-                    // if error 
-                    resetButtons();
-                },
-                connected: function (event) {
-                    console.log("connected: ", event)
-                },
-                connectionClosed: function (type, event) {
-                    if (type === 'websocket') {
-                        let reason;
-                        if (event.code === 1000)
-                            reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled.";
-                        else if (event.code === 1001)
-                            reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page.";
-                        else if (event.code === 1002)
-                            reason = "An endpoint is terminating the connection due to a protocol error";
-                        else if (event.code === 1003)
-                            reason = "An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).";
-                        else if (event.code === 1004)
-                            reason = "Reserved. The specific meaning might be defined in the future.";
-                        else if (event.code === 1005)
-                            reason = "No status code was actually present.";
-                        else if (event.code === 1006)
-                            reason = "The connection was closed abnormally, e.g., without sending or receiving a Close control frame";
-                        else if (event.code === 1007)
-                            reason = "An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [http://tools.ietf.org/html/rfc3629] data within a text message).";
-                        else if (event.code === 1008)
-                            reason = "An endpoint is terminating the connection because it has received a message that \"violates its policy\". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.";
-                        else if (event.code === 1009)
-                            reason = "An endpoint is terminating the connection because it has received a message that is too big for it to process.";
-                        else if (event.code === 1010)
-                            reason = "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. <br /> Specifically, the extensions that are needed are: " + event.reason;
-                        else if (event.code === 1011)
-                            reason = "A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.";
-                        else if (event.code === 1015)
-                            reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
-                        else
-                            reason = "Unknown reason";
-                        error.innerHTML = 'Web Socket is closed. ' + reason
-                        resetButtons()
-                    }
-                    if (type === 'ice') {
-                        error.innerHTML = 'Peer Connection is closed. State: ' + qencodeWebRTC.peerConnection.iceConnectionState
-                        resetButtons()
-                    }
-                },
-                // iceStateChange: function (state) {
-                //     iceState.innerHTML = "ICE State: " + state
-                //     if(state === 'connected'){
-                //         disconnectBtn.disabled = false;
-                //     }
-                //     if(state === 'disconnected'){
-                //         resetButtons();
-                //     }
-                // }
-            }
-        }        
-
-        qencodeWebRTC = QencodeWebRTC.create(config);
-        window.qencodeWebRTC = qencodeWebRTC;
-        qencodeWebRTC.attachMedia(document.getElementById('userCam'));
+      }
+      //let params = new URLSearchParams(window.location.search);
+      // let url = params.get('u')
+      // if(url){
+      //     let el = document.getElementById('webSocketUrl');
+      //     el.value = url;
+      // }
 
     </script>
+  </div>
+
+  <hello-box/>
+</div>
+
+<script src="./js/QencodeWebRTC.min.js"></script>
+<script>
+
+  let constraints = window.constraints = {
+    audio: true,
+    video: { width: 1280, height: 720 }
+  };
+
+  function handleSuccess(stream) {
+    const document2 = document.querySelector('hello-box').shadowRoot;
+    const video = document.querySelector('#userCam');
+    const videoTracks = stream.getVideoTracks();
+    console.log('Got stream with constraints:', constraints);
+    console.log(`Using video device: ${videoTracks[0].label}`);
+    let log = document2.querySelector('#log');
+    log.innerHTML = `Using video device: ${videoTracks[0].label}`
+    window.stream = stream; // make variable available to browser console
+    video.srcObject = stream;
+
+    let height = videoTracks[0].getSettings().height
+    let width = videoTracks[0].getSettings().width
+    // let frameRate = videoTracks[0].getSettings().frameRate
+
+
+    let videoDimentionsLog = document2.getElementById('dimensions')
+    console.log('videoDimentionsLog', videoDimentionsLog)
+    videoDimentionsLog.innerHTML = `Video dimensions: ${width}x${height}px`
+
+    // ready to initiate peer connection and start streaming
+    enableStreaming(stream)
+  }
+
+  function handleError(error) {
+    if (error.name === 'ConstraintNotSatisfiedError') {
+      const v = constraints.video;
+      errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+    } else if (error.name === 'PermissionDeniedError') {
+      errorMsg('Permissions have not been granted to use your camera and ' +
+        'microphone, you need to allow the page access to your devices in ' +
+        'order for the demo to work.');
+    }
+    errorMsg(`getUserMedia error: ${error.name}`, error);
+  }
+
+  function errorMsg(msg, error) {
+    const document2 = document.querySelector('hello-box').shadowRoot;
+    const errorElement = document2.querySelector('#errorMsg2');
+    errorElement.innerHTML += `<p>${msg}</p>`;
+    if (typeof error !== 'undefined') {
+      console.log(error);
+    }
+  }
+
+  async function init() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      handleSuccess(stream);
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  function enableStreaming(stream){
+    console.log("User video is ready")
+  }
+
+  init()
+
+  // streaming
+  let qencodeWebRTC = null;
+
+  let config = {
+    callbacks: {
+      error: function (error) {
+        if(typeof(error) === String){
+          socketError.innerHTML = "Socket connection error: " + error
+        } else{
+          socketError.innerHTML = "Socket connection error"
+        }
+        // if error
+        resetButtons();
+      },
+      connected: function (event) {
+        console.log("connected: ", event)
+      },
+      connectionClosed: function (type, event) {
+        if (type === 'websocket') {
+          let reason;
+          if (event.code === 1000)
+            reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled.";
+          else if (event.code === 1001)
+            reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page.";
+          else if (event.code === 1002)
+            reason = "An endpoint is terminating the connection due to a protocol error";
+          else if (event.code === 1003)
+            reason = "An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).";
+          else if (event.code === 1004)
+            reason = "Reserved. The specific meaning might be defined in the future.";
+          else if (event.code === 1005)
+            reason = "No status code was actually present.";
+          else if (event.code === 1006)
+            reason = "The connection was closed abnormally, e.g., without sending or receiving a Close control frame";
+          else if (event.code === 1007)
+            reason = "An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [http://tools.ietf.org/html/rfc3629] data within a text message).";
+          else if (event.code === 1008)
+            reason = "An endpoint is terminating the connection because it has received a message that \"violates its policy\". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.";
+          else if (event.code === 1009)
+            reason = "An endpoint is terminating the connection because it has received a message that is too big for it to process.";
+          else if (event.code === 1010)
+            reason = "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. <br /> Specifically, the extensions that are needed are: " + event.reason;
+          else if (event.code === 1011)
+            reason = "A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.";
+          else if (event.code === 1015)
+            reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
+          else
+            reason = "Unknown reason";
+          error.innerHTML = 'Web Socket is closed. ' + reason
+          resetButtons()
+        }
+        if (type === 'ice') {
+          error.innerHTML = 'Peer Connection is closed. State: ' + qencodeWebRTC.peerConnection.iceConnectionState
+          resetButtons()
+        }
+      },
+      // iceStateChange: function (state) {
+      //     iceState.innerHTML = "ICE State: " + state
+      //     if(state === 'connected'){
+      //         disconnectBtn.disabled = false;
+      //     }
+      //     if(state === 'disconnected'){
+      //         resetButtons();
+      //     }
+      // }
+    }
+  }
+
+  qencodeWebRTC = QencodeWebRTC.create(config);
+  window.qencodeWebRTC = qencodeWebRTC;
+  qencodeWebRTC.attachMedia(document.getElementById('userCam'));
+
+</script>
 </body>
 
 </html>
