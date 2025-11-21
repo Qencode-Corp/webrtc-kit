@@ -32,6 +32,7 @@
       disconnectStarted: { type: Boolean },
       connectStarted: { type: Boolean },
       mediaError: { type: String, reflect: true },
+      retryingWebSocket: { type: Boolean },
     };
 
     static styles = css`
@@ -191,6 +192,7 @@ button.stop:hover{
       this.webSocketReadyState = null;
       this.disconnectStarted = false;
       this.connectStarted = false;
+      this.retryingWebSocket = false;
       this.mediaError = '';
     }
 
@@ -256,6 +258,8 @@ button.stop:hover{
           this.webSocketActive = !!webSocket;
           const webSocketReadyState = webSocketReadyStates[ webSocket?.readyState ];
           this.webSocketReadyState = webSocketReadyState;
+
+          this.retryingWebSocket = !!window.qencodeWebRTC.retryingWebSocket;
         }
         this._rafId = requestAnimationFrame(tick);
       }
@@ -360,7 +364,7 @@ button.stop:hover{
           <button
             id="disconect"
             class="stop"
-            ?disabled=${this.disconnectStarted}
+            ?disabled=${this.disconnectStarted || this.retryingWebSocket}
             @click=${this._onDisconnect}
           >
 
@@ -370,7 +374,7 @@ button.stop:hover{
         return html`
           <button
             id="connect"
-            ?disabled=${this.connectStarted}
+            ?disabled=${this.connectStarted || this.retryingWebSocket}
             @click=${this._onConnect}
           >
             ${ this.connectStarted ? 'Starting Stream' : `Start Stream` }
