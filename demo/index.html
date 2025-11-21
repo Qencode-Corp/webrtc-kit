@@ -407,12 +407,12 @@ button.stop:hover{
             reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
           else
             reason = "Unknown reason";
-          error.innerHTML = 'Web Socket is closed. ' + reason
-          resetButtons()
+          // error.innerHTML = 'Web Socket is closed. ' + reason
+          // resetButtons()
         }
         if (type === 'ice') {
-          error.innerHTML = 'Peer Connection is closed. State: ' + qencodeWebRTC.peerConnection.iceConnectionState
-          resetButtons()
+          // error.innerHTML = 'Peer Connection is closed. State: ' + qencodeWebRTC.peerConnection.iceConnectionState
+          // resetButtons()
         }
       },
       // iceStateChange: function (state) {
