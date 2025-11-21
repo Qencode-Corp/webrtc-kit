@@ -260,7 +260,7 @@ button.stop:hover{
           this.webSocketReadyState = webSocketReadyState;
 
           this.retryProcessActive = window.qencodeWebRTC.retriesUsed > 0
-            && window.qencodeWebRTC.retriesUsed < window.qencodeWebRTC.retriesUsed.retryMaxCount;
+            && window.qencodeWebRTC.retriesUsed < window.qencodeWebRTC.retryMaxCount;
         }
         this._rafId = requestAnimationFrame(tick);
       }
