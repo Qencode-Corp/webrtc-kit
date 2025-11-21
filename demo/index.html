@@ -245,6 +245,13 @@ button.stop:hover{
       this._rafId = requestAnimationFrame(tick);
     }
 
+    _clearErrors() {
+      if (window.qencodeWebRTC) {
+        window.qencodeWebRTC.error = null;
+        window.qencodeWebRTC.webSocketCloseEvent = null;
+      }
+    }
+
     _stopLoop() {
       if (this._rafId !== null) {
         cancelAnimationFrame(this._rafId);
@@ -254,7 +261,7 @@ button.stop:hover{
 
     _onConnect() {
       console.log("constraints before actual connection: ", constraints)
-
+      this._clearErrors();
       qencodeWebRTC.getUserMedia(window.constraints).then(function (stream) {
         let webSocketUrl = ""
 
@@ -264,7 +271,6 @@ button.stop:hover{
         if(clientWebSocketUrl){
           webSocketUrl = clientWebSocketUrl
         }
-        qencodeWebRTC.remove();
         // Set WebRTC Provider URL
         qencodeWebRTC.startStreaming(webSocketUrl)
       });
