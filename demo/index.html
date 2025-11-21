@@ -18,6 +18,7 @@
     'closing',
     'closed',
   ]
+
   class HelloBox extends LitElement {
     static properties = {
       name: { type: String },
@@ -25,6 +26,7 @@
       error: { type: String },
       webSocketCloseEvent: { type: Object },
       iceConnected: { type: Boolean },
+      isConnected: { type: Boolean },
       webSocketActive: { type: Boolean },
       webSocketReadyState: { type: String },
       webSocketCloseError: { type: String },
@@ -178,6 +180,7 @@ button.stop:hover{
       this.error = '';
       this.webSocketCloseEvent = null;
       this.iceConnected = false;
+      this.isConnected = false;
       this.webSocketActive = false;
       this.webSocketReadyState = null;
       this.webSocketCloseError = null;
@@ -202,6 +205,19 @@ button.stop:hover{
         time += 1;
 
         if (time % 15 === 0 && window.qencodeWebRTC) {
+          const peerConnection = window.qencodeWebRTC.peerConnection;
+
+          if (peerConnection) {
+            if (peerConnection.connectionState === 'connected') {
+              // Note: 'completed' is rarely used/needed in the modern connectionState API
+              this.isConnected = true;
+            } else {
+              this.isConnected = false;
+            }
+          } else {
+            this.isConnected = false;
+          }
+
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
 
