@@ -203,10 +203,14 @@ button.stop:hover{
           this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           const error = window.qencodeWebRTC.error;
 
-          if (typeof error === 'string') {
-            this.error = "Socket connection error: " + error;
+          if (error) {
+            if (typeof error === 'string') {
+              this.error = "Socket connection error: " + error;
+            } else {
+              this.error = 'Socket connection error.'
+            }
           } else {
-            this.error = 'Socket connection error.'
+            this.error = null;
           }
 
           this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
