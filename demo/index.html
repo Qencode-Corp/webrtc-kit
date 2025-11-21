@@ -30,6 +30,7 @@
       webSocketCloseError: { type: String },
       webSocketReadyState: { type: String },
       disconnectStarted: { type: Boolean },
+      connectStarted: { type: Boolean },
       mediaError: { type: String, reflect: true },
     };
 
@@ -185,6 +186,7 @@ button.stop:hover{
       this.webSocketCloseError = null;
       this.webSocketReadyState = null;
       this.disconnectStarted = false;
+      this.connectStarted = false;
       this.mediaError = '';
     }
 
@@ -215,6 +217,9 @@ button.stop:hover{
 
           if (this.isConnectionClosed) {
             this.disconnectStarted = false;
+          }
+          if (this.isConnected) {
+            this.connectStarted = false;
           }
 
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
@@ -270,6 +275,7 @@ button.stop:hover{
     _onConnect() {
       console.log("constraints before actual connection: ", constraints)
       this._clearErrors();
+      this.connectStarted = true;
       qencodeWebRTC.getUserMedia(window.constraints).then(function (stream) {
         let webSocketUrl = ""
 
@@ -357,6 +363,7 @@ button.stop:hover{
         return html`
           <button
             id="connect"
+            ?disabled=${this.connectStarted}
             @click=${this._onConnect}
           >
             Start Stream
