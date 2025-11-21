@@ -53,18 +53,6 @@ function joinSdpLines(lines) {
     return lines.join('\r\n');
 }
 
-/* Just in case. */
-function normalizeSdpObject(offer) {
-  if (offer && typeof offer.sdp === "string") {
-    
-    // Normalize line endings to CRLF
-    let sdp = offer.sdp.replace(/\r?\n/g, "\r\n");
-    
-    offer.sdp = sdp;
-  }
-  
-}
-
 function getFormatNumber(sdp, format) {
 
     const lines = splitSdpLines(sdp);
@@ -596,9 +584,7 @@ function addMethod(instance) {
             offer.sdp = appendFmtp(offer.sdp);
         }
         
-      
-      normalizeSdpObject(offer);
-      
+        
       // Set up event handlers BEFORE setRemoteDescription to avoid missing events
       peerConnection.onicecandidate = function (e) {
 
