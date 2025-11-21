@@ -666,7 +666,6 @@ function addMethod(instance) {
     }
 
     async function addIceCandidate(peerConnection, candidates) {
-        console.log('addIceCandidate', peerConnection, candidates);
         for (let i = 0; i < candidates.length; i++) {
 
             if (candidates[i] && candidates[i].candidate) {
