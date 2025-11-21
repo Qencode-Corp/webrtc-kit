@@ -211,22 +211,7 @@ button.stop:hover{
 
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
-
-          if (iceConnectionState === 'connected' || iceConnectionState === 'completed') {
-            this.iceConnected = true;
-          }
-          else if (
-            iceConnectionState === 'failed' ||
-            iceConnectionState === 'disconnected' ||
-            iceConnectionState === 'closed') {
-            this.iceConnected = false;
-          } else {
-            /*
-              Trying to take into account all possible values: https://w3c.github.io/webrtc-pc/#rtciceconnectionstate-enum
-              "new", "checking"
-            */
-            this.iceConnected = false;
-          }
+          this.iceConnected = iceConnectionState === 'connected' || iceConnectionState === 'completed';
 
           const error = window.qencodeWebRTC.error;
 
