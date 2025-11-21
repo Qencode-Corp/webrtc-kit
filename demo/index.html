@@ -194,8 +194,9 @@ button.stop:hover{
     }
 
     _startLoop() {
+      let time = 0;
+
       const tick = () => {
-        let time = 0;
         time += 1;
 
         if (time % 15 === 0) {
