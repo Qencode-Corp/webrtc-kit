@@ -201,7 +201,14 @@ button.stop:hover{
 
         if (time % 15 === 0 && window.qencodeWebRTC) {
           this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
-          this.error = window.qencodeWebRTC.error;
+          const error = window.qencodeWebRTC.error;
+
+          if (typeof error === 'string') {
+            this.error = "Socket connection error: " + error;
+          } else {
+            this.error = 'Socket connection error.'
+          }
+
           this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
           this.connected = window.qencodeWebRTC.iceConnectionState === 'connected';
           const webSocket = window.qencodeWebRTC?.webSocket
@@ -258,6 +265,7 @@ button.stop:hover{
     }
 
     render() {
+      console.log('error', this.error)
       return html`
         <div>
           <div class="buttons-container">
@@ -272,6 +280,7 @@ button.stop:hover{
           <p id='dimensions'></p>
           <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
+          ${ html`` }
           <p class="error" id='errorMsg'>${ this.error }</p>
           <p class="error" id='errorMsg2'></p>
           <p class="error" id='socketError'>${ this.webSocketCloseError }</p>
@@ -386,7 +395,7 @@ button.stop:hover{
     callbacks: {
       error: function (error) {
         // if(typeof(error) === String){
-        //   socketError.innerHTML = "Socket connection error: " + error
+        //   socketError.innerHTML =
         // } else{
         //   socketError.innerHTML = "Socket connection error"
         // }
