@@ -249,6 +249,7 @@ button.stop:hover{
       if (window.qencodeWebRTC) {
         window.qencodeWebRTC.error = null;
         window.qencodeWebRTC.webSocketCloseEvent = null;
+        window.qencodeWebRTC.peerConnection = null; // todo memory leak?
       }
     }
 
