@@ -397,9 +397,6 @@ button.stop:hover{
 
   let config = {
     callbacks: {
-      connected: function (event) {
-        console.log("connected: ", event)
-      },
       connectionClosed: function (type, event) {
         if (type === 'websocket') {
           let reason;
