@@ -293,7 +293,9 @@ button.stop:hover{
           ${ this.webSocketActive ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
           <p id='log'></p>
           <p id='dimensions'></p>
-          <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
+          <p class="state" id='iceState'>
+            ICE State: ${ this.iceConnectionState }
+          </p>
           <p class="state" id='closingMessage' style="display: none;">Closing connection...</p>
           <p class="error" id='errorMsg'>${ this.error }</p>
           ${
@@ -309,7 +311,9 @@ button.stop:hover{
 
           <p class="error">${ this.webSocketCloseError }</p>
           <p class="error" id='errorMsg2'></p>
-          <p class="error" id='socketError'>${ this.webSocketCloseEvent }</p>
+          <p class="error" id='socketError'>
+            ${ this.webSocketCloseEvent }
+          </p>
         </div>
       `;
     }
