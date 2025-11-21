@@ -12,7 +12,12 @@
 </head>
 <script type="module">
   import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
-
+  const webSocketReadyStates = [
+    'connecting',
+    'open',
+    'closing',
+    'closed',
+  ]
   class HelloBox extends LitElement {
     static properties = {
       name: { type: String },
@@ -20,7 +25,8 @@
       error: { type: String },
       webSocketCloseError: { type: Object },
       connected: { type: Boolean },
-      webSocketActive: { type: Boolean }
+      webSocketActive: { type: Boolean },
+      webSocketReadyState: { type: String },
     };
 
     static styles = css`
@@ -172,6 +178,7 @@ button.stop:hover{
       this.webSocketCloseError = null;
       this.connected = false;
       this.webSocketActive = false;
+      this.webSocketReadyState = null;
     }
 
     connectedCallback() {
@@ -192,12 +199,12 @@ button.stop:hover{
         time += 0;
 
         if (time % 15 === 0) {
-          // console.log(window.qencodeWebRTC)
           this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.error = window.qencodeWebRTC.error;
           this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
           this.connected = window.qencodeWebRTC.iceConnectionState === 'connected';
           this.webSocketActive = !!window.qencodeWebRTC.webSocket;
+          this.webSocketReadyState = webSocketReadyStates[ window.qencodeWebRTC.webSocket.readyState ];
         }
         this._rafId = requestAnimationFrame(tick);
       }
@@ -248,6 +255,7 @@ button.stop:hover{
     }
 
     render() {
+      console.log(this.webSocketReadyState)
       return html`
         <div>
           <div class="buttons-container">
@@ -257,7 +265,7 @@ button.stop:hover{
                 html`<button id="connect" @click=${this._onConnect}>Start Stream</button>`
             }
           </div>
-          ${ this.webSocketActive ? html`<p>Web Socket Active</p>` : null }
+          ${ this.webSocketActive ? html`<p>Web Socket Active. ReadyState: ${ html`${ this.webSocketReadyState }` }</p>` : null }
           <p id='log'></p>
           <p id='dimensions'></p>
           <p class="state" id='iceState'>ICE State: ${ this.iceConnectionState }</p>
