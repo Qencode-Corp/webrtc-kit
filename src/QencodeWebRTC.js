@@ -620,6 +620,7 @@ function addMethod(instance) {
 
           console.info(logHeader, 'ICE State', '[' + state + ']');
           instance.iceConnectionState = state;
+          instance.iceLastEvent = e;
 
           if (state === 'connected') {
             console.info(logHeader, 'Iceconnection Connected', e);
