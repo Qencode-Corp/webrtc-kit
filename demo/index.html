@@ -365,13 +365,13 @@ button.stop:hover{
   let config = {
     callbacks: {
       error: function (error) {
-        if(typeof(error) === String){
-          socketError.innerHTML = "Socket connection error: " + error
-        } else{
-          socketError.innerHTML = "Socket connection error"
-        }
-        // if error
-        resetButtons();
+        // if(typeof(error) === String){
+        //   socketError.innerHTML = "Socket connection error: " + error
+        // } else{
+        //   socketError.innerHTML = "Socket connection error"
+        // }
+        // // if error
+        // resetButtons();
       },
       connected: function (event) {
         console.log("connected: ", event)
