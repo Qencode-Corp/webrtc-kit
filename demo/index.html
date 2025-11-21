@@ -206,17 +206,8 @@ button.stop:hover{
 
         if (time % 15 === 0 && window.qencodeWebRTC) {
           const peerConnection = window.qencodeWebRTC.peerConnection;
-
-          if (peerConnection) {
-            if (peerConnection.connectionState === 'connected') {
-              // Note: 'completed' is rarely used/needed in the modern connectionState API
-              this.isConnected = true;
-            } else {
-              this.isConnected = false;
-            }
-          } else {
-            this.isConnected = false;
-          }
+          const isConnected = peerConnection && peerConnection.connectionState === 'connected';
+          this.isConnected = isConnected;
 
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
