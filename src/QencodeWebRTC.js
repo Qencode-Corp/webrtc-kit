@@ -171,6 +171,7 @@ function initConfig(instance) {
     instance.createPeerConnectionCount = 0;
     instance.offerRequestCount = 0;
     instance.retriesUsed = 0;
+    instance.retrying = false;
 }
 
 function delayedCall(fn, args, delay) {
