@@ -330,13 +330,13 @@ button.stop:hover{
             ICE State: ${ this.iceConnectionState }
           </p>
           ${
-            this.disconnectStarted ?
+            !this.retryProcessActive && this.disconnectStarted ?
               html`<p class="state" id='closingMessage'>Closing connection...</p>`
               : null
           }
           <p class="error" id='errorMsg'>${ this.error }</p>
           ${
-            this.isConnectionClosed ?
+            !this.retryProcessActive && this.isConnectionClosed ?
               html`
                 <p class="error">
                   Peer Connection is closed.
@@ -345,14 +345,14 @@ button.stop:hover{
               : null
           }
           ${
-            this.mediaError ?
+            !this.retryProcessActive && this.mediaError ?
               html`
                 <p class="error" id='errorMsg2'>
                   ${ this.mediaError }
                 </p>
               ` : null
           }
-          ${ this.webSocketCloseError ?
+          ${ !this.retryProcessActive && this.webSocketCloseError ?
             html`
               <p class="error" id='socketError'>
                 ${ this.webSocketCloseError }
