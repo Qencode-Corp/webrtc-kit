@@ -214,7 +214,10 @@ button.stop:hover{
             iceConnectionState === 'closed') {
             this.connected = false;
           } else {
-            /* "new", "connecting" */
+            /*
+              Trying to take into account all possible values: https://w3c.github.io/webrtc-pc/#rtciceconnectionstate-enum
+              "new", "connecting"
+            */
             this.connected = false;
           }
 
