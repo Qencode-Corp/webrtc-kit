@@ -205,7 +205,7 @@ button.stop:hover{
           const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
 
-          if (iceConnectionState === 'connected') {
+          if (iceConnectionState === 'connected') { // todo completed
             this.connected = true;
           }
           else if (
@@ -216,7 +216,7 @@ button.stop:hover{
           } else {
             /*
               Trying to take into account all possible values: https://w3c.github.io/webrtc-pc/#rtciceconnectionstate-enum
-              "new", "connecting"
+              "new", "checking"
             */
             this.connected = false;
           }
