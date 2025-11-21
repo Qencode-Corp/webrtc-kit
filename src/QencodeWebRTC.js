@@ -170,6 +170,7 @@ function initConfig(instance) {
     instance.error = null;
     instance.createPeerConnectionCount = 0;
     instance.offerRequestCount = 0;
+    instance.retriesUsed = 0;
 }
 
 function delayedCall(fn, args, delay) {
@@ -400,7 +401,6 @@ function addMethod(instance) {
         async function onWebsocketError(error) {
           console.error('webSocket.onerror', error);
           errorHandler(error);
-          instance.retriesUsed |= 0;
           
           if (
             !instance.removing &&
