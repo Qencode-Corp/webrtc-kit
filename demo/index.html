@@ -217,6 +217,7 @@ button.stop:hover{
 
           if (this.isConnectionClosed) {
             this.disconnectStarted = false;
+            this.connectStarted = false;
           }
           if (this.isConnected) {
             this.connectStarted = false;
@@ -233,8 +234,8 @@ button.stop:hover{
               this.error = "Socket connection error: " + error;
             } else {
               this.error = 'Socket connection error.'
-              this.connectStarted = false;
             }
+            this.connectStarted = false;
           } else {
             this.error = null;
           }
