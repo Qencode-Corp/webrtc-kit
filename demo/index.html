@@ -306,7 +306,7 @@ button.stop:hover{
     }
 
     mainButton() {
-      if (this.iceConnected && !this.error) {
+      if (this.isConnected) {
         return html`
           <button
             id="disconect"
