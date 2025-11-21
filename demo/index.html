@@ -329,9 +329,11 @@ button.stop:hover{
           <button
             id="disconect"
             class="stop"
+            ?disabled=${this.disconnectStarted}
             @click=${this._onDisconnect}
           >
-            Stop Stream
+
+            ${ this.disconnectStarted ? 'Stopping Stream' : 'Stop Stream' }
           </button>`
       } else {
         return html`
