@@ -264,7 +264,7 @@ button.stop:hover{
         if(clientWebSocketUrl){
           webSocketUrl = clientWebSocketUrl
         }
-
+        qencodeWebRTC.remove();
         // Set WebRTC Provider URL
         qencodeWebRTC.startStreaming(webSocketUrl)
       });
