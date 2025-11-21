@@ -21,7 +21,6 @@
 
   class HelloBox extends LitElement {
     static properties = {
-      name: { type: String },
       iceConnectionState: { type: String },
       error: { type: String },
       webSocketCloseEvent: { type: Object },
@@ -176,7 +175,6 @@ button.stop:hover{
 
     constructor() {
       super();
-      this.name = "world";
       this.iceConnectionState = '';
       this.error = '';
       this.webSocketCloseEvent = null;
