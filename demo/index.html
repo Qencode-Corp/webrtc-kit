@@ -366,7 +366,7 @@ button.stop:hover{
             ?disabled=${this.connectStarted}
             @click=${this._onConnect}
           >
-            Start Stream
+            ${ this.connectStarted ? 'Starting Stream' : `Start Stream` }
           </button>
         `
       }
