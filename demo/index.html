@@ -199,7 +199,7 @@ button.stop:hover{
       const tick = () => {
         time += 1;
 
-        if (time % 15 === 0) {
+        if (time % 15 === 0 && window.qencodeWebRTC) {
           this.iceConnectionState = window.qencodeWebRTC.iceConnectionState;
           this.error = window.qencodeWebRTC.error;
           this.webSocketCloseError = window.qencodeWebRTC.webSocketCloseError;
