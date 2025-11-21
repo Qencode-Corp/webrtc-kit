@@ -252,6 +252,7 @@ button.stop:hover{
         window.qencodeWebRTC.error = null;
         window.qencodeWebRTC.webSocketCloseEvent = null;
         window.qencodeWebRTC.peerConnection = null; // todo memory leak?
+        this.mediaError = null;
       }
     }
 
@@ -321,8 +322,13 @@ button.stop:hover{
               `
               : null
           }
-
-          <p class="error" id='errorMsg2'></p>
+          ${
+            this.mediaError ? html`
+              <p class="error" id='errorMsg2'>
+                ${ this.mediaError }
+              </p>
+            ` : null
+          }
           <p class="error" id='socketError'>
             ${ this.webSocketCloseError }
           </p>
