@@ -214,7 +214,7 @@ button.stop:hover{
       const tick = () => {
         time += 1;
 
-        if (time % 15 === 0 && window.qencodeWebRTC) {
+        if (time % 8 === 0 && window.qencodeWebRTC) {
           const peerConnection = window.qencodeWebRTC.peerConnection;
           const isConnected = peerConnection && peerConnection.connectionState === 'connected';
           this.isConnected = isConnected;
