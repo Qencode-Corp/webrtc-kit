@@ -42,9 +42,20 @@ function checkIOSVersion() {
     return 0;
 }
 
+// SDP helper functions to properly handle CRLF line endings (RFC 4566)
+function splitSdpLines(sdp) {
+    // Normalize line endings: split on \r\n or \n, and remove trailing \r from each line
+    return sdp.split(/\r?\n/).map(line => line.replace(/\r$/, ''));
+}
+
+function joinSdpLines(lines) {
+    // Join with CRLF as required by SDP specification (RFC 4566)
+    return lines.join('\r\n');
+}
+
 function getFormatNumber(sdp, format) {
 
-    const lines = sdp.split('\n');
+    const lines = splitSdpLines(sdp);
     let formatNumber = -1;
 
     for (let i = 0; i < lines.length - 1; i++) {
@@ -63,7 +74,7 @@ function getFormatNumber(sdp, format) {
 
 function removeFormat(sdp, formatNumber) {
     let newLines = [];
-    let lines = sdp.split('\n');
+    let lines = splitSdpLines(sdp);
 
     for (let i = 0; i < lines.length; i++) {
 
@@ -76,7 +87,7 @@ function removeFormat(sdp, formatNumber) {
         }
     }
 
-    return newLines.join('\n')
+    return joinSdpLines(newLines)
 }
 
 async function getStreamForDeviceCheck() {
@@ -136,35 +147,38 @@ function gotDevices(deviceInfos) {
     return devices;
 }
 
-function initConfig(instance, options) {
-
-    instance.stream = null;
-    instance.webSocket = null;
-    instance.peerConnection = null;
-    instance.connectionConfig = {};
-
-    instance.status = 'creating';
-
+function initConfig(instance) {
     instance.videoElement = null;
     instance.connectionUrl = null;
+    instance.connectionConfig = {};
+    instance.stream = null;
+    
+    instance.webSocket = null;
+    instance.webSocketCloseEvent = null;
+    instance.retryingWebSocket = false;
+    instance.retriesUsed = 0;
+    
+    instance.peerConnection = null;
+    instance.createPeerConnectionCount = 0;
+    
+    instance.status = 'creating';
+    instance.error = null;
+    
+    instance.offerRequestCount = 0;
+}
 
-    if (options && options.callbacks) {
-
-        instance.callbacks = options.callbacks;
-    } else {
-        instance.callbacks = {};
-    }
-
+function delayedCall(fn, args, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      Promise.resolve(fn(...args)).then(resolve);
+    }, delay);
+  });
 }
 
 function addMethod(instance) {
 
     function errorHandler(error) {
-
-        if (instance.callbacks.error) {
-
-            instance.callbacks.error(error);
-        }
+        instance.error = error;
     }
 
     function getUserMedia(constraints) {
@@ -266,7 +280,7 @@ function addMethod(instance) {
     // From https://webrtchacks.com/limit-webrtc-bandwidth-sdp/
     function setBitrateLimit(sdp, media, bitrate) {
 
-        let lines = sdp.split('\n');
+        let lines = splitSdpLines(sdp);
         let line = -1;
 
         for (let i = 0; i < lines.length; i++) {
@@ -294,7 +308,7 @@ function addMethod(instance) {
 
             lines[line] = 'b=AS:' + bitrate;
 
-            return lines.join('\n');
+            return joinSdpLines(lines);
         }
 
         // Add a new b line
@@ -303,7 +317,7 @@ function addMethod(instance) {
         newLines.push('b=AS:' + bitrate)
         newLines = newLines.concat(lines.slice(line, lines.length))
 
-        return newLines.join('\n')
+        return joinSdpLines(newLines)
     }
 
     function initWebSocket(connectionUrl) {
@@ -327,16 +341,19 @@ function addMethod(instance) {
 
 
         instance.webSocket = webSocket;
+        
+        function requestOffer() {
+          sendMessage(instance.webSocket, {
+            command: 'request_offer'
+          });
+          instance.offerRequestCount += 1;
+        }
 
         webSocket.onopen = function () {
-
-            // Request offer at the first time.
-            sendMessage(webSocket, {
-                command: 'request_offer'
-            });
+          requestOffer();
         };
 
-        webSocket.onmessage = function (e) {
+        webSocket.onmessage = async function (e) {
 
             let message = JSON.parse(e.data);
 
@@ -348,30 +365,70 @@ function addMethod(instance) {
             if (message.command === 'offer') {
 
                 // OME returns offer. Start create peer connection.
-                createPeerConnection(
+                try {
+                  await createPeerConnection(
                     message.id,
                     message.peer_id,
                     message.sdp,
                     message.candidates,
                     message.ice_servers
-                );
+                  );
+                  instance.createPeerConnectionCount += 1;
+                  instance.offerRequestCount = 0;
+                } catch (e) {
+                  console.log('createPeerConnection error', e);
+                  
+                  if (instance.offerRequestCount < 3) {
+                    requestOffer();
+                  } else {
+                    await delayedCall(async () => {
+                      if (instance.createPeerConnectionCount === 0) {
+                        await onWebsocketError(e)
+                      }
+                    }, [], 2000)
+                  }
+                }
             }
         };
+        
+        async function onWebsocketError(error) {
+          console.error('webSocket.onerror', error);
+          errorHandler(error);
+          
+          if (
+            !instance.removing &&
+            !instance.retryingWebSocket &&
+            Number.isFinite(instance.retryDelay) &&
+            Number.isFinite(instance.retryMaxCount) &&
+            instance.retriesUsed < instance.retryMaxCount
+          ) {
+            instance.retriesUsed += 1;
+            instance.retryingWebSocket = true; /* Prevent multiple concurrent retries if onerror runs too often. */
+            console.log(`Starting retry attempt ${instance.retriesUsed}`);
+            
+            // Close the failed WebSocket before retrying
+            if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
+              instance.webSocket.onerror = null; // Remove handlers to prevent stale events
+              instance.webSocket.onclose = null;
+              instance.webSocket.onmessage = null;
+              instance.webSocket.onopen = null;
+              instance.webSocket.close();
+            }
+            instance.error = null;
+            instance.webSocketCloseEvent = null;
+            instance.peerConnection = null;
+            
+            await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+            instance.retryingWebSocket = false;
+          }
+        }
 
-        webSocket.onerror = function (error) {
-
-            console.error('webSocket.onerror', error);
-            errorHandler(error);
-        };
+        webSocket.onerror = onWebsocketError;
 
         webSocket.onclose = function (e) {
 
             if (!instance.removing) {
-
-                if (instance.callbacks.connectionClosed) {
-
-                    instance.callbacks.connectionClosed('websocket', e);
-                }
+              instance.webSocketCloseEvent = e;
             }
         };
 
@@ -381,7 +438,7 @@ function addMethod(instance) {
 
         const fmtpStr = instance.connectionConfig.sdp.appendFmtp;
 
-        const lines = sdp.split('\n');
+        const lines = splitSdpLines(sdp);
         const payloads = [];
 
         for (let i = 0; i < lines.length; i++) {
@@ -392,7 +449,7 @@ function addMethod(instance) {
 
                 for (let j = 3; j < tokens.length; j++) {
 
-                    payloads.push(tokens[j].replace('\r', ''));
+                    payloads.push(tokens[j]);
                 }
 
                 break;
@@ -417,16 +474,16 @@ function addMethod(instance) {
 
                     if (lines[j].indexOf('a=rtpmap:' + payloads[i]) === 0) {
 
-                        lines[j] += '\na=fmtp:' + payloads[i] + ' ' + fmtpStr;
+                        lines[j] += '\r\na=fmtp:' + payloads[i] + ' ' + fmtpStr;
                     }
                 }
             }
         }
 
-        return lines.join('\n')
+        return joinSdpLines(lines)
     }
 
-    function createPeerConnection(id, peerId, offer, candidates, iceServers) {
+    async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
 
         window.connectionData = {
             id,
@@ -498,32 +555,7 @@ function addMethod(instance) {
                 peerConnectionConfig.iceTransportPolicy = instance.iceTransportPolicy;
             }
         }
-
-        let advancedSetting = {
-            optional: [
-                {
-                    googHighStartBitrate: {
-                        exact: !0
-                    }
-                },
-                {
-                    googPayloadPadding: {
-                        exact: !0
-                    }
-                },
-                {
-                    googScreencastMinBitrate: {
-                        exact: 500
-                    }
-                },
-                {
-                    enableDscp: {
-                        exact: true
-                    }
-                }
-            ]
-        };
-
+        
         console.info(logHeader, 'Create Peer Connection With Config', peerConnectionConfig);
 
         let peerConnection = new RTCPeerConnection(peerConnectionConfig);
@@ -556,62 +588,10 @@ function addMethod(instance) {
 
             offer.sdp = appendFmtp(offer.sdp);
         }
-
-        peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
-            .then(function () {
-
-                peerConnection.createAnswer()
-                    .then(function (answer) {
-
-                        if (checkIOSVersion() >= 15) {
-
-                            const formatNumber = getFormatNumber(answer.sdp, 'H264');
-
-                            if (formatNumber > 0) {
-
-                                answer.sdp = removeFormat(answer.sdp, formatNumber);
-                            }
-                        }
-
-                        if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
-
-                            answer.sdp = appendFmtp(answer.sdp);
-                        }
-
-                        peerConnection.setLocalDescription(answer)
-                            .then(function () {
-
-                                sendMessage(instance.webSocket, {
-                                    id: id,
-                                    peer_id: peerId,
-                                    command: 'answer',
-                                    sdp: answer
-                                });
-                            })
-                            .catch(function (error) {
-
-                                console.error('peerConnection.setLocalDescription', error);
-                                errorHandler(error);
-                            });
-                    })
-                    .catch(function (error) {
-
-                        console.error('peerConnection.createAnswer', error);
-                        errorHandler(error);
-                    });
-            })
-            .catch(function (error) {
-
-                console.error('peerConnection.setRemoteDescription', error);
-                errorHandler(error);
-            });
-
-        if (candidates) {
-
-            addIceCandidate(peerConnection, candidates);
-        }
-
-        peerConnection.onicecandidate = function (e) {
+        
+        
+      // Set up event handlers BEFORE setRemoteDescription to avoid missing events
+      peerConnection.onicecandidate = function (e) {
 
             if (e.candidate && e.candidate.candidate) {
 
@@ -626,53 +606,68 @@ function addMethod(instance) {
             }
         };
 
-        peerConnection.oniceconnectionstatechange = function (e) {
+      peerConnection.oniceconnectionstatechange = function (e) {
+          let state = peerConnection.iceConnectionState;
 
-            let state = peerConnection.iceConnectionState;
+          console.info(logHeader, 'ICE State', '[' + state + ']');
+          instance.iceConnectionState = state;
+          instance.iceLastEvent = e;
 
-            if (instance.callbacks.iceStateChange) {
+          if (state === 'connected') {
+            console.info(logHeader, 'Iceconnection Connected', e);
+          }
 
-                console.info(logHeader, 'ICE State', '[' + state + ']');
-                instance.callbacks.iceStateChange(state);
-            }
+          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+            console.error(logHeader, 'Iceconnection Closed', e);
+          }
+      };
 
-            if (state === 'connected') {
+      await peerConnection.setRemoteDescription(offer);
 
-                if (instance.callbacks.connected) {
+      const answer = await peerConnection.createAnswer();
 
-                    console.info(logHeader, 'Iceconnection Connected', e);
-                    instance.callbacks.connected(e);
-                }
-            }
+      if (checkIOSVersion() >= 15) {
 
-            if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+          const formatNumber = getFormatNumber(answer.sdp, 'H264');
 
-                if (instance.callbacks.connectionClosed) {
+          if (formatNumber > 0) {
 
-                    console.error(logHeader, 'Iceconnection Closed', e);
-                    instance.callbacks.connectionClosed('ice', e);
-                }
-            }
-        }
+              answer.sdp = removeFormat(answer.sdp, formatNumber);
+          }
+      }
+
+      if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
+          answer.sdp = appendFmtp(answer.sdp);
+      }
+
+      await peerConnection.setLocalDescription(answer);
+      
+      // Add remote ICE candidates after setRemoteDescription completes
+      if (candidates) {
+          await addIceCandidate(peerConnection, candidates);
+      }
+      
+      sendMessage(instance.webSocket, {
+          id: id,
+          peer_id: peerId,
+          command: 'answer',
+          sdp: answer
+      });
     }
 
-    function addIceCandidate(peerConnection, candidates) {
-
+    async function addIceCandidate(peerConnection, candidates) {
         for (let i = 0; i < candidates.length; i++) {
 
             if (candidates[i] && candidates[i].candidate) {
 
                 let basicCandidate = candidates[i];
 
-                peerConnection.addIceCandidate(new RTCIceCandidate(basicCandidate))
-                    .then(function () {
-
-                    })
-                    .catch(function (error) {
-
-                        console.error('peerConnection.addIceCandidate', error);
-                        errorHandler(error);
-                    });
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(basicCandidate));
+                } catch (error) {
+                    console.error('peerConnection.addIceCandidate', basicCandidate, error);
+                    errorHandler(error);
+                }
             }
         }
     }
@@ -703,7 +698,8 @@ function addMethod(instance) {
 
             instance.connectionConfig = connectionConfig;
         }
-
+        
+        instance.retriesUsed = 0;
         initWebSocket(connectionUrl);
     };
 
@@ -763,15 +759,18 @@ function addMethod(instance) {
 }
 
 // static methods
-QencodeWebRTC.create = function (options) {
+QencodeWebRTC.create = function () {
 
     console.info(logEventHeader, 'Create WebRTC');
 
-    let instance = {};
+    let instance = {
+      retryMaxCount: 2,
+      retryDelay: 2000,
+    };
 
     instance.removing = false;
 
-    initConfig(instance, options);
+    initConfig(instance);
     addMethod(instance);
 
     return instance;
