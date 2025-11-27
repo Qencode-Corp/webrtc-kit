@@ -320,6 +320,8 @@ button.stop:hover{
 
     _selectVideoDevice(e) {
       this.selectedDeviceId = e.target.value;
+      this._rebuildConstraints();
+      this._initStream();
     }
 
     async _initDevices() {
