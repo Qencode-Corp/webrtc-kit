@@ -35,6 +35,7 @@
       serverUrl: { type: String },
       log: { type: String },
       dimensions: { type: String },
+      videoDevices: { type: Array },
     };
 
     static styles = css`
@@ -189,6 +190,7 @@ button.stop:hover{
       this.retryProcessActive = false;
       this.mediaError = null;
       this.serverUrl = '';
+      this.videoDevices = [];
     }
 
     connectedCallback() {
@@ -299,6 +301,9 @@ button.stop:hover{
     async _initStream() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        this.videoDevices = videoDevices;
         const video = document.querySelector('#userCam');
         const videoTracks = stream.getVideoTracks();
         console.log('Got stream with constraints:', constraints);
@@ -384,14 +389,15 @@ button.stop:hover{
       return html`
         <div class="main-container">
           <form @submit=${this._onConnect} class="web-socket-url">
-            <label>Server URL: </label>
-            <input
-              id="webSocketUrl"
-              type="text"
-              .value=${this.serverUrl}
-              @input=${this._onInput}
-
-            />
+            <div>
+              <label>Server URL: </label>
+              <input
+                id="webSocketUrl"
+                type="text"
+                .value=${this.serverUrl}
+                @input=${this._onInput}
+              />
+            </div>
           </form>
           <div class="buttons-container">
             ${ this.mainButton() }
