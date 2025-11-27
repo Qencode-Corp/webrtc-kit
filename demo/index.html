@@ -466,7 +466,7 @@ button.stop:hover{
           <div class="buttons-container">
             ${ this.mainButton() }
           </div>
-          ${ this.webSocketActive ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
+          ${ this.webSocketActive && false ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
           ${
             this.log ? html`<p id='log'>
               ${ this.log }
