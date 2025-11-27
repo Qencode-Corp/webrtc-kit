@@ -119,7 +119,8 @@ button.stop:hover{
   text-align: left;
 }
 
-.web-socket-url input {
+#videoSource,
+#webSocketUrl {
     width: 100%;
     outline: none;
     border: 1px solid #e1e5ee;
@@ -132,8 +133,12 @@ button.stop:hover{
     height: 40px;
 }
 
-.web-socket-url input:focus {
+#webSocketUrl:focus {
     border-color: #316fea;
+}
+
+#webSocketUrl::placeholder {
+    color: #bababa;
 }
 
 .web-socket-url label {
@@ -154,22 +159,6 @@ input {
   box-sizing: border-box;
 }
 
-#videoSource {
-    width: 100%;
-    outline: none;
-    border: 1px solid #e1e5ee;
-    font-weight: 500;
-    font-size: 16px;
-    border-radius: 6px;
-    color: #171717;
-    padding: 0px 14px;
-    line-height: 40px;
-    height: 40px;
-}
-
-#webSocketUrl::placeholder {
-    color: #bababa;
-}
 `;
 
     constructor() {
