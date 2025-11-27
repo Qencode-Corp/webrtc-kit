@@ -191,6 +191,10 @@ button.stop:hover{
     line-height: 40px;
     height: 40px;
 }
+
+#webSocketUrl::placeholder {
+    color: #bababa;
+}
 `;
 
     constructor() {
@@ -458,6 +462,7 @@ button.stop:hover{
               <input
                 id="webSocketUrl"
                 type="text"
+                placeholder="wss://live-7f9...d7a.qencode.com:3334/qlive/04a2...32b"
                 .value=${this.serverUrl}
                 @input=${this._onInput}
               />
