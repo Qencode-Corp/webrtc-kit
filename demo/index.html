@@ -307,6 +307,7 @@ button.stop:hover{
         this.log = `Using video device: ${videoTracks[0].label}`
         window.stream = stream; // make variable available to browser console
         video.srcObject = stream;
+        video.dataset.initialized = true;
 
         let height = videoTracks[0].getSettings().height
         let width = videoTracks[0].getSettings().width

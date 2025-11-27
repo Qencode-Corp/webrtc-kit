@@ -6,14 +6,15 @@ video{
     width: 100%;
     aspect-ratio: 16/9;
     background-color: black;
+
+    &[data-initialized="true"] {
+        aspect-ratio: auto;
+    }
 }
 
 .container{
-    width: 453px;
     width: 100%;
     max-width: 720px;
-    height: 340px;
-    height: auto;
     margin: 3% auto;
     text-align: center;
 }
