@@ -354,6 +354,11 @@ button.stop:hover{
     }
 
     async _initStream() {
+      // Stop existing stream tracks before getting a new stream
+      if (qencodeWebRTC.stream) {
+        qencodeWebRTC.stream.getTracks().forEach(track => track.stop());
+      }
+      
       try {
         const stream = await qencodeWebRTC.getUserMedia(window.constraints);
         const video = document.querySelector('#userCam');
