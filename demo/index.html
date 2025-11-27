@@ -374,9 +374,13 @@ button.stop:hover{
               </p>
             ` : null
           }
-          <p class="state" id='iceState'>
-            ICE State: ${ this.iceConnectionState }
-          </p>
+          ${
+            this.iceConnectionState ? html`
+              <p class="state" id='iceState'>
+                ICE State: ${ this.iceConnectionState }
+              </p>
+            ` : null
+          }
           ${
             !this.retryProcessActive && this.disconnectStarted ?
               html`<p class="state" id='closingMessage'>Closing connection...</p>`
