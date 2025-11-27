@@ -4,13 +4,16 @@ body{
 
 video{
     width: 100%;
-    min-height: 405px;
+
     max-height: 80vh;
     aspect-ratio: 16/9;
     background-color: black;
 
     &[data-initialized="true"] {
         aspect-ratio: auto;
+    }
+    @media (width < 750px) {
+        min-height: 405px;
     }
 }
 
