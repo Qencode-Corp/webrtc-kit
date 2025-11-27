@@ -32,6 +32,7 @@
       connectStarted: { type: Boolean },
       mediaError: { type: String, reflect: true },
       retryProcessActive: { type: Boolean, reflect: true },
+      serverUrl: { type: String },
     };
 
     static styles = css`
@@ -193,13 +194,13 @@ button.stop:hover{
       this.connectStarted = false;
       this.retryProcessActive = false;
       this.mediaError = null;
-      this.videoSrc = null;
+      this.serverUrl = '';
     }
 
     connectedCallback() {
       super.connectedCallback();
       const params = new URLSearchParams(location.search);
-      this.videoSrc = params.get('u');
+      this.serverUrl = params.get('u');
       this._startLoop();
     }
 
@@ -318,9 +319,22 @@ button.stop:hover{
       }, 1000);
     }
 
+    _onInput(e) {
+      this.serverUrl = e.target.value;
+    }
+
     render() {
       return html`
         <div>
+          <div class="web-socket-url">
+            <label>Server URL: </label>
+            <input
+              id="webSocketUrl"
+              type="text"
+              .value=${this.serverUrl}
+              @input=${this._onInput}
+            />
+          </div>
           <div class="buttons-container">
             ${ this.mainButton() }
           </div>
@@ -399,12 +413,6 @@ button.stop:hover{
   <h1>Client webcam</h1>
 
   <video id="userCam" autoplay playsinline muted></video>
-
-  <div class="web-socket-url">
-    <label>Server URL: </label>
-    <input id="webSocketUrl" type="text" value="">
-  </div>
-
   <hello-box/>
 </div>
 
