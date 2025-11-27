@@ -356,7 +356,7 @@ button.stop:hover{
 
     async _initStream() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const stream = await navigator.mediaDevices.getUserMedia(window.constraints);
         const video = document.querySelector('#userCam');
         const videoTracks = stream.getVideoTracks();
         console.log('Got stream with constraints:', constraints);
