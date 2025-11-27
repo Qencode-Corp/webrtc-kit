@@ -173,6 +173,23 @@ button.stop:hover{
 .buttons-container > button + button{
     margin-left: 15px;
 }
+
+#videoSource {
+    width: 100%;
+    margin: 0;
+    display: inline-block;
+    box-sizing: border-box;
+    outline: none;
+    border: 1px solid #e1e5ee;
+    font-family: arial;
+    font-weight: 500;
+    font-size: 16px;
+    border-radius: 6px;
+    color: #171717;
+    padding: 0px 14px;
+    line-height: 40px;
+    height: 40px;
+}
 `;
 
     constructor() {
@@ -389,6 +406,16 @@ button.stop:hover{
       return html`
         <div class="main-container">
           <form @submit=${this._onConnect} class="web-socket-url">
+            <div>
+              <label></label>
+              <select id="videoSource">
+                ${
+                  this.videoDevices.map(device => (
+                    html`<option value="${device.id}">${device.label}</option>`
+                  ))
+                }
+              </select>
+            </div>
             <div>
               <label>Server URL: </label>
               <input
