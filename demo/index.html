@@ -455,8 +455,10 @@ button.stop:hover{
                 ?disabled=${this.videoDevices.length < 2}
               >
                 ${
-                  this.videoDevices.map(device => (
-                    html`<option value="${device.deviceId}">${device.label}</option>`
+                  this.videoDevices.map( (device, index) => (
+                    html`<option value="${device.deviceId}">
+                        ${device.label || `camera ${index + 1}`}
+                      </option>`
                   ))
                 }
               </select>
