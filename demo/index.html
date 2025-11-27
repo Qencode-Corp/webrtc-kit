@@ -18,7 +18,7 @@
     'closed',
   ]
 
-  class HelloBox extends LitElement {
+  class WebcamTestRtc extends LitElement {
     static properties = {
       error: { type: String },
       iceConnected: { type: Boolean },
@@ -406,14 +406,14 @@ button.stop:hover{
     }
   }
 
-  customElements.define('hello-box', HelloBox);
+  customElements.define('webcam-test-rtc', WebcamTestRtc);
 </script>
 <body>
 <div class="container">
   <h1>Client webcam</h1>
 
   <video id="userCam" autoplay playsinline muted></video>
-  <hello-box/>
+  <webcam-test-rtc/>
 </div>
 
 <script src="./js/QencodeWebRTC.min.js"></script>
@@ -425,7 +425,7 @@ button.stop:hover{
   };
 
   function handleSuccess(stream) {
-    const document2 = document.querySelector('hello-box').shadowRoot;
+    const document2 = document.querySelector('webcam-test-rtc').shadowRoot;
     const video = document.querySelector('#userCam');
     const videoTracks = stream.getVideoTracks();
     console.log('Got stream with constraints:', constraints);
@@ -460,7 +460,7 @@ button.stop:hover{
   }
 
   function errorMsg(msg, error) {
-    const ui = document.querySelector('hello-box');
+    const ui = document.querySelector('webcam-test-rtc');
     ui.mediaError = msg;
     if (typeof error !== 'undefined') {
       console.log(error);
