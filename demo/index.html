@@ -69,25 +69,14 @@ p{
     font-weight: 600;
 }
 
-.buttons-container{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 button{
     background: transparent;
-    outline: none;
     padding: 0 22px;
     text-align: center;
     white-space: nowrap;
     vertical-align: middle;
-    -ms-touch-action: manipulation;
     touch-action: manipulation;
     cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
     border: none;
     border-radius: 5px;
@@ -132,12 +121,10 @@ button.stop:hover{
   text-align: left;
 }
 
-.web-socket-url input,
-.video-quality select{
+.web-socket-url input {
     width: 100%;
     margin: 0;
     display: inline-block;
-    box-sizing: border-box;
     outline: none;
     border: 1px solid #e1e5ee;
     font-family: arial;
@@ -151,13 +138,11 @@ button.stop:hover{
     height: 40px;
 }
 
-.web-socket-url input:focus,
-.video-quality select:focus{
+.web-socket-url input:focus {
     border-color: #316fea;
 }
 
-.web-socket-url label,
-.video-quality label{
+.web-socket-url label {
     font-weight: normal;
     font-family: arial;
     font-size: 14px;
@@ -171,15 +156,10 @@ button.stop:hover{
     margin: 0 auto;
 }
 
-.buttons-container > button + button{
-    margin-left: 15px;
-}
-
 #videoSource {
     width: 100%;
     margin: 0;
     display: inline-block;
-    box-sizing: border-box;
     outline: none;
     border: 1px solid #e1e5ee;
     font-family: arial;
