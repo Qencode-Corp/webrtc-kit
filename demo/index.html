@@ -335,6 +335,19 @@ button.stop:hover{
       }
     }
 
+    _rebuildConstraints() {
+      let newConstraints = {
+        ...constraints
+      }
+
+      let deviceId = this.selectedDeviceId ? {
+          exact: this.selectedDeviceId
+        } : undefined
+      newConstraints.video.deviceId = deviceId
+
+      constraints = window.constraints = newConstraints;
+    }
+
     async _initStream() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
