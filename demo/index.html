@@ -408,7 +408,7 @@ button.stop:hover{
           <form @submit=${this._onConnect} class="web-socket-url">
             <div>
               <label></label>
-              <select id="videoSource">
+              <select id="videoSource" ?disabled=${this.videoDevices.length < 2}>
                 ${
                   this.videoDevices.map(device => (
                     html`<option value="${device.id}">${device.label}</option>`
