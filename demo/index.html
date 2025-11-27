@@ -381,7 +381,11 @@ button.stop:hover{
               html`<p class="state" id='closingMessage'>Closing connection...</p>`
               : null
           }
-          <p class="error" id='errorMsg'>${ this.error }</p>
+          ${
+            this.error ? html`
+              <p class="error" id='errorMsg'>${ this.error }</p>
+            ` : null
+          }
           ${
           !this.retryProcessActive && this.isConnectionClosed ?
               html`
