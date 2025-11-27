@@ -30,7 +30,7 @@
       webSocketReadyState: { type: String },
       disconnectStarted: { type: Boolean },
       connectStarted: { type: Boolean },
-      mediaError: { type: String, reflect: true },
+      mediaError: { type: String },
       retryProcessActive: { type: Boolean, reflect: true },
       serverUrl: { type: String },
       log: { type: String },
@@ -326,21 +326,13 @@ button.stop:hover{
       catch (error) {
         if (error.name === 'ConstraintNotSatisfiedError') {
           const v = constraints.video;
-          errorMsg(`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`);
+          this.mediaError =`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
         } else if (error.name === 'PermissionDeniedError') {
-          errorMsg('Permissions have not been granted to use your camera and ' +
+          this.mediaError ='Permissions have not been granted to use your camera and ' +
             'microphone, you need to allow the page access to your devices in ' +
-            'order for the demo to work.');
+            'order for the demo to work.';
         }
-        errorMsg(`getUserMedia error: ${error.name}`, error);
-      }
-
-      function errorMsg(msg, error) {
-        const ui = document.querySelector('webcam-test-rtc');
-        ui.mediaError = msg;
-        if (typeof error !== 'undefined') {
-          console.log(error);
-        }
+        this.mediaError = `getUserMedia error: ${error.name}`;
       }
     }
 
