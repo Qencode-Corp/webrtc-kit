@@ -194,11 +194,13 @@ button.stop:hover{
       this.connectStarted = false;
       this.retryProcessActive = false;
       this.mediaError = null;
+      this.videoSrc = null;
     }
 
     connectedCallback() {
       super.connectedCallback();
-
+      const params = new URLSearchParams(location.search);
+      this.videoSrc = params.get('u');
       this._startLoop();
     }
 
