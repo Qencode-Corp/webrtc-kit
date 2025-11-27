@@ -280,7 +280,8 @@ button.stop:hover{
       }
     }
 
-    async _onConnect() {
+    async _onConnect(e) {
+      e.preventDefault();
       this._clearErrors();
       this.connectStarted = true;
       try {
@@ -377,15 +378,16 @@ button.stop:hover{
     render() {
       return html`
         <div class="main-container">
-          <div class="web-socket-url">
+          <form @submit=${this._onConnect} class="web-socket-url">
             <label>Server URL: </label>
             <input
               id="webSocketUrl"
               type="text"
               .value=${this.serverUrl}
               @input=${this._onInput}
+
             />
-          </div>
+          </form>
           <div class="buttons-container">
             ${ this.mainButton() }
           </div>
