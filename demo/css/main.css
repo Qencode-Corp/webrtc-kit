@@ -4,6 +4,7 @@ body{
 
 video{
     width: 100%;
+    min-height: 405px;
     aspect-ratio: 16/9;
     background-color: black;
 
