@@ -314,7 +314,6 @@ button.stop:hover{
         this._clearErrors();
         this.connectStarted = true;
         try {
-          await qencodeWebRTC.getUserMedia(window.constraints);
           qencodeWebRTC.startStreaming(this.serverUrl);
         } catch (error) {
 
@@ -356,7 +355,7 @@ button.stop:hover{
 
     async _initStream() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia(window.constraints);
+        const stream = await qencodeWebRTC.getUserMedia(window.constraints);
         const video = document.querySelector('#userCam');
         const videoTracks = stream.getVideoTracks();
         console.log('Got stream with constraints:', constraints);
