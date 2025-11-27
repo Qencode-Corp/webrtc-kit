@@ -212,11 +212,12 @@ button.stop:hover{
       this.selectedDeviceId = null;
     }
 
-    connectedCallback() {
-      super.connectedCallback();
+    async connectedCallback() {
+      await super.connectedCallback();
       const params = new URLSearchParams(location.search);
       this.serverUrl = params.get('u');
-      this._initStream();
+      await this._initDevices();
+      await this._initStream();
       this._startLoop();
     }
 
@@ -321,15 +322,22 @@ button.stop:hover{
       this.selectedDeviceId = e.target.value;
     }
 
-    async _initStream() {
+    async _initDevices() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         this.videoDevices = videoDevices;
         if (videoDevices.length > 0) {
           this.selectedDeviceId = videoDevices[0]?.deviceId;
         }
+      } catch (e) {
+
+      }
+    }
+
+    async _initStream() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         const video = document.querySelector('#userCam');
         const videoTracks = stream.getVideoTracks();
         console.log('Got stream with constraints:', constraints);
