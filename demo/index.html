@@ -322,8 +322,9 @@ button.stop:hover{
           this.mediaError ='Permissions have not been granted to use your camera and ' +
             'microphone, you need to allow the page access to your devices in ' +
             'order for the demo to work.';
+        } else {
+          this.mediaError = `getUserMedia error: ${error.name}`;
         }
-        this.mediaError = `getUserMedia error: ${error.name}`;
       }
     }
 
