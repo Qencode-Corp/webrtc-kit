@@ -439,7 +439,7 @@ button.stop:hover{
         <div class="main-container">
           <form @submit=${this._onConnect} class="web-socket-url">
             <div>
-              <label></label>
+              <label for="videoSource">Video source:</label>
               <select
                 id="videoSource"
                 .value=${this.selectedDeviceId}
@@ -454,7 +454,7 @@ button.stop:hover{
               </select>
             </div>
             <div>
-              <label>Server URL: </label>
+              <label for="webSocketUrl">Server URL: </label>
               <input
                 id="webSocketUrl"
                 type="text"
