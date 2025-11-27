@@ -12,7 +12,7 @@ video{
     &[data-initialized="true"] {
         aspect-ratio: auto;
     }
-    @media (width < 750px) {
+    @media (width > 750px) {
         min-height: 405px;
     }
 }
