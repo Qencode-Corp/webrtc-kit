@@ -282,13 +282,16 @@ button.stop:hover{
 
     async _onConnect(e) {
       e.preventDefault();
-      this._clearErrors();
-      this.connectStarted = true;
-      try {
-        await qencodeWebRTC.getUserMedia(window.constraints);
-        qencodeWebRTC.startStreaming(this.serverUrl);
-      } catch (error) {
 
+      if (!( this.connectStarted || this.retryProcessActive )) {
+        this._clearErrors();
+        this.connectStarted = true;
+        try {
+          await qencodeWebRTC.getUserMedia(window.constraints);
+          qencodeWebRTC.startStreaming(this.serverUrl);
+        } catch (error) {
+
+        }
       }
     }
 
