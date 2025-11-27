@@ -310,7 +310,7 @@ button.stop:hover{
         this._clearErrors();
         this.connectStarted = true;
         try {
-          // await qencodeWebRTC.getUserMedia(window.constraints);
+          await qencodeWebRTC.getUserMedia(window.constraints);
           qencodeWebRTC.startStreaming(this.serverUrl);
         } catch (error) {
 
