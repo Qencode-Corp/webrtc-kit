@@ -38,20 +38,10 @@
     };
 
     static styles = css`
-div {
-  padding: 16px;
-  background: #f0f0ff;
-  border-radius: 8px;
-  font-family: sans-serif;
-}
-.container{
-    width: 453px;
-    width: 100%;
-    max-width: 720px;
-    height: 340px;
-    height: auto;
-    margin: 3% auto;
-    text-align: center;
+
+.main-container {
+  display: grid;
+  gap: 30px;
 }
 
 h1{
@@ -357,7 +347,7 @@ button.stop:hover{
 
     render() {
       return html`
-        <div>
+        <div class="main-container">
           <div class="web-socket-url">
             <label>Server URL: </label>
             <input
@@ -371,12 +361,18 @@ button.stop:hover{
             ${ this.mainButton() }
           </div>
           ${ this.webSocketActive ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
-          <p id='log'>
-            ${ this.log }
-          </p>
-          <p id='dimensions'>
-            ${ this.dimensions }
-          </p>
+          ${
+            this.log ? html`<p id='log'>
+              ${ this.log }
+            </p>` : null
+          }
+          ${
+            this.dimensions ? html`
+              <p id='dimensions'>
+                ${ this.dimensions }
+              </p>
+            ` : null
+          }
           <p class="state" id='iceState'>
             ICE State: ${ this.iceConnectionState }
           </p>
@@ -444,6 +440,17 @@ button.stop:hover{
 
   customElements.define('webcam-test-rtc', WebcamTestRtc);
 </script>
+<style>
+    .container{
+        width: 453px;
+        width: 100%;
+        max-width: 720px;
+        height: 340px;
+        height: auto;
+        margin: 3% auto;
+        text-align: center;
+    }
+</style>
 <body>
 <div class="container">
   <h1>Client webcam</h1>
