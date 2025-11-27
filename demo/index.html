@@ -280,21 +280,15 @@ button.stop:hover{
       }
     }
 
-    _onConnect() {
+    async _onConnect() {
       this._clearErrors();
       this.connectStarted = true;
-      qencodeWebRTC.getUserMedia(window.constraints).then(function (stream) {
-        let webSocketUrl = ""
+      try {
+        await qencodeWebRTC.getUserMedia(window.constraints);
+        qencodeWebRTC.startStreaming(this.serverUrl);
+      } catch (error) {
 
-        let clientWebSocketUrl = document.getElementById('webSocketUrl').value
-        console.log("clientWebSocketUrl: ", clientWebSocketUrl)
-
-        if(clientWebSocketUrl){
-          webSocketUrl = clientWebSocketUrl
-        }
-        // Set WebRTC Provider URL
-        qencodeWebRTC.startStreaming(webSocketUrl)
-      });
+      }
     }
 
     async _initStream() {
