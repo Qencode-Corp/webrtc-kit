@@ -36,6 +36,7 @@
       log: { type: String },
       dimensions: { type: String },
       videoDevices: { type: Array },
+      selectedDeviceId: { type: String },
     };
 
     static styles = css`
@@ -208,6 +209,7 @@ button.stop:hover{
       this.mediaError = null;
       this.serverUrl = '';
       this.videoDevices = [];
+      this.selectedDeviceId = null;
     }
 
     connectedCallback() {
@@ -315,12 +317,19 @@ button.stop:hover{
       }
     }
 
+    _selectVideoDevice(e) {
+      this.selectedDeviceId = e.target.value;
+    }
+
     async _initStream() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         this.videoDevices = videoDevices;
+        if (videoDevices.length > 0) {
+          this.selectedDeviceId = videoDevices[0]?.deviceId;
+        }
         const video = document.querySelector('#userCam');
         const videoTracks = stream.getVideoTracks();
         console.log('Got stream with constraints:', constraints);
@@ -408,10 +417,15 @@ button.stop:hover{
           <form @submit=${this._onConnect} class="web-socket-url">
             <div>
               <label></label>
-              <select id="videoSource" ?disabled=${this.videoDevices.length < 2}>
+              <select
+                id="videoSource"
+                .value=${this.selectedDeviceId}
+                @change=${this._selectVideoDevice}
+                ?disabled=${this.videoDevices.length < 2}
+              >
                 ${
                   this.videoDevices.map(device => (
-                    html`<option value="${device.id}">${device.label}</option>`
+                    html`<option value="${device.deviceId}">${device.label}</option>`
                   ))
                 }
               </select>
