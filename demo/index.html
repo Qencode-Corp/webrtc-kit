@@ -360,6 +360,7 @@ button.stop:hover{
       }
       
       try {
+        /* need to use qencodeWebRTC.getUserMedia instead of navigator.mediaDevices.getUserMedia to avoid errors about empty "stream" property on instance. */
         const stream = await qencodeWebRTC.getUserMedia(window.constraints);
         const video = document.querySelector('#userCam');
         const videoTracks = stream.getVideoTracks();
