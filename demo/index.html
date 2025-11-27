@@ -442,9 +442,6 @@ button.stop:hover{
 
     let videoDimentionsLog = document2.getElementById('dimensions')
     videoDimentionsLog.innerHTML = `Video dimensions: ${width}x${height}px`
-
-    // ready to initiate peer connection and start streaming
-    enableStreaming(stream)
   }
 
   function handleError(error) {
@@ -474,10 +471,6 @@ button.stop:hover{
     } catch (error) {
       handleError(error);
     }
-  }
-
-  function enableStreaming(stream){
-    console.log("User video is ready")
   }
 
   init()
