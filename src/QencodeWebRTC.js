@@ -383,7 +383,7 @@ function addMethod(instance) {
                   } else {
                     await delayedCall(async () => {
                       if (instance.createPeerConnectionCount === 0) {
-                        await onWebsocketError(e)
+                        await reconnectWebSocket(e)
                       }
                     }, [], 2000)
                   }
@@ -391,7 +391,7 @@ function addMethod(instance) {
             }
         };
         
-        async function onWebsocketError(error) {
+        async function reconnectWebSocket(error) {
           console.error('webSocket.onerror', error);
           errorHandler(error);
           
@@ -429,7 +429,7 @@ function addMethod(instance) {
             console.log('Connection closed', event);
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
-              onWebsocketError(event)
+              reconnectWebSocket(event)
             } else {
               console.log("Connection closed normally.");
             }
