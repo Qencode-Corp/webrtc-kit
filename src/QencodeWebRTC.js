@@ -332,11 +332,10 @@ function addMethod(instance) {
         let webSocket = null;
 
         try {
-
             webSocket = new WebSocket(connectionUrl);
         } catch (error) {
-
             errorHandler(error);
+            return;
         }
 
 
