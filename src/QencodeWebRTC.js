@@ -426,9 +426,9 @@ function addMethod(instance) {
         webSocket.onerror = (e) => console.error('webSocket.onerror', e);
 
         webSocket.onclose = function (event) {
+            console.log('Connection closed', event);
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
-              console.log("Connection died. Attempting reconnect...");
               onWebsocketError(event)
             } else {
               console.log("Connection closed normally.");
