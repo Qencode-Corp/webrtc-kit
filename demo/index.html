@@ -246,7 +246,8 @@ input {
           const webSocketReadyState = webSocketReadyStates[ webSocket?.readyState ];
           this.webSocketReadyState = webSocketReadyState;
 
-          this.retryProcessActive = window.qencodeWebRTC.retryingWebSocket;
+          this.retryProcessActive = window.qencodeWebRTC.retryingWebSocket || (window.qencodeWebRTC.retriesUsed > 0
+            && window.qencodeWebRTC.retriesUsed < window.qencodeWebRTC.retryMaxCount);
         }
         this._rafId = requestAnimationFrame(tick);
       }
