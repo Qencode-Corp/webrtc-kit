@@ -349,6 +349,7 @@ function addMethod(instance) {
         }
 
         webSocket.onopen = function () {
+          instance.retriesUsed = 0;
           requestOffer();
         };
 
