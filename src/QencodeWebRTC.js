@@ -615,7 +615,6 @@ function addMethod(instance) {
           let state = peerConnection.iceConnectionState;
 
           console.info(logHeader, 'ICE State', '[' + state + ']');
-          instance.iceConnectionState = state;
           instance.iceLastEvent = e;
 
           if (state === 'connected') {

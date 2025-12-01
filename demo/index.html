@@ -216,7 +216,7 @@ input {
             this.connectStarted = false;
           }
 
-          const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
+          const iceConnectionState = window.qencodeWebRTC?.peerConnection?.iceConnectionState;
           this.iceConnectionState = iceConnectionState;
           this.iceConnected = iceConnectionState === 'connected' || iceConnectionState === 'completed';
 
