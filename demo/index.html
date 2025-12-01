@@ -514,7 +514,7 @@ input {
         return html`
           <button
             id="connect"
-            ?disabled=${this.connectStarted || this.retryProcessActive}
+            ?disabled=${this.connectStarted || this.disconnectStarted || this.retryProcessActive}
             @click=${this._onConnect}
           >
             ${ this.connectStarted ? 'Starting Stream' : `Start Stream` }
