@@ -642,6 +642,7 @@ function addMethod(instance) {
           console.info(logHeader, 'Connection State', '[' + state + ']');
 
           if (state === 'connected') {
+            instance.error = null;
             console.info(logHeader, 'Connection Connected', e);
           }
 
