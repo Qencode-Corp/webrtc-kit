@@ -427,6 +427,9 @@ function addMethod(instance) {
             instance.retryingWebSocket = false;
           }
         }
+        
+        // Store reconnectWebSocket on instance so it can be accessed from createPeerConnection
+        instance.reconnectWebSocket = reconnectWebSocket;
 
         webSocket.onerror = (e) => console.error('webSocket.onerror', e);
 
@@ -630,6 +633,26 @@ function addMethod(instance) {
 
           if (state === 'failed' || state === 'disconnected' || state === 'closed') {
             console.error(logHeader, 'Iceconnection Closed', e);
+          }
+      };
+
+      peerConnection.onconnectionstatechange = function (e) {
+          let state = peerConnection.connectionState;
+
+          console.info(logHeader, 'Connection State', '[' + state + ']');
+
+          if (state === 'connected') {
+            console.info(logHeader, 'Connection Connected', e);
+          }
+
+          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+            console.error(logHeader, 'Connection Closed', e);
+            
+            // Retry on peerConnection failure if WebSocket is still open
+            if (state === 'failed' && instance.reconnectWebSocket && instance.webSocket && instance.webSocket.readyState === WebSocket.OPEN) {
+              console.info(logHeader, 'PeerConnection connectionState failed, initiating retry');
+              delayedCall(instance.reconnectWebSocket, ['PeerConnection connectionState failed'], instance.retryDelay);
+            }
           }
       };
 
