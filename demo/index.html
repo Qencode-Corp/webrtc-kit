@@ -21,7 +21,6 @@
   class WebcamTestRtc extends LitElement {
     static properties = {
       error: { type: String },
-      iceConnected: { type: Boolean },
       iceConnectionState: { type: String },
       isConnected: { type: Boolean },
       isConnectionClosed: { type: Boolean },
@@ -164,7 +163,6 @@ input {
     constructor() {
       super();
       this.error = '';
-      this.iceConnected = false;
       this.iceConnectionState = '';
       this.isConnected = false;
       this.isConnectionClosed = false;
@@ -216,10 +214,6 @@ input {
           if (this.isConnected) {
             this.connectStarted = false;
           }
-
-          const iceConnectionState = window.qencodeWebRTC?.peerConnection?.iceConnectionState;
-          this.iceConnectionState = iceConnectionState;
-          this.iceConnected = iceConnectionState === 'connected' || iceConnectionState === 'completed';
 
           const error = window.qencodeWebRTC.error;
 
@@ -458,9 +452,9 @@ input {
             ` : null
           }
           ${
-            this.iceConnectionState ? html`
+            this.connectionState ? html`
               <p class="state" id='iceState'>
-                ICE State: ${ this.iceConnectionState }
+                PeerConnection State: ${ this.connectionState }
               </p>
             ` : null
           }
