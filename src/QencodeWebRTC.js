@@ -391,7 +391,6 @@ function addMethod(instance) {
         };
         
         async function reconnectWebSocket(error) {
-          console.error('webSocket.onerror', error);
           errorHandler(error);
           
           if (
@@ -403,7 +402,7 @@ function addMethod(instance) {
           ) {
             instance.retriesUsed += 1;
             instance.retryingWebSocket = true; /* Prevent multiple concurrent retries if onerror runs too often. */
-            console.log(`Starting retry attempt ${instance.retriesUsed}`);
+            console.info(`Starting retry attempt ${instance.retriesUsed}`);
             
             // Close the failed WebSocket before retrying
             if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
