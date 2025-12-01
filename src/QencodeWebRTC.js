@@ -647,15 +647,15 @@ function addMethod(instance) {
             console.info(logHeader, 'Connection Connected', e);
           }
 
-          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-            console.error(logHeader, 'Connection Closed', e);
-            
-            // Retry on peerConnection failure if WebSocket is still open
-            if (state === 'failed' && instance.reconnectWebSocket && instance.webSocket && instance.webSocket.readyState === WebSocket.OPEN) {
-              console.info(logHeader, 'PeerConnection connectionState failed, initiating retry');
-              delayedCall(instance.reconnectWebSocket, ['PeerConnection connectionState failed'], instance.retryDelay);
-            }
-          }
+          // if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+          //   console.error(logHeader, 'Connection Closed', e);
+          //
+          //   // Retry on peerConnection failure if WebSocket is still open
+          //   if (state === 'failed' && instance.reconnectWebSocket && instance.webSocket && instance.webSocket.readyState === WebSocket.OPEN) {
+          //     console.info(logHeader, 'PeerConnection connectionState failed, initiating retry');
+          //     delayedCall(instance.reconnectWebSocket, ['PeerConnection connectionState failed'], instance.retryDelay);
+          //   }
+          // }
       };
 
       await peerConnection.setRemoteDescription(offer);
