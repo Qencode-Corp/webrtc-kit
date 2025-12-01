@@ -416,7 +416,12 @@ function addMethod(instance) {
             instance.webSocketCloseEvent = null;
             instance.peerConnection = null;
             
-            await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+            try {
+              await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+            } catch (e) {
+            
+            }
+            
             instance.retryingWebSocket = false;
           }
         }
