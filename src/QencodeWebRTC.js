@@ -557,14 +557,6 @@ function addMethod(instance) {
 
           console.info(logHeader, 'ICE State', '[' + state + ']');
           instance.iceLastEvent = e;
-
-          if (state === 'connected') {
-            console.info(logHeader, 'Iceconnection Connected', e);
-          }
-
-          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-            console.error(logHeader, 'Iceconnection Closed', e);
-          }
       };
 
       peerConnection.onconnectionstatechange = function (e) {
