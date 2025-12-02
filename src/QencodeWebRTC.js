@@ -157,7 +157,6 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function waitForOnline() {
   if (navigator.onLine) {
-    console.log('already online')
     return Promise.resolve()
   };
   
