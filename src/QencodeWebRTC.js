@@ -593,6 +593,16 @@ function addMethod(instance) {
           let state = peerConnection.connectionState;
           
           if (state === 'failed') {
+            if (instance.peerConnection) {
+              // remove tracks from peer connection
+              instance.peerConnection.getSenders().forEach(function (sender) {
+                instance.peerConnection.removeTrack(sender);
+              });
+              
+              instance.peerConnection.close();
+              instance.peerConnection = null;
+              delete instance.peerConnection;
+            }
             await delayedCall(requestOffer, [], 2000);
           }
           if (state === 'connected') {
