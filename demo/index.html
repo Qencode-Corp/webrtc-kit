@@ -528,20 +528,20 @@ input {
           <button
             id="disconect"
             class="stop"
-            ?disabled=${this.disconnectStarted || this.retryProcessActive}
+            ?disabled=${this.disconnectStarted || this.retryProcessActive || this.isOffline}
             @click=${this._onDisconnect}
           >
 
-            ${ this.disconnectStarted ? 'Stopping Stream' : 'Stop Stream' }
+            ${ this.isOffline ? 'Browser is offline' : (this.disconnectStarted ? 'Stopping Stream' : 'Stop Stream') }
           </button>`
       } else {
         return html`
           <button
             id="connect"
-            ?disabled=${this.connectStarted || this.disconnectStarted || this.retryProcessActive}
+            ?disabled=${this.connectStarted || this.disconnectStarted || this.retryProcessActive || this.isOffline}
             @click=${this._onConnect}
           >
-            ${ this.connectStarted ? 'Starting Stream' : `Start Stream` }
+            ${ this.isOffline ? 'Browser is offline' : (this.connectStarted ? 'Starting Stream' : `Start Stream`) }
           </button>
         `
       }
