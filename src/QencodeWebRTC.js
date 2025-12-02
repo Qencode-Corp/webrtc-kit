@@ -374,6 +374,7 @@ function addMethod(instance) {
 
         webSocket.onopen = function () {
           instance.retriesUsed = 0;
+          instance.offerRequestCount = 0;
           requestOffer();
         };
 
@@ -383,7 +384,7 @@ function addMethod(instance) {
             if (message.error) {
                 console.error('webSocket.onmessage', message.error);
                 errorHandler(message.error);
-                await delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
+                instance.reconnectWebSocketPromise = await delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
                 return;
             }
 
@@ -397,7 +398,7 @@ function addMethod(instance) {
                     message.candidates,
                     message.ice_servers
                   );
-                  instance.createPeerConnectionCount += 1;
+                  instance.createPeerConnectionCount += 1; // todo understand why is this and why it's not reset
                   instance.offerRequestCount = 0;
                 } catch (e) {
                   console.log('createPeerConnection error', e);
@@ -405,17 +406,15 @@ function addMethod(instance) {
                   if (instance.offerRequestCount < 3) {
                     requestOffer();
                   } else {
-                    await delayedCall(async () => {
-                      if (instance.createPeerConnectionCount === 0) {
-                        await reconnectWebSocket(e)
-                      }
-                    }, [], 2000)
+                    instance.reconnectWebSocketPromise = await delayedCall(reconnectWebSocket, [], instance.retryDelay)
                   }
                 }
             }
         };
         
         async function reconnectWebSocket() {
+          await waitForOnline();
+          
           if (instance.reconnectWebSocketPromise) {
             await instance.reconnectWebSocketPromise;
           }
@@ -453,7 +452,6 @@ function addMethod(instance) {
             }
             resolve();
           });
-          instance.reconnectWebSocketPromise = promise;
           
           return promise;
         }
@@ -467,7 +465,7 @@ function addMethod(instance) {
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
               await waitForOnline();
-              await delayedCall(reconnectWebSocket, [], instance.retryDelay)
+              instance.reconnectWebSocketPromise = await delayedCall(reconnectWebSocket, [], instance.retryDelay)
             } else {
               console.log("Connection closed normally.");
             }
