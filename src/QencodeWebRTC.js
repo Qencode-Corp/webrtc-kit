@@ -422,10 +422,21 @@ function addMethod(instance) {
           instance.connectStarted = true;
           
           const promise = new Promise(async function (resolve) {
+            let disconnected = true;
+            if (instance.peerConnection) {
+              if (![
+                'failed',
+                'disconnected',
+                'closed',
+              ].includes(instance.peerConnection.iceConnectionState)) {
+                disconnected = false;
+              }
+            }
             if (
               Number.isFinite(instance.retryDelay) &&
               Number.isFinite(instance.retryMaxCount) &&
-              instance.retriesUsed < instance.retryMaxCount
+              instance.retriesUsed < instance.retryMaxCount &&
+              disconnected
             ) {
               instance.retriesUsed += 1;
               console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
