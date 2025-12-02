@@ -37,6 +37,7 @@
       dimensions: { type: String },
       videoDevices: { type: Array },
       selectedDeviceId: { type: String },
+      isOffline: { type: Boolean },
     };
 
     static styles = css`
@@ -178,6 +179,9 @@ input {
       this.videoDevices = [];
       this.selectedDeviceId = null;
       this.connectionState = null;
+      this.isOffline = !navigator.onLine;
+      this._handleOnline = this._handleOnline.bind(this);
+      this._handleOffline = this._handleOffline.bind(this);
     }
 
     async connectedCallback() {
@@ -187,12 +191,14 @@ input {
       await this._initDevices();
       await this._initStream();
       this._startLoop();
+      this._initOnlineOfflineListeners();
     }
 
     disconnectedCallback() {
       super.disconnectedCallback();
 
       this._stopLoop();
+      this._removeOnlineOfflineListeners();
     }
 
     _startLoop() {
@@ -265,6 +271,24 @@ input {
         cancelAnimationFrame(this._rafId);
         this._rafId = null;
       }
+    }
+
+    _initOnlineOfflineListeners() {
+      window.addEventListener('online', this._handleOnline);
+      window.addEventListener('offline', this._handleOffline);
+    }
+
+    _removeOnlineOfflineListeners() {
+      window.removeEventListener('online', this._handleOnline);
+      window.removeEventListener('offline', this._handleOffline);
+    }
+
+    _handleOnline() {
+      this.isOffline = false;
+    }
+
+    _handleOffline() {
+      this.isOffline = true;
     }
 
     async _onConnect(e) {
