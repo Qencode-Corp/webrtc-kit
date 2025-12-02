@@ -471,6 +471,7 @@ function addMethod(instance) {
             } else {
               console.log("Connection closed normally.");
             }
+            instance.connectStarted = false;
         };
     }
     
