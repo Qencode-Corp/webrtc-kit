@@ -142,6 +142,7 @@ function gotDevices(deviceInfos) {
 function initConfig(instance) {
     instance.connectionConfig = {};
     instance.connectionUrl = null;
+    instance.connectStarted = false;
     instance.error = null;
     instance.offerRequestCount = 0;
     instance.peerConnection = null;
@@ -400,6 +401,7 @@ function addMethod(instance) {
                   );
 
                   instance.offerRequestCount = 0;
+                  instance.connectStarted = false;
                 } catch (e) {
                   console.log('createPeerConnection error', e);
                   

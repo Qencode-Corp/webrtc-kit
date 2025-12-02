@@ -216,10 +216,6 @@ input {
 
           if (this.isConnectionClosed) {
             this.disconnectStarted = false;
-            this.connectStarted = false;
-          }
-          if (this.isConnected) {
-            this.connectStarted = false;
           }
 
           const error = window.qencodeWebRTC.error;
@@ -230,7 +226,6 @@ input {
             } else {
               this.error = 'Socket connection error.'
             }
-            this.connectStarted = false;
           } else {
             this.error = null;
           }
@@ -238,7 +233,6 @@ input {
           const webSocketCloseEvent = window.qencodeWebRTC.webSocketCloseEvent;
           if (webSocketCloseEvent) {
             this.webSocketCloseError = this._websocketCloseEventToErrorMessage(webSocketCloseEvent);
-            this.connectStarted = false;
           } else {
             this.webSocketCloseError = null;
           }
@@ -251,6 +245,7 @@ input {
         if (time % 8 === 0 && window.qencodeWebRTC) {
           this.retryProcessActive = !!window.qencodeWebRTC.reconnectWebSocketPromise;
           this.connectionState = window.qencodeWebRTC?.peerConnection?.connectionState;
+          this.connectStarted = window.qencodeWebRTC?.connectStarted;
         }
         this._rafId = requestAnimationFrame(tick);
       }
@@ -292,7 +287,7 @@ input {
 
       if (!( this.connectStarted || this.retryProcessActive )) {
         this._clearErrors();
-        this.connectStarted = true;
+        qencodeWebRTC.connectStarted = true;
         try {
           qencodeWebRTC.startStreaming(this.serverUrl);
         } catch (error) {
