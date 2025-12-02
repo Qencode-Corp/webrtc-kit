@@ -573,7 +573,6 @@ function addMethod(instance) {
           if (state === 'connected') {
             instance.error = null;
             instance.webSocketCloseEvent = null;
-            console.info(logHeader, 'Connection Connected', e);
           }
       };
 
