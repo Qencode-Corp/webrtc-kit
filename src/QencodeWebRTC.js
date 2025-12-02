@@ -403,6 +403,7 @@ function addMethod(instance) {
                   instance.offerRequestCount = 0;
                   instance.connectStarted = false;
                 } catch (e) {
+                  instance.connectStarted = false;
                   console.log('createPeerConnection error', e);
                   
                   if (instance.offerRequestCount < 3) {
