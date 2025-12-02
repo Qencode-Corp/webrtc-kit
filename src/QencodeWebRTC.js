@@ -210,6 +210,52 @@ function setBitrateLimit(sdp, media, bitrate) {
   return joinSdpLines(newLines)
 }
 
+function appendFmtp(fmtpStr, sdp) {
+  const lines = splitSdpLines(sdp);
+  const payloads = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    
+    if (lines[i].indexOf('m=video') === 0) {
+      
+      let tokens = lines[i].split(' ')
+      
+      for (let j = 3; j < tokens.length; j++) {
+        
+        payloads.push(tokens[j]);
+      }
+      
+      break;
+    }
+  }
+  
+  for (let i = 0; i < payloads.length; i++) {
+    
+    let fmtpLineFound = false;
+    
+    for (let j = 0; j < lines.length; j++) {
+      
+      if (lines[j].indexOf('a=fmtp:' + payloads[i]) === 0) {
+        fmtpLineFound = true;
+        lines[j] += ';' + fmtpStr;
+      }
+    }
+    
+    if (!fmtpLineFound) {
+      
+      for (let j = 0; j < lines.length; j++) {
+        
+        if (lines[j].indexOf('a=rtpmap:' + payloads[i]) === 0) {
+          
+          lines[j] += '\r\na=fmtp:' + payloads[i] + ' ' + fmtpStr;
+        }
+      }
+    }
+  }
+  
+  return joinSdpLines(lines)
+}
+
 
 function addMethod(instance) {
 
@@ -418,53 +464,7 @@ function addMethod(instance) {
         };
 
     }
-
-    function appendFmtp(fmtpStr, sdp) {
-        const lines = splitSdpLines(sdp);
-        const payloads = [];
-
-        for (let i = 0; i < lines.length; i++) {
-
-            if (lines[i].indexOf('m=video') === 0) {
-
-                let tokens = lines[i].split(' ')
-
-                for (let j = 3; j < tokens.length; j++) {
-
-                    payloads.push(tokens[j]);
-                }
-
-                break;
-            }
-        }
-
-        for (let i = 0; i < payloads.length; i++) {
-
-            let fmtpLineFound = false;
-
-            for (let j = 0; j < lines.length; j++) {
-
-                if (lines[j].indexOf('a=fmtp:' + payloads[i]) === 0) {
-                    fmtpLineFound = true;
-                    lines[j] += ';' + fmtpStr;
-                }
-            }
-
-            if (!fmtpLineFound) {
-
-                for (let j = 0; j < lines.length; j++) {
-
-                    if (lines[j].indexOf('a=rtpmap:' + payloads[i]) === 0) {
-
-                        lines[j] += '\r\na=fmtp:' + payloads[i] + ' ' + fmtpStr;
-                    }
-                }
-            }
-        }
-
-        return joinSdpLines(lines)
-    }
-
+    
     async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
         window.connectionData = {
             id,
