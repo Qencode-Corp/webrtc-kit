@@ -432,9 +432,6 @@ function addMethod(instance) {
           }
         }
         
-        // Store reconnectWebSocket on instance so it can be accessed from createPeerConnection
-        instance.reconnectWebSocket = reconnectWebSocket;
-
         webSocket.onerror = (e) => console.error('webSocket.onerror', e);
 
         webSocket.onclose = async function (event) {
