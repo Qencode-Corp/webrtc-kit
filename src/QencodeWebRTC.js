@@ -384,7 +384,8 @@ function addMethod(instance) {
             if (message.error) {
                 console.error('webSocket.onmessage', message.error);
                 errorHandler(message.error);
-                instance.reconnectWebSocketPromise = await delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
+                instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
+                await instance.reconnectWebSocketPromise;
                 return;
             }
 
@@ -406,7 +407,8 @@ function addMethod(instance) {
                   if (instance.offerRequestCount < 3) {
                     requestOffer();
                   } else {
-                    instance.reconnectWebSocketPromise = await delayedCall(reconnectWebSocket, [], instance.retryDelay)
+                    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
+                    await instance.reconnectWebSocketPromise;
                   }
                 }
             }
@@ -465,7 +467,8 @@ function addMethod(instance) {
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
               await waitForOnline();
-              instance.reconnectWebSocketPromise = await delayedCall(reconnectWebSocket, [], instance.retryDelay)
+              instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
+              await instance.reconnectWebSocketPromise;
             } else {
               console.log("Connection closed normally.");
             }
