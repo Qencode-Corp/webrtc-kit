@@ -345,6 +345,13 @@ function addMethod(instance) {
                 });
             });
     }
+  
+    function requestOffer() {
+      sendMessage(instance.webSocket, {
+        command: 'request_offer'
+      });
+      instance.offerRequestCount += 1;
+    }
     
     function initWebSocket(connectionUrl) {
         if (!connectionUrl) {
@@ -363,13 +370,6 @@ function addMethod(instance) {
         }
         
         instance.webSocket = webSocket;
-        
-        function requestOffer() {
-          sendMessage(instance.webSocket, {
-            command: 'request_offer'
-          });
-          instance.offerRequestCount += 1;
-        }
 
         webSocket.onopen = function () {
           instance.retriesUsed = 0;
