@@ -150,7 +150,6 @@ function initConfig(instance) {
     instance.retriesUsed = 0;
     instance.peerConnection = null;
     instance.createPeerConnectionCount = 0;
-    instance.status = 'creating';
     instance.error = null;
     instance.offerRequestCount = 0;
 }
@@ -403,7 +402,6 @@ function addMethod(instance) {
           errorHandler(error);
           
           if (
-            !instance.removing &&
             !instance.retryingWebSocket &&
             Number.isFinite(instance.retryDelay) &&
             Number.isFinite(instance.retryMaxCount) &&
@@ -448,12 +446,8 @@ function addMethod(instance) {
             } else {
               console.log("Connection closed normally.");
             }
-            
-            if (!instance.removing) {
-              instance.webSocketCloseEvent = event;
-            }
+            instance.webSocketCloseEvent = event;
         };
-
     }
     
     async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
@@ -658,7 +652,6 @@ function addMethod(instance) {
     };
 
     instance.remove = function () {
-        instance.removing = true;
 
         // first release peer connection with ome
         if (instance.peerConnection) {
@@ -700,7 +693,6 @@ function addMethod(instance) {
             delete instance.webSocket;
         }
 
-        instance.status = 'removed';
         console.info(logEventHeader, 'Removed');
     };
 }
@@ -712,7 +704,6 @@ QencodeWebRTC.create = function () {
       retryDelay: 2000,
     };
 
-    instance.removing = false;
     initConfig(instance);
     addMethod(instance);
 
