@@ -463,6 +463,7 @@ function addMethod(instance) {
 
         webSocket.onclose = async function (event) {
             console.log('Connection closed', event);
+            instance.webSocketCloseEvent = event;
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
               await waitForOnline();
@@ -470,7 +471,6 @@ function addMethod(instance) {
             } else {
               console.log("Connection closed normally.");
             }
-            instance.webSocketCloseEvent = event;
         };
     }
     
