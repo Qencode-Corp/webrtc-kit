@@ -526,12 +526,12 @@ input {
             ${ this.isOffline ? 'Browser is offline' : (this.disconnectStarted ? 'Stopping Stream' : 'Stop Stream') }
           </button>`
       } else {
-        console.table( {
-          connectStarted: this.connectStarted,
-          disconnectStarted: this.disconnectStarted,
-          retryProcessActive: this.retryProcessActive,
-          connectionState: this.connectionState,
-        })
+        // console.table( {
+        //   connectStarted: this.connectStarted,
+        //   disconnectStarted: this.disconnectStarted,
+        //   retryProcessActive: this.retryProcessActive,
+        //   connectionState: this.connectionState,
+        // })
         return html`
           <button
             id="connect"
