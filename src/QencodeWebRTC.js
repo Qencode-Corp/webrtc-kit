@@ -426,7 +426,7 @@ function addMethod(instance) {
           ) {
             instance.retriesUsed += 1;
             instance.retryingWebSocket = true; /* Prevent multiple concurrent retries if onerror runs too often. */
-            console.info(`${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
+            console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
             
             // Close the failed WebSocket before retrying
             if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
