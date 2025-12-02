@@ -592,7 +592,7 @@ function addMethod(instance) {
       peerConnection.onconnectionstatechange = async function (e) {
           let state = peerConnection.connectionState;
           
-          if (state === 'failed') {
+          if (state === 'failed' || state === 'disconnected') {
             if (instance.peerConnection) {
               // remove tracks from peer connection
               instance.peerConnection.getSenders().forEach(function (sender) {
