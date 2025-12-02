@@ -538,7 +538,7 @@ input {
         return html`
           <button
             id="connect"
-            ?disabled=${this.connectStarted || this.disconnectStarted || this.retryProcessActive || this.isOffline}
+            ?disabled=${this.connectStarted || this.disconnectStarted || this.retryProcessActive || this.isOffline || ['new', 'connecting'].includes(this.connectionState)}
             @click=${this._onConnect}
           >
             ${ this.isOffline ? 'Browser is offline' : (this.connectStarted ? 'Starting Stream' : `Start Stream`) }
