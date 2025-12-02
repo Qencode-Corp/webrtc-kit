@@ -226,9 +226,7 @@ function addMethod(instance) {
     }
 
     function getUserMedia(constraints) {
-
         if (!constraints) {
-
             constraints = {
                 video: {
                     deviceId: undefined
@@ -238,36 +236,26 @@ function addMethod(instance) {
                 }
             };
         }
-
-        console.info(logHeader, 'Requested Constraint To Input Devices', constraints);
-
+        
         return navigator.mediaDevices.getUserMedia(constraints)
             .then(function (stream) {
-
                 console.info(logHeader, 'Received Media Stream From Input Device', stream);
-
                 instance.stream = stream;
-
                 let elem = instance.videoElement;
 
                 // Attach stream to video element when video element is provided.
                 if (elem) {
-
                     elem.srcObject = stream;
-
                     elem.onloadedmetadata = function (e) {
-
                         elem.play();
                     };
                 }
 
                 return new Promise(function (resolve) {
-
                     resolve(stream);
                 });
             })
             .catch(function (error) {
-
                 console.error(logHeader, 'Can\'t Get Media Stream From Input Device', error);
                 errorHandler(error);
 
@@ -278,40 +266,29 @@ function addMethod(instance) {
     }
 
     function getDisplayMedia(constraints) {
-
         if (!constraints) {
             constraints = {};
         }
 
-        console.info(logHeader, 'Requested Constraint To Display', constraints);
-
         return navigator.mediaDevices.getDisplayMedia(constraints)
             .then(function (stream) {
-
                 console.info(logHeader, 'Received Media Stream From Display', stream);
-
                 instance.stream = stream;
-
                 let elem = instance.videoElement;
 
                 // Attach stream to video element when video element is provided.
                 if (elem) {
-
                     elem.srcObject = stream;
-
                     elem.onloadedmetadata = function (e) {
-
                         elem.play();
                     };
                 }
 
                 return new Promise(function (resolve) {
-
                     resolve(stream);
                 });
             })
             .catch(function (error) {
-
                 console.error(logHeader, 'Can\'t Get Media Stream From Display', error);
                 errorHandler(error);
 
@@ -356,7 +333,6 @@ function addMethod(instance) {
         };
 
         webSocket.onmessage = async function (e) {
-
             let message = JSON.parse(e.data);
 
             if (message.error) {
@@ -367,7 +343,6 @@ function addMethod(instance) {
             }
 
             if (message.command === 'offer') {
-
                 // OME returns offer. Start create peer connection.
                 try {
                   await createPeerConnection(
@@ -502,7 +477,6 @@ function addMethod(instance) {
     }
 
     async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
-
         window.connectionData = {
             id,
             peerId
@@ -525,20 +499,15 @@ function addMethod(instance) {
             peerConnectionConfig.iceServers = [];
 
             for (let i = 0; i < iceServers.length; i++) {
-
                 let iceServer = iceServers[i];
-
                 let regIceServer = {};
-
                 regIceServer.urls = iceServer.urls;
-
                 let hasWebSocketUrl = false;
                 let webSocketUrl = generateDomainFromUrl(instance.connectionUrl);
 
                 for (let j = 0; j < regIceServer.urls.length; j++) {
-
                     let serverUrl = regIceServer.urls[j];
-
+                    
                     if (serverUrl.indexOf(webSocketUrl) > -1) {
                         hasWebSocketUrl = true;
                         break;
@@ -582,7 +551,6 @@ function addMethod(instance) {
 
         // set local stream
         instance.stream.getTracks().forEach(function (track) {
-
             console.info(logHeader, 'Add Track To Peer Connection', track);
             peerConnection.addTrack(track, instance.stream);
         });
@@ -597,24 +565,19 @@ function addMethod(instance) {
         }
 
         if (instance.connectionConfig.maxVideoBitrate) {
-
             // if bandwith limit is set. modify sdp from ome to limit acceptable bandwidth of ome
             offer.sdp = setBitrateLimit(offer.sdp, 'video', instance.connectionConfig.maxVideoBitrate);
         }
 
         if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
-
             offer.sdp = appendFmtp(offer.sdp);
         }
         
         
       // Set up event handlers BEFORE setRemoteDescription to avoid missing events
       peerConnection.onicecandidate = function (e) {
-
             if (e.candidate && e.candidate.candidate) {
-
                 console.info(logHeader, 'Candidate Sent', '\n', e.candidate.candidate, '\n', e);
-
                 sendMessage(instance.webSocket, {
                     id: id,
                     peer_id: peerId,
@@ -662,15 +625,12 @@ function addMethod(instance) {
       };
 
       await peerConnection.setRemoteDescription(offer);
-
       const answer = await peerConnection.createAnswer();
 
       if (checkIOSVersion() >= 15) {
-
           const formatNumber = getFormatNumber(answer.sdp, 'H264');
-
+          
           if (formatNumber > 0) {
-
               answer.sdp = removeFormat(answer.sdp, formatNumber);
           }
       }
@@ -698,7 +658,6 @@ function addMethod(instance) {
         for (let i = 0; i < candidates.length; i++) {
 
             if (candidates[i] && candidates[i].candidate) {
-
                 let basicCandidate = candidates[i];
 
                 try {
@@ -713,28 +672,22 @@ function addMethod(instance) {
 
     // instance methods
     instance.attachMedia = function (videoElement) {
-
         instance.videoElement = videoElement;
     };
 
     instance.getUserMedia = function (constraints) {
-
         return getUserMedia(constraints);
     };
 
     instance.getDisplayMedia = function (constraints) {
-
         return getDisplayMedia(constraints);
     };
 
     instance.startStreaming = function (connectionUrl, connectionConfig) {
-
         connectionUrl+="?direction=send&transport=tcp"
-
         console.info(logEventHeader, 'Start Streaming');
 
         if (connectionConfig) {
-
             instance.connectionConfig = connectionConfig;
         }
         
@@ -743,12 +696,10 @@ function addMethod(instance) {
     };
 
     instance.remove = function () {
-
         instance.removing = true;
 
         // first release peer connection with ome
         if (instance.peerConnection) {
-
             // remove tracks from peer connection
             instance.peerConnection.getSenders().forEach(function (sender) {
                 instance.peerConnection.removeTrack(sender);
@@ -761,9 +712,7 @@ function addMethod(instance) {
 
         // release video, audio stream
         if (instance.stream) {
-
             instance.stream.getTracks().forEach(track => {
-
                 track.stop();
                 instance.stream.removeTrack(track);
             });
@@ -778,7 +727,6 @@ function addMethod(instance) {
 
         // release websocket
         if (instance.webSocket) {
-            
             sendMessage(instance.webSocket, {
                 id: window.connectionData.id,
                 peer_id: window.connectionData.peerId,
@@ -791,24 +739,18 @@ function addMethod(instance) {
         }
 
         instance.status = 'removed';
-
         console.info(logEventHeader, 'Removed');
-
     };
 }
 
 // static methods
 QencodeWebRTC.create = function () {
-
-    console.info(logEventHeader, 'Create WebRTC');
-
     let instance = {
       retryMaxCount: 2,
       retryDelay: 2000,
     };
 
     instance.removing = false;
-
     initConfig(instance);
     addMethod(instance);
 
@@ -816,7 +758,6 @@ QencodeWebRTC.create = function () {
 };
 
 QencodeWebRTC.getDevices = async function () {
-
     await getStreamForDeviceCheck();
     const deviceInfos = await getDevices();
     return gotDevices(deviceInfos)
