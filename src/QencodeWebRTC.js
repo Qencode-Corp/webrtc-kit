@@ -386,6 +386,7 @@ function addMethod(instance) {
                 errorHandler(message.error);
                 instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
                 await instance.reconnectWebSocketPromise;
+                instance.reconnectWebSocketPromise = null;
                 return;
             }
 
@@ -409,6 +410,7 @@ function addMethod(instance) {
                   } else {
                     instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
                     await instance.reconnectWebSocketPromise;
+                    instance.reconnectWebSocketPromise = null;
                   }
                 }
             }
@@ -419,6 +421,7 @@ function addMethod(instance) {
           
           if (instance.reconnectWebSocketPromise) {
             await instance.reconnectWebSocketPromise;
+            instance.reconnectWebSocketPromise = null;
           }
 
           const promise = new Promise(async function (resolve) {
@@ -469,6 +472,7 @@ function addMethod(instance) {
               await waitForOnline();
               instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
               await instance.reconnectWebSocketPromise;
+              instance.reconnectWebSocketPromise = null;
             } else {
               console.log("Connection closed normally.");
             }
