@@ -589,9 +589,12 @@ function addMethod(instance) {
           instance.iceLastEvent = e;
       };
 
-      peerConnection.onconnectionstatechange = function (e) {
+      peerConnection.onconnectionstatechange = async function (e) {
           let state = peerConnection.connectionState;
-
+          
+          if (state === 'failed') {
+            await delayedCall(requestOffer, [], 2000);
+          }
           if (state === 'connected') {
             instance.error = null;
             instance.webSocketCloseEvent = null;
