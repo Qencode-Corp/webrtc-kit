@@ -155,7 +155,10 @@ function initConfig(instance) {
 }
 
 function waitForOnline() {
-  if (navigator.onLine) return Promise.resolve();
+  if (navigator.onLine) {
+    console.log('already online')
+    return Promise.resolve()
+  };
   
   return new Promise((resolve) => {
     console.log("Offline. Waiting for connection...");
