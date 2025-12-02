@@ -247,7 +247,8 @@ input {
           this.webSocketActive = !!webSocket;
           const webSocketReadyState = webSocketReadyStates[ webSocket?.readyState ];
           this.webSocketReadyState = webSocketReadyState;
-
+        }
+        if (time % 3 === 0 && window.qencodeWebRTC) {
           this.retryProcessActive = !!window.qencodeWebRTC.reconnectWebSocketPromise;
           this.connectionState = window.qencodeWebRTC?.peerConnection?.connectionState;
         }
