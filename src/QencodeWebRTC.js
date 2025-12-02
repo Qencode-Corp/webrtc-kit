@@ -416,7 +416,7 @@ function addMethod(instance) {
             }
         };
         
-        async function reconnectWebSocket(error) {
+        async function reconnectWebSocket() {
           
           if (
             !instance.retryingWebSocket &&
