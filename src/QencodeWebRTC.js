@@ -366,7 +366,7 @@ function addMethod(instance) {
             if (message.error) {
                 console.error('webSocket.onmessage', message.error);
                 errorHandler(message.error);
-                await delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
+                    await delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
                 return;
             }
 
