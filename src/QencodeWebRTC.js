@@ -91,7 +91,6 @@ function removeFormat(sdp, formatNumber) {
 }
 
 async function getStreamForDeviceCheck() {
-
     // High resolution video constraints makes browser to get maximum resolution of video device.
     const constraints = {
         audio: { deviceId: undefined },
@@ -102,10 +101,7 @@ async function getStreamForDeviceCheck() {
 }
 
 async function getDevices() {
-
     return await navigator.mediaDevices.enumerateDevices();
-
-
 }
 
 function gotDevices(deviceInfos) {
@@ -152,18 +148,14 @@ function initConfig(instance) {
     instance.connectionUrl = null;
     instance.connectionConfig = {};
     instance.stream = null;
-    
     instance.webSocket = null;
     instance.webSocketCloseEvent = null;
     instance.retryingWebSocket = false;
     instance.retriesUsed = 0;
-    
     instance.peerConnection = null;
     instance.createPeerConnectionCount = 0;
-    
     instance.status = 'creating';
     instance.error = null;
-    
     instance.offerRequestCount = 0;
 }
 
@@ -427,10 +419,7 @@ function addMethod(instance) {
 
     }
 
-    function appendFmtp(sdp) {
-
-        const fmtpStr = instance.connectionConfig.sdp.appendFmtp;
-
+    function appendFmtp(fmtpStr, sdp) {
         const lines = splitSdpLines(sdp);
         const payloads = [];
 
@@ -570,7 +559,7 @@ function addMethod(instance) {
         }
 
         if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
-            offer.sdp = appendFmtp(offer.sdp);
+            offer.sdp = appendFmtp(instance.connectionConfig.sdp.appendFmtp, offer.sdp);
         }
         
         
@@ -636,7 +625,7 @@ function addMethod(instance) {
       }
 
       if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
-          answer.sdp = appendFmtp(answer.sdp);
+          answer.sdp = appendFmtp(instance.connectionConfig.sdp.appendFmtp, answer.sdp);
       }
 
       await peerConnection.setLocalDescription(answer);
