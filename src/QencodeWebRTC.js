@@ -162,6 +162,22 @@ function delayedCall(fn, args, delay) {
   });
 }
 
+function waitForOnline() {
+  return new Promise((resolve) => {
+    if (navigator.onLine) {
+      resolve();
+      return;
+    }
+    
+    const handleOnline = () => {
+      window.removeEventListener('online', handleOnline);
+      resolve();
+    };
+    
+    window.addEventListener('online', handleOnline);
+  });
+}
+
 // From https://webrtchacks.com/limit-webrtc-bandwidth-sdp/
 function setBitrateLimit(sdp, media, bitrate) {
   
