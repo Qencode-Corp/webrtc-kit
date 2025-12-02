@@ -220,7 +220,7 @@ input {
 
           const error = window.qencodeWebRTC.error;
 
-          if (error) {
+          if (error && !window.qencodeWebRTC.reconnectWebSocketPromise) {
             if (typeof error === 'string') {
               this.error = "Socket connection error: " + error;
             } else {
