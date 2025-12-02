@@ -5,7 +5,6 @@ const logEventHeader = 'QencodeWebRTC.js :';
 
 // private methods
 function sendMessage(webSocket, message) {
-
     if (webSocket) {
         webSocket.send(JSON.stringify(message));
     }
@@ -22,7 +21,6 @@ function generateDomainFromUrl(url) {
 }
 
 function findIp(string) {
-
     let result = '';
     let match;
 
@@ -54,12 +52,10 @@ function joinSdpLines(lines) {
 }
 
 function getFormatNumber(sdp, format) {
-
     const lines = splitSdpLines(sdp);
     let formatNumber = -1;
 
     for (let i = 0; i < lines.length - 1; i++) {
-
         lines[i] = lines[i].toLowerCase();
 
         if (lines[i].indexOf('a=rtpmap') > -1 && lines[i].indexOf(format.toLowerCase()) > -1) {
@@ -256,7 +252,6 @@ function appendFmtp(fmtpStr, sdp) {
   return joinSdpLines(lines)
 }
 
-
 function addMethod(instance) {
 
     function errorHandler(error) {
@@ -335,10 +330,8 @@ function addMethod(instance) {
                 });
             });
     }
-
-
+    
     function initWebSocket(connectionUrl) {
-
         if (!connectionUrl) {
             errorHandler('connectionUrl is required');
             return;
@@ -347,15 +340,13 @@ function addMethod(instance) {
         instance.connectionUrl = connectionUrl;
 
         let webSocket = null;
-
         try {
             webSocket = new WebSocket(connectionUrl);
         } catch (error) {
             errorHandler(error);
             return;
         }
-
-
+        
         instance.webSocket = webSocket;
         
         function requestOffer() {
@@ -504,9 +495,7 @@ function addMethod(instance) {
                 }
 
                 if (!hasWebSocketUrl) {
-
                     if (regIceServer.urls.length > 0) {
-
                         let cloneIceServer = regIceServer.urls[0];
                         let ip = findIp(cloneIceServer);
 
@@ -518,16 +507,13 @@ function addMethod(instance) {
 
                 regIceServer.username = iceServer.user_name;
                 regIceServer.credential = iceServer.credential;
-
                 peerConnectionConfig.iceServers.push(regIceServer);
             }
 
             peerConnectionConfig.iceTransportPolicy = 'relay';
         } else {
             // last priority using default ice servers.
-
             if (instance.iceTransportPolicy) {
-
                 peerConnectionConfig.iceTransportPolicy = instance.iceTransportPolicy;
             }
         }
@@ -535,7 +521,6 @@ function addMethod(instance) {
         console.info(logHeader, 'Create Peer Connection With Config', peerConnectionConfig);
 
         let peerConnection = new RTCPeerConnection(peerConnectionConfig);
-
         instance.peerConnection = peerConnection;
 
         // set local stream
@@ -594,23 +579,11 @@ function addMethod(instance) {
       peerConnection.onconnectionstatechange = function (e) {
           let state = peerConnection.connectionState;
 
-          console.info(logHeader, 'Connection State', '[' + state + ']');
-
           if (state === 'connected') {
             instance.error = null;
             instance.webSocketCloseEvent = null;
             console.info(logHeader, 'Connection Connected', e);
           }
-
-          // if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-          //   console.error(logHeader, 'Connection Closed', e);
-          //
-          //   // Retry on peerConnection failure if WebSocket is still open
-          //   if (state === 'failed' && instance.reconnectWebSocket && instance.webSocket && instance.webSocket.readyState === WebSocket.OPEN) {
-          //     console.info(logHeader, 'PeerConnection connectionState failed, initiating retry');
-          //     delayedCall(instance.reconnectWebSocket, ['PeerConnection connectionState failed'], instance.retryDelay);
-          //   }
-          // }
       };
 
       await peerConnection.setRemoteDescription(offer);
