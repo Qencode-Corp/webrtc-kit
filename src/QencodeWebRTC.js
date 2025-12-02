@@ -453,7 +453,7 @@ function addMethod(instance) {
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
               await waitForOnline();
-              await delayedCall(reconnectWebSocket, [], 500)
+              await delayedCall(reconnectWebSocket, [], instance.retryDelay)
             } else {
               console.log("Connection closed normally.");
             }
