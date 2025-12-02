@@ -419,6 +419,7 @@ function addMethod(instance) {
         
         async function reconnectWebSocket() {
           await waitForOnline();
+          instance.connectStarted = true;
           
           const promise = new Promise(async function (resolve) {
             if (
@@ -447,6 +448,7 @@ function addMethod(instance) {
               } catch (e) {
               
               } finally {
+                instance.connectStarted = false;
                 resolve();
               }
               
