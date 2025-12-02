@@ -142,7 +142,6 @@ function gotDevices(deviceInfos) {
 function initConfig(instance) {
     instance.connectionConfig = {};
     instance.connectionUrl = null;
-    instance.createPeerConnectionCount = 0;
     instance.error = null;
     instance.offerRequestCount = 0;
     instance.peerConnection = null;
@@ -399,7 +398,7 @@ function addMethod(instance) {
                     message.candidates,
                     message.ice_servers
                   );
-                  instance.createPeerConnectionCount += 1; // todo understand why is this and why it's not reset
+
                   instance.offerRequestCount = 0;
                 } catch (e) {
                   console.log('createPeerConnection error', e);
