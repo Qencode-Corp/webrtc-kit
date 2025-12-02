@@ -140,18 +140,18 @@ function gotDevices(deviceInfos) {
 }
 
 function initConfig(instance) {
-    instance.videoElement = null;
-    instance.connectionUrl = null;
     instance.connectionConfig = {};
-    instance.stream = null;
-    instance.webSocket = null;
-    instance.webSocketCloseEvent = null;
-    instance.retryingWebSocket = false;
-    instance.retriesUsed = 0;
-    instance.peerConnection = null;
+    instance.connectionUrl = null;
     instance.createPeerConnectionCount = 0;
     instance.error = null;
     instance.offerRequestCount = 0;
+    instance.peerConnection = null;
+    instance.retriesUsed = 0;
+    instance.retryingWebSocket = false;
+    instance.stream = null;
+    instance.videoElement = null;
+    instance.webSocket = null;
+    instance.webSocketCloseEvent = null;
 }
 
 function delayedCall(fn, args, delay) {
