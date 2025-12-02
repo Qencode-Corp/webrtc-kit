@@ -465,7 +465,6 @@ function addMethod(instance) {
             instance.webSocketCloseEvent = event;
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
-              await waitForOnline();
               instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
               await instance.reconnectWebSocketPromise;
               instance.reconnectWebSocketPromise = null;
