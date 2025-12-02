@@ -154,27 +154,24 @@ function initConfig(instance) {
     instance.webSocketCloseEvent = null;
 }
 
+function waitForOnline() {
+  if (navigator.onLine) return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    console.log("Offline. Waiting for connection...");
+    // Use { once: true } to auto-remove the listener after it fires
+    window.addEventListener('online', () => {
+      console.log("Back online!");
+      resolve();
+    }, { once: true });
+  });
+}
+
 function delayedCall(fn, args, delay) {
   return new Promise(resolve => {
     setTimeout(() => {
       Promise.resolve(fn(...args)).then(resolve);
     }, delay);
-  });
-}
-
-function waitForOnline() {
-  return new Promise((resolve) => {
-    if (navigator.onLine) {
-      resolve();
-      return;
-    }
-    
-    const handleOnline = () => {
-      window.removeEventListener('online', handleOnline);
-      resolve();
-    };
-    
-    window.addEventListener('online', handleOnline);
   });
 }
 
@@ -455,7 +452,8 @@ function addMethod(instance) {
             console.log('Connection closed', event);
             // Check if the close was clean (1000) or caused by an issue
             if (event.code !== 1000) {
-              await delayedCall(reconnectWebSocket, [], instance.retryDelay)
+              await waitForOnline();
+              await delayedCall(reconnectWebSocket, [], 500)
             } else {
               console.log("Connection closed normally.");
             }
