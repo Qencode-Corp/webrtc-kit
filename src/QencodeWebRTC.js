@@ -147,7 +147,6 @@ function initConfig(instance) {
     instance.offerRequestCount = 0;
     instance.peerConnection = null;
     instance.retriesUsed = 0;
-    instance.retryingWebSocket = false;
     instance.stream = null;
     instance.videoElement = null;
     instance.webSocket = null;
@@ -417,37 +416,46 @@ function addMethod(instance) {
         };
         
         async function reconnectWebSocket() {
-          
-          if (
-            !instance.retryingWebSocket &&
-            Number.isFinite(instance.retryDelay) &&
-            Number.isFinite(instance.retryMaxCount) &&
-            instance.retriesUsed < instance.retryMaxCount
-          ) {
-            instance.retriesUsed += 1;
-            instance.retryingWebSocket = true; /* Prevent multiple concurrent retries if onerror runs too often. */
-            console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
-            
-            // Close the failed WebSocket before retrying
-            if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
-              instance.webSocket.onerror = null; // Remove handlers to prevent stale events
-              instance.webSocket.onclose = null;
-              instance.webSocket.onmessage = null;
-              instance.webSocket.onopen = null;
-              instance.webSocket.close();
-            }
-            instance.error = null;
-            instance.webSocketCloseEvent = null;
-            instance.peerConnection = null;
-            
-            try {
-              await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
-            } catch (e) {
-            
-            }
-            
-            instance.retryingWebSocket = false;
+          if (instance.reconnectWebSocketPromise) {
+            await instance.reconnectWebSocketPromise;
           }
+
+          const promise = new Promise(async function (resolve) {
+            if (
+              Number.isFinite(instance.retryDelay) &&
+              Number.isFinite(instance.retryMaxCount) &&
+              instance.retriesUsed < instance.retryMaxCount
+            ) {
+              instance.retriesUsed += 1;
+              console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
+              
+              // Close the failed WebSocket before retrying
+              if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
+                instance.webSocket.onerror = null; // Remove handlers to prevent stale events
+                instance.webSocket.onclose = null;
+                instance.webSocket.onmessage = null;
+                instance.webSocket.onopen = null;
+                instance.webSocket.close();
+              }
+              instance.error = null;
+              instance.webSocketCloseEvent = null;
+              instance.peerConnection = null;
+              
+              
+              try {
+                await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+              } catch (e) {
+              
+              } finally {
+                resolve();
+              }
+              
+            }
+            resolve();
+          })
+          instance.reconnectWebSocketPromise = promise;
+          
+          return promise;
         }
         
         /* For reliability it is recommended to check for error with event code in onclose instead. */
