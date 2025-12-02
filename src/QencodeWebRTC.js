@@ -432,7 +432,8 @@ function addMethod(instance) {
           }
         }
         
-        webSocket.onerror = (e) => console.error('webSocket.onerror', e);
+        /* For reliability it is recommended to check for error with event code in onclose instead. */
+        webSocket.onerror = (e) => console.log('webSocket.onerror', e);
 
         webSocket.onclose = async function (event) {
             console.log('Connection closed', event);
