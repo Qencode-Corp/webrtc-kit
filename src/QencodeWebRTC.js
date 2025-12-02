@@ -452,7 +452,7 @@ function addMethod(instance) {
               
             }
             resolve();
-          })
+          });
           instance.reconnectWebSocketPromise = promise;
           
           return promise;
