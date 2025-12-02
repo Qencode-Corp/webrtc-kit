@@ -249,6 +249,7 @@ input {
           this.webSocketReadyState = webSocketReadyState;
 
           this.retryProcessActive = !!window.qencodeWebRTC.reconnectWebSocketPromise;
+          console.log(window.qencodeWebRTC.reconnectWebSocketPromise)
           this.connectionState = window.qencodeWebRTC?.peerConnection?.connectionState;
         }
         this._rafId = requestAnimationFrame(tick);
