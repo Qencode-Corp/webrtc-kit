@@ -151,6 +151,7 @@ function initConfig(instance) {
     instance.videoElement = null;
     instance.webSocket = null;
     instance.webSocketCloseEvent = null;
+    instance.isReconnecting = false;
 }
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -419,10 +420,15 @@ function addMethod(instance) {
         async function reconnectWebSocket() {
           await waitForOnline();
           
-          if (instance.reconnectWebSocketPromise) {
-            await instance.reconnectWebSocketPromise;
-            instance.reconnectWebSocketPromise = null;
+          // Prevent concurrent reconnection attempts
+          // Note: We don't await instance.reconnectWebSocketPromise here because
+          // it's the promise wrapping THIS execution, which would create a circular dependency
+          if (instance.isReconnecting) {
+            // Another reconnection is in progress, skip this attempt
+            return;
           }
+          
+          instance.isReconnecting = true;
 
           const promise = new Promise(async function (resolve) {
             if (
@@ -451,11 +457,14 @@ function addMethod(instance) {
               } catch (e) {
               
               } finally {
+                instance.isReconnecting = false;
                 resolve();
               }
               
+            } else {
+              instance.isReconnecting = false;
+              resolve();
             }
-            resolve();
           });
           
           return promise;
@@ -598,6 +607,7 @@ function addMethod(instance) {
             instance.error = null;
             instance.webSocketCloseEvent = null;
             instance.reconnectWebSocketPromise = null;
+            instance.isReconnecting = false;
           }
       };
 
