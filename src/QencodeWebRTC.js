@@ -545,7 +545,7 @@ function addMethod(instance) {
       // Set up event handlers BEFORE setRemoteDescription to avoid missing events
       peerConnection.onicecandidate = function (e) {
             if (e.candidate && e.candidate.candidate) {
-                console.info(logHeader, 'Candidate Sent', '\n', e.candidate.candidate, '\n', e);
+                // console.info(logHeader, 'Candidate Sent', '\n', e.candidate.candidate, '\n', e);
                 sendMessage(instance.webSocket, {
                     id: id,
                     peer_id: peerId,
