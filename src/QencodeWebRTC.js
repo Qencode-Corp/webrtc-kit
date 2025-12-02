@@ -417,6 +417,8 @@ function addMethod(instance) {
         };
         
         async function reconnectWebSocket() {
+          await waitForOnline();
+          
           const promise = new Promise(async function (resolve) {
             if (
               Number.isFinite(instance.retryDelay) &&
