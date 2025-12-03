@@ -1,40 +1,39 @@
-body{
-    background: #f0f3f6;
+body {
+  background: #f0f3f6;
 }
 
-video{
-    width: 100%;
+video {
+  width: 100%;
 
-    max-height: 80vh;
-    aspect-ratio: 16/9;
-    background-color: black;
+  max-height: 80vh;
+  aspect-ratio: 16/9;
+  background-color: black;
 
-    &[data-initialized="true"] {
-        aspect-ratio: auto;
-    }
-    @media (width > 750px) {
-        min-height: 405px;
-    }
+  &[data-initialized='true'] {
+    aspect-ratio: auto;
+  }
+  @media (width > 750px) {
+    min-height: 405px;
+  }
 }
 
-.container{
-    width: 100%;
-    max-width: 720px;
-    margin: 3% auto;
-    text-align: center;
+.container {
+  width: 100%;
+  max-width: 720px;
+  margin: 3% auto;
+  text-align: center;
 }
 
-h1{
-    color: #4f4f4f;
-    
-    font-weight: 500;
-    font-family: arial;     
+h1 {
+  color: #4f4f4f;
+
+  font-weight: 500;
+  font-family: arial;
 }
 
-p{
-    color: #4f4f4f;
-    font-weight: 500;
-    font-family: arial; 
-    font-size: 14px;     
+p {
+  color: #4f4f4f;
+  font-weight: 500;
+  font-family: arial;
+  font-size: 14px;
 }
-
