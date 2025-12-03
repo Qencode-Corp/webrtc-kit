@@ -238,7 +238,9 @@
             this.webSocketReadyState = webSocketReadyState;
           }
           if (time % 3 === 0 && window.qencodeWebRTC) {
-            this.retryProcessActive = !!window.qencodeWebRTC.reconnectWebSocketPromise || Number.isFinite(window.qencodeWebRTC.iceDisconnectTimeoutId);
+            this.retryProcessActive =
+              !!window.qencodeWebRTC.reconnectWebSocketPromise ||
+              Number.isFinite(window.qencodeWebRTC.iceDisconnectTimeoutId);
             this.connectionState = window.qencodeWebRTC?.peerConnection?.connectionState;
             this.connectStarted = window.qencodeWebRTC?.connectStarted;
           }

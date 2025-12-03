@@ -346,35 +346,37 @@ function addMethod(instance) {
     });
     instance.offerRequestCount += 1;
   }
-  
+
   async function addRetryToQueue(delay) {
     if (instance.isManualStop) return;
-    
+
     if (instance.reconnectWebSocketPromise) {
       await instance.reconnectWebSocketPromise;
       // [FIX] Re-check after waiting. User might have stopped stream during the wait.
       if (instance.isManualStop) return;
     }
-    
-    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], delay ?? instance.retryDelay);
+
+    instance.reconnectWebSocketPromise = delayedCall(
+      reconnectWebSocket,
+      [],
+      delay ?? instance.retryDelay
+    );
     await instance.reconnectWebSocketPromise;
     instance.reconnectWebSocketPromise = null;
   }
-  
+
   async function reconnectWebSocket() {
     await waitForOnline();
     instance.connectStarted = true;
-    
+
     // [FIX] Abort if user stopped stream while we were waiting for internet
     if (instance.isManualStop) return;
-    
+
     const promise = new Promise(async function (resolve) {
       let disconnected = true;
       if (instance.peerConnection) {
         if (
-          !['failed', 'disconnected', 'closed'].includes(
-            instance.peerConnection.iceConnectionState
-          )
+          !['failed', 'disconnected', 'closed'].includes(instance.peerConnection.iceConnectionState)
         ) {
           disconnected = false;
         }
@@ -388,10 +390,8 @@ function addMethod(instance) {
         instance.isManualStop = false;
         instance.closePeerConnection();
         instance.retriesUsed += 1;
-        console.info(
-          `online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`
-        );
-        
+        console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
+
         // Close the failed WebSocket before retrying
         if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
           instance.webSocket.onerror = null; // Remove handlers to prevent stale events
@@ -403,7 +403,7 @@ function addMethod(instance) {
         instance.error = null;
         instance.webSocketCloseEvent = null;
         instance.peerConnection = null;
-        
+
         try {
           await delayedCall(initWebSocket, [], instance.retryDelay);
         } catch (e) {
@@ -414,7 +414,7 @@ function addMethod(instance) {
       }
       resolve();
     });
-    
+
     return promise;
   }
 
@@ -423,7 +423,7 @@ function addMethod(instance) {
       errorHandler('connectionUrl is required');
       return;
     }
-    
+
     let webSocket = null;
     try {
       webSocket = new WebSocket(instance.connectionUrl);
@@ -474,7 +474,7 @@ function addMethod(instance) {
         }
       }
     };
-    
+
     /* For reliability it is recommended to check for error with event code in onclose instead. */
     webSocket.onerror = (e) => console.log('webSocket.onerror', e);
 
@@ -490,19 +490,22 @@ function addMethod(instance) {
       instance.connectStarted = false;
     };
   }
-  
+
   function initRetryAfterLongEnoughIceDisconnect(timeout = 3000) {
     if (!instance.iceDisconnectTimeoutId) {
       instance.iceDisconnectTimeoutId = setTimeout(function () {
         if (instance.isManualStop) return;
-        
-        if (instance.peerConnection && ['failed', 'disconnected'].includes(instance.peerConnection.iceConnectionState)) {
+
+        if (
+          instance.peerConnection &&
+          ['failed', 'disconnected'].includes(instance.peerConnection.iceConnectionState)
+        ) {
           addRetryToQueue(0);
         }
       }, timeout);
     }
   }
-  
+
   function cancelRetryAfterLongEnoughIceDisconnect() {
     clearTimeout(instance.iceDisconnectTimeoutId);
   }
@@ -612,11 +615,10 @@ function addMethod(instance) {
 
       console.info(logHeader, 'ICE State', '[' + state + ']');
       instance.iceLastEvent = e;
-      
+
       if (state === 'failed' && !instance.isManualStop) {
         initRetryAfterLongEnoughIceDisconnect();
-      }
-      else if (state === 'disconnected' && !instance.isManualStop) {
+      } else if (state === 'disconnected' && !instance.isManualStop) {
         initRetryAfterLongEnoughIceDisconnect();
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
@@ -625,7 +627,7 @@ function addMethod(instance) {
 
     peerConnection.onconnectionstatechange = async function (e) {
       let state = peerConnection.connectionState;
-      
+
       /* A happy ending! */
       if (state === 'connected') {
         instance.error = null;
@@ -704,7 +706,7 @@ function addMethod(instance) {
     instance.isManualStop = false;
     initWebSocket();
   };
-  
+
   instance.closePeerConnection = function () {
     // first release peer connection with ome
     if (instance.peerConnection) {
@@ -712,11 +714,11 @@ function addMethod(instance) {
       instance.peerConnection.getSenders().forEach(function (sender) {
         instance.peerConnection.removeTrack(sender);
       });
-      
+
       instance.peerConnection.close();
       instance.peerConnection = null;
     }
-  }
+  };
 
   instance.remove = function () {
     instance.isManualStop = true;
@@ -743,12 +745,12 @@ function addMethod(instance) {
       instance.webSocket.onclose = null;
       instance.webSocket.onerror = null;
       instance.webSocket.onmessage = null;
-      
-        sendMessage(instance.webSocket, {
-          id: window.connectionData.id,
-          peer_id: window.connectionData.peerId,
-          command: 'stop',
-        });
+
+      sendMessage(instance.webSocket, {
+        id: window.connectionData.id,
+        peer_id: window.connectionData.peerId,
+        command: 'stop',
+      });
 
       instance.webSocket.close();
       instance.webSocket = null;
