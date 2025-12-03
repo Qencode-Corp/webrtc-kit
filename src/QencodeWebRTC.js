@@ -715,7 +715,6 @@ function addMethod(instance) {
       
       instance.peerConnection.close();
       instance.peerConnection = null;
-      delete instance.peerConnection;
     }
   }
 
@@ -736,7 +735,6 @@ function addMethod(instance) {
       }
 
       instance.stream = null;
-      delete instance.stream;
     }
 
     // release websocket
