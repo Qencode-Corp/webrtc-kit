@@ -488,7 +488,9 @@ function addMethod(instance) {
   function initRetryAfterLongEnoughIceDisconnect(timeout = 3000) {
     if (!instance.iceDisconnectTimeoutId) {
       instance.iceDisconnectTimeoutId = setTimeout(function () {
-        if (['failed', 'disconnected'].includes(instance.peerConnection.iceConnectionState)) {
+        if (instance.isManualStop) return;
+        
+        if (instance.peerConnection && ['failed', 'disconnected'].includes(instance.peerConnection.iceConnectionState)) {
           addRetryToQueue(0);
         }
       }, timeout);
