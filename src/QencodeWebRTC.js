@@ -734,25 +734,26 @@ function addMethod(instance) {
       instance.webSocket = null;
     }
   }
-
-  instance.remove = function () {
-    instance.isManualStop = true;
-    instance.closePeerConnection();
-
-    // release video, audio stream
+  
+  instance.closeVideoAudioStreams = function () {
     if (instance.stream) {
       instance.stream.getTracks().forEach((track) => {
         track.stop();
         instance.stream.removeTrack(track);
       });
-
+      
       if (instance.videoElement) {
         instance.videoElement.srcObject = null;
       }
-
+      
       instance.stream = null;
     }
+  }
 
+  instance.remove = function () {
+    instance.isManualStop = true;
+    instance.closePeerConnection();
+    instance.closeVideoAudioStreams();
     instance.closeWebSocket();
     console.info(logEventHeader, 'Removed');
   };
