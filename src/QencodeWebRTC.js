@@ -722,7 +722,7 @@ function addMethod(instance) {
   };
   
   instance.closeWebSocket = function () {
-    if (instance.webSocket) {
+    if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
       // [FIX] Prevent retry trigger in onclose
       instance.webSocket.onclose = null;
       instance.webSocket.onerror = null;
