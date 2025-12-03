@@ -754,7 +754,6 @@ function addMethod(instance) {
 
       instance.webSocket.close();
       instance.webSocket = null;
-      delete instance.webSocket;
     }
 
     console.info(logEventHeader, 'Removed');
