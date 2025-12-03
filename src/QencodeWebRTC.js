@@ -593,16 +593,7 @@ function addMethod(instance) {
       let state = peerConnection.connectionState;
 
       if (state === 'failed' || state === 'disconnected') {
-        if (instance.peerConnection) {
-          // remove tracks from peer connection
-          instance.peerConnection.getSenders().forEach(function (sender) {
-            instance.peerConnection.removeTrack(sender);
-          });
-
-          instance.peerConnection.close();
-          instance.peerConnection = null;
-          delete instance.peerConnection;
-        }
+        instance.closePeerConnection();
         await delayedCall(requestOffer, [], 2000);
       }
       if (state === 'connected') {
@@ -681,19 +672,23 @@ function addMethod(instance) {
     instance.retriesUsed = 0;
     initWebSocket(connectionUrl);
   };
-
-  instance.remove = function () {
+  
+  instance.closePeerConnection = function () {
     // first release peer connection with ome
     if (instance.peerConnection) {
       // remove tracks from peer connection
       instance.peerConnection.getSenders().forEach(function (sender) {
         instance.peerConnection.removeTrack(sender);
       });
-
+      
       instance.peerConnection.close();
       instance.peerConnection = null;
       delete instance.peerConnection;
     }
+  }
+
+  instance.remove = function () {
+    instance.closePeerConnection();
 
     // release video, audio stream
     if (instance.stream) {
