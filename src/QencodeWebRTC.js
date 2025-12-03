@@ -348,14 +348,17 @@ function addMethod(instance) {
   }
   
   async function addRetryToQueue(delay) {
-    if (!instance.isManualStop) {
-      if (instance.reconnectWebSocketPromise) {
-        await instance.reconnectWebSocketPromise;
-      }
-      instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], delay ?? instance.retryDelay);
+    if (instance.isManualStop) return;
+    
+    if (instance.reconnectWebSocketPromise) {
       await instance.reconnectWebSocketPromise;
-      instance.reconnectWebSocketPromise = null;
+      // [FIX] Re-check after waiting. User might have stopped stream during the wait.
+      if (instance.isManualStop) return;
     }
+    
+    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], delay ?? instance.retryDelay);
+    await instance.reconnectWebSocketPromise;
+    instance.reconnectWebSocketPromise = null;
   }
   
   async function reconnectWebSocket() {
