@@ -708,6 +708,7 @@ function addMethod(instance) {
   };
 
   instance.closePeerConnection = function () {
+    cancelRetryAfterLongEnoughIceDisconnect();
     // first release peer connection with ome
     if (instance.peerConnection) {
       // remove tracks from peer connection
