@@ -376,6 +376,7 @@ function addMethod(instance) {
         instance.retriesUsed < instance.retryMaxCount &&
         disconnected
       ) {
+        instance.closePeerConnection();
         instance.retriesUsed += 1;
         console.info(
           `online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`
