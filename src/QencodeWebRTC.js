@@ -5,7 +5,7 @@ const logEventHeader = 'QencodeWebRTC.js :';
 
 // private methods
 function sendMessage(webSocket, message) {
-  if (webSocket) {
+  if (webSocket && webSocket.readyState === WebSocket.OPEN) {
     webSocket.send(JSON.stringify(message));
   }
 }
@@ -746,11 +746,11 @@ function addMethod(instance) {
       instance.webSocket.onerror = null;
       instance.webSocket.onmessage = null;
       
-      sendMessage(instance.webSocket, {
-        id: window.connectionData.id,
-        peer_id: window.connectionData.peerId,
-        command: 'stop',
-      });
+        sendMessage(instance.webSocket, {
+          id: window.connectionData.id,
+          peer_id: window.connectionData.peerId,
+          command: 'stop',
+        });
 
       instance.webSocket.close();
       instance.webSocket = null;
