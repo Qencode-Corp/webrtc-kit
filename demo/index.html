@@ -1,556 +1,551 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>WebRTC Demo</title>
+  </head>
+  <script type="module">
+    import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
+    const webSocketReadyStates = ['connecting', 'open', 'closing', 'closed'];
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-  <link rel="stylesheet" href="css/main.css">
-  <title>WebRTC Demo</title>
-</head>
-<script type="module">
-  import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
-  const webSocketReadyStates = [
-    'connecting',
-    'open',
-    'closing',
-    'closed',
-  ]
+    class WebcamTestRtc extends LitElement {
+      static properties = {
+        error: { type: String },
+        iceConnectionState: { type: String },
+        connectionState: { type: String, reflect: true },
+        isConnected: { type: Boolean },
+        isConnectionClosed: { type: Boolean },
+        webSocketActive: { type: Boolean },
+        webSocketCloseError: { type: String },
+        webSocketReadyState: { type: String },
+        disconnectStarted: { type: Boolean, reflect: true },
+        connectStarted: { type: Boolean, reflect: true },
+        mediaError: { type: String },
+        retryProcessActive: { type: Boolean, reflect: true },
+        serverUrl: { type: String },
+        log: { type: String },
+        dimensions: { type: String },
+        videoDevices: { type: Array },
+        selectedDeviceId: { type: String },
+        isOffline: { type: Boolean },
+      };
 
-  class WebcamTestRtc extends LitElement {
-    static properties = {
-      error: { type: String },
-      iceConnected: { type: Boolean },
-      iceConnectionState: { type: String },
-      isConnected: { type: Boolean },
-      isConnectionClosed: { type: Boolean },
-      webSocketActive: { type: Boolean },
-      webSocketCloseError: { type: String },
-      webSocketReadyState: { type: String },
-      disconnectStarted: { type: Boolean },
-      connectStarted: { type: Boolean },
-      mediaError: { type: String },
-      retryProcessActive: { type: Boolean, reflect: true },
-      serverUrl: { type: String },
-      log: { type: String },
-      dimensions: { type: String },
-      videoDevices: { type: Array },
-      selectedDeviceId: { type: String },
-    };
-
-    static styles = css`
-
-.main-container {
-  display: grid;
-  gap: 30px;
-}
-
-h1 {
-    color: #4f4f4f;
-    font-weight: 500;
-    font-family: arial;
-}
-
-p {
-    color: #4f4f4f;
-    font-weight: 500;
-    font-family: arial;
-    font-size: 14px;
-    margin: 0;
-}
-
-.error {
-    color: red;
-}
-
-.state {
-    font-weight: 600;
-}
-
-button {
-    padding: 0 22px;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    touch-action: manipulation;
-    cursor: pointer;
-    user-select: none;
-    border: none;
-    border-radius: 5px;
-    line-height: 38px;
-    background: #316fea;
-    color: white;
-    border: 1px solid transparent;
-
-    margin: 0 5px;
-    min-width: 140px;
-    font-size: 15px;
-
-    display: block;
-}
-
-button:hover {
-    background-color: #265cc5;
-}
-
-button.stop{
-    background-color: #d83232;
-}
-
-#connect:disabled {
-  background: rgb(49, 111, 234, .5);
-}
-
-button.stop:disabled,
-button.stop:disabled:hover{
-    background-color: #a78181;
-    cursor: not-allowed;
-}
-
-button.stop:hover{
-    background-color: #ca2e2e;;
-}
-
-.web-socket-url {
-  display: grid;
-  gap: 10px;
-  margin-top: 20px;
-  text-align: left;
-}
-
-#videoSource,
-#webSocketUrl {
-    width: 100%;
-    outline: none;
-    border: 1px solid #e1e5ee;
-    font-weight: 500;
-    font-size: 16px;
-    border-radius: 6px;
-    color: #171717;
-    padding: 0px 14px;
-    line-height: 40px;
-    height: 40px;
-}
-
-#webSocketUrl:focus {
-    border-color: #316fea;
-}
-
-#webSocketUrl::placeholder {
-    color: #bababa;
-}
-
-.web-socket-url label {
-    font-weight: normal;
-    font-family: arial;
-    font-size: 14px;
-    color: #383939;
-}
-
-.buttons-container{
-    display: flex;
-    align-items: center;
-    width: max-content;
-    margin: 0 auto;
-}
-
-input {
-  box-sizing: border-box;
-}
-
-`;
-
-    constructor() {
-      super();
-      this.error = '';
-      this.iceConnected = false;
-      this.iceConnectionState = '';
-      this.isConnected = false;
-      this.isConnectionClosed = false;
-      this.webSocketActive = false;
-      this.webSocketCloseError = null;
-      this.webSocketReadyState = null;
-      this.disconnectStarted = false;
-      this.connectStarted = false;
-      this.retryProcessActive = false;
-      this.mediaError = null;
-      this.serverUrl = '';
-      this.videoDevices = [];
-      this.selectedDeviceId = null;
-    }
-
-    async connectedCallback() {
-      await super.connectedCallback();
-      const params = new URLSearchParams(location.search);
-      this.serverUrl = params.get('u');
-      await this._initDevices();
-      await this._initStream();
-      this._startLoop();
-    }
-
-    disconnectedCallback() {
-      super.disconnectedCallback();
-
-      this._stopLoop();
-    }
-
-    _startLoop() {
-      let time = 0;
-
-      const tick = () => {
-        time += 1;
-
-        if (time % 8 === 0 && window.qencodeWebRTC) {
-          const peerConnection = window.qencodeWebRTC.peerConnection;
-          const isConnected = peerConnection && peerConnection.connectionState === 'connected';
-          this.isConnected = isConnected;
-          this.isConnectionClosed = peerConnection && peerConnection.connectionState === 'failed'
-            || peerConnection && peerConnection.connectionState === 'closed';
-
-          if (this.isConnectionClosed) {
-            this.disconnectStarted = false;
-            this.connectStarted = false;
-          }
-          if (this.isConnected) {
-            this.connectStarted = false;
-          }
-
-          const iceConnectionState = window.qencodeWebRTC.iceConnectionState;
-          this.iceConnectionState = iceConnectionState;
-          this.iceConnected = iceConnectionState === 'connected' || iceConnectionState === 'completed';
-
-          const error = window.qencodeWebRTC.error;
-
-          if (error) {
-            if (typeof error === 'string') {
-              this.error = "Socket connection error: " + error;
-            } else {
-              this.error = 'Socket connection error.'
-            }
-            this.connectStarted = false;
-          } else {
-            this.error = null;
-          }
-
-          const webSocketCloseEvent = window.qencodeWebRTC.webSocketCloseEvent;
-          if (webSocketCloseEvent) {
-            this.webSocketCloseError = this._websocketCloseEventToErrorMessage(webSocketCloseEvent);
-            this.connectStarted = false;
-          } else {
-            this.webSocketCloseError = null;
-          }
-
-          const webSocket = window.qencodeWebRTC?.webSocket
-          this.webSocketActive = !!webSocket;
-          const webSocketReadyState = webSocketReadyStates[ webSocket?.readyState ];
-          this.webSocketReadyState = webSocketReadyState;
-
-          this.retryProcessActive = window.qencodeWebRTC.retriesUsed > 0
-            && window.qencodeWebRTC.retriesUsed < window.qencodeWebRTC.retryMaxCount;
+      static styles = css`
+        .main-container {
+          display: grid;
+          gap: 30px;
         }
+
+        h1 {
+          color: #4f4f4f;
+          font-weight: 500;
+          font-family: arial;
+        }
+
+        p {
+          color: #4f4f4f;
+          font-weight: 500;
+          font-family: arial;
+          font-size: 14px;
+          margin: 0;
+        }
+
+        .error {
+          color: red;
+        }
+
+        .state {
+          font-weight: 600;
+        }
+
+        button {
+          padding: 0 22px;
+          text-align: center;
+          white-space: nowrap;
+          vertical-align: middle;
+          touch-action: manipulation;
+          cursor: pointer;
+          user-select: none;
+          border: none;
+          border-radius: 5px;
+          line-height: 38px;
+          background: #316fea;
+          color: white;
+          border: 1px solid transparent;
+
+          margin: 0 5px;
+          min-width: 140px;
+          font-size: 15px;
+
+          display: block;
+        }
+
+        button:hover {
+          background-color: #265cc5;
+        }
+
+        button.stop {
+          background-color: #d83232;
+        }
+
+        #connect:disabled {
+          background: rgb(49, 111, 234, 0.5);
+        }
+
+        button.stop:disabled,
+        button.stop:disabled:hover {
+          background-color: #a78181;
+          cursor: not-allowed;
+        }
+
+        button.stop:hover {
+          background-color: #ca2e2e;
+        }
+
+        .web-socket-url {
+          display: grid;
+          gap: 10px;
+          margin-top: 20px;
+          text-align: left;
+        }
+
+        #videoSource,
+        #webSocketUrl {
+          width: 100%;
+          outline: none;
+          border: 1px solid #e1e5ee;
+          font-weight: 500;
+          font-size: 16px;
+          border-radius: 6px;
+          color: #171717;
+          padding: 0px 14px;
+          line-height: 40px;
+          height: 40px;
+        }
+
+        #webSocketUrl:focus {
+          border-color: #316fea;
+        }
+
+        #webSocketUrl::placeholder {
+          color: #bababa;
+        }
+
+        .web-socket-url label {
+          font-weight: normal;
+          font-family: arial;
+          font-size: 14px;
+          color: #383939;
+        }
+
+        .buttons-container {
+          display: flex;
+          align-items: center;
+          width: max-content;
+          margin: 0 auto;
+        }
+
+        input {
+          box-sizing: border-box;
+        }
+      `;
+
+      constructor() {
+        super();
+        this.error = '';
+        this.iceConnectionState = '';
+        this.isConnected = false;
+        this.isConnectionClosed = false;
+        this.webSocketActive = false;
+        this.webSocketCloseError = null;
+        this.webSocketReadyState = null;
+        this.disconnectStarted = false;
+        this.connectStarted = false;
+        this.retryProcessActive = false;
+        this.mediaError = null;
+        this.serverUrl = '';
+        this.videoDevices = [];
+        this.selectedDeviceId = null;
+        this.connectionState = null;
+        this.isOffline = !navigator.onLine;
+        this._handleOnline = this._handleOnline.bind(this);
+        this._handleOffline = this._handleOffline.bind(this);
+      }
+
+      async connectedCallback() {
+        await super.connectedCallback();
+        const params = new URLSearchParams(location.search);
+        this.serverUrl = params.get('u');
+        await this._initDevices();
+        await this._initStream();
+        this._startLoop();
+        this._initOnlineOfflineListeners();
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+
+        this._stopLoop();
+        this._removeOnlineOfflineListeners();
+      }
+
+      _startLoop() {
+        let time = 0;
+
+        const tick = () => {
+          time += 1;
+
+          if (time % 8 === 0 && window.qencodeWebRTC) {
+            const peerConnection = window.qencodeWebRTC.peerConnection;
+            const isConnected = peerConnection && peerConnection.connectionState === 'connected';
+            this.isConnected = isConnected;
+            this.isConnectionClosed =
+              !peerConnection ||
+              (peerConnection && peerConnection.connectionState === 'failed') ||
+              (peerConnection && peerConnection.connectionState === 'closed');
+
+            if (this.isConnectionClosed) {
+              this.disconnectStarted = false;
+            }
+
+            const error = window.qencodeWebRTC.error;
+
+            if (error && !window.qencodeWebRTC.reconnectWebSocketPromise) {
+              if (typeof error === 'string') {
+                this.error = 'Socket connection error: ' + error;
+              } else {
+                this.error = 'Socket connection error.';
+              }
+            } else {
+              this.error = null;
+            }
+
+            const webSocketCloseEvent = window.qencodeWebRTC.webSocketCloseEvent;
+            if (webSocketCloseEvent) {
+              this.webSocketCloseError =
+                this._websocketCloseEventToErrorMessage(webSocketCloseEvent);
+            } else {
+              this.webSocketCloseError = null;
+            }
+
+            const webSocket = window.qencodeWebRTC?.webSocket;
+            this.webSocketActive = !!webSocket;
+            const webSocketReadyState = webSocketReadyStates[webSocket?.readyState];
+            this.webSocketReadyState = webSocketReadyState;
+          }
+          if (time % 3 === 0 && window.qencodeWebRTC) {
+            this.retryProcessActive =
+              !!window.qencodeWebRTC.reconnectWebSocketPromise ||
+              Number.isFinite(window.qencodeWebRTC.iceDisconnectTimeoutId);
+            this.connectionState = window.qencodeWebRTC?.peerConnection?.connectionState;
+            this.connectStarted = window.qencodeWebRTC?.connectStarted;
+          }
+          this._rafId = requestAnimationFrame(tick);
+        };
+
         this._rafId = requestAnimationFrame(tick);
       }
 
-      this._rafId = requestAnimationFrame(tick);
-    }
-
-    _clearErrors() {
-      if (window.qencodeWebRTC) {
-        window.qencodeWebRTC.error = null;
-        window.qencodeWebRTC.webSocketCloseEvent = null;
-        window.qencodeWebRTC.peerConnection = null; // todo memory leak?
+      _clearErrors() {
         this.mediaError = null;
       }
-    }
 
-    _stopLoop() {
-      if (this._rafId !== null) {
-        cancelAnimationFrame(this._rafId);
-        this._rafId = null;
+      _stopLoop() {
+        if (this._rafId !== null) {
+          cancelAnimationFrame(this._rafId);
+          this._rafId = null;
+        }
       }
-    }
 
-    async _onConnect(e) {
-      e.preventDefault();
+      _initOnlineOfflineListeners() {
+        window.addEventListener('online', this._handleOnline);
+        window.addEventListener('offline', this._handleOffline);
+      }
 
-      if (!( this.connectStarted || this.retryProcessActive )) {
-        this._clearErrors();
-        this.connectStarted = true;
+      _removeOnlineOfflineListeners() {
+        window.removeEventListener('online', this._handleOnline);
+        window.removeEventListener('offline', this._handleOffline);
+      }
+
+      _handleOnline() {
+        this.isOffline = false;
+      }
+
+      _handleOffline() {
+        this.isOffline = true;
+      }
+
+      async _onConnect(e) {
+        e.preventDefault();
+
+        if (!(this.connectStarted || this.retryProcessActive)) {
+          this._clearErrors();
+          qencodeWebRTC.connectStarted = true;
+          try {
+            qencodeWebRTC.startStreaming(this.serverUrl);
+          } catch (error) {}
+        }
+      }
+
+      _selectVideoDevice(e) {
+        this.selectedDeviceId = e.target.value;
+        this._rebuildConstraints();
+        this._initStream();
+      }
+
+      async _initDevices() {
         try {
-          qencodeWebRTC.startStreaming(this.serverUrl);
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter((device) => device.kind === 'videoinput');
+          this.videoDevices = videoDevices;
+          if (videoDevices.length > 0) {
+            this.selectedDeviceId = videoDevices[0]?.deviceId;
+          }
+        } catch (e) {}
+      }
+
+      _rebuildConstraints() {
+        let newConstraints = {
+          ...constraints,
+        };
+
+        let deviceId = this.selectedDeviceId
+          ? {
+              exact: this.selectedDeviceId,
+            }
+          : undefined;
+        newConstraints.video.deviceId = deviceId;
+
+        constraints = window.constraints = newConstraints;
+      }
+
+      async _initStream() {
+        // Stop existing stream tracks before getting a new stream
+        if (qencodeWebRTC.stream) {
+          qencodeWebRTC.stream.getTracks().forEach((track) => track.stop());
+        }
+
+        try {
+          /* need to use qencodeWebRTC.getUserMedia instead of navigator.mediaDevices.getUserMedia to avoid errors about empty "stream" property on instance. */
+          const stream = await qencodeWebRTC.getUserMedia(window.constraints);
+          const video = document.querySelector('#userCam');
+          const videoTracks = stream.getVideoTracks();
+          console.log('Got stream with constraints:', constraints);
+          console.log(`Using video device: ${videoTracks[0].label}`);
+
+          this.log = `Using video device: ${videoTracks[0].label}`;
+          window.stream = stream; // make variable available to browser console
+          video.srcObject = stream;
+          video.dataset.initialized = true;
+
+          let height = videoTracks[0].getSettings().height;
+          let width = videoTracks[0].getSettings().width;
+
+          this.dimensions = `Video dimensions: ${width}x${height}px`;
         } catch (error) {
-
+          if (error.name === 'ConstraintNotSatisfiedError') {
+            const v = constraints.video;
+            this.mediaError = `The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
+          } else if (error.name === 'PermissionDeniedError') {
+            this.mediaError =
+              'Permissions have not been granted to use your camera and ' +
+              'microphone, you need to allow the page access to your devices in ' +
+              'order for the demo to work.';
+          } else {
+            this.mediaError = `getUserMedia error: ${error.name}`;
+          }
         }
       }
-    }
 
-    _selectVideoDevice(e) {
-      this.selectedDeviceId = e.target.value;
-      this._rebuildConstraints();
-      this._initStream();
-    }
-
-    async _initDevices() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        this.videoDevices = videoDevices;
-        if (videoDevices.length > 0) {
-          this.selectedDeviceId = videoDevices[0]?.deviceId;
-        }
-      } catch (e) {
-
-      }
-    }
-
-    _rebuildConstraints() {
-      let newConstraints = {
-        ...constraints
+      _onDisconnect() {
+        console.log('Stop Socket Connection');
+        this.disconnectStarted = true; // todo possibly redundant, maybe use webSocketReadyState "closing"
+        qencodeWebRTC.isManualStop = true;
+        qencodeWebRTC.closePeerConnection();
+        qencodeWebRTC.closeWebSocket();
+        // What was the point of this???
+        // setTimeout(function () {
+        //   qencodeWebRTC.webSocket.send('');
+        // }, 1000);
       }
 
-      let deviceId = this.selectedDeviceId ? {
-          exact: this.selectedDeviceId
-        } : undefined
-      newConstraints.video.deviceId = deviceId
-
-      constraints = window.constraints = newConstraints;
-    }
-
-    async _initStream() {
-      // Stop existing stream tracks before getting a new stream
-      if (qencodeWebRTC.stream) {
-        qencodeWebRTC.stream.getTracks().forEach(track => track.stop());
+      _onInput(e) {
+        this.serverUrl = e.target.value;
       }
-      
-      try {
-        /* need to use qencodeWebRTC.getUserMedia instead of navigator.mediaDevices.getUserMedia to avoid errors about empty "stream" property on instance. */
-        const stream = await qencodeWebRTC.getUserMedia(window.constraints);
-        const video = document.querySelector('#userCam');
-        const videoTracks = stream.getVideoTracks();
-        console.log('Got stream with constraints:', constraints);
-        console.log(`Using video device: ${videoTracks[0].label}`);
 
-        this.log = `Using video device: ${videoTracks[0].label}`
-        window.stream = stream; // make variable available to browser console
-        video.srcObject = stream;
-        video.dataset.initialized = true;
-
-        let height = videoTracks[0].getSettings().height
-        let width = videoTracks[0].getSettings().width
-
-        this.dimensions = `Video dimensions: ${width}x${height}px`
+      _websocketCloseEventToErrorMessage(event) {
+        let reason;
+        if (event.code === 1000)
+          reason =
+            'Normal closure, meaning that the purpose for which the connection was established has been fulfilled.';
+        else if (event.code === 1001)
+          reason =
+            'An endpoint is "going away", such as a server going down or a browser having navigated away from a page.';
+        else if (event.code === 1002)
+          reason = 'An endpoint is terminating the connection due to a protocol error';
+        else if (event.code === 1003)
+          reason =
+            'An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).';
+        else if (event.code === 1004)
+          reason = 'Reserved. The specific meaning might be defined in the future.';
+        else if (event.code === 1005) reason = 'No status code was actually present.';
+        else if (event.code === 1006)
+          reason =
+            'The connection was closed abnormally, e.g., without sending or receiving a Close control frame';
+        else if (event.code === 1007)
+          reason =
+            'An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [http://tools.ietf.org/html/rfc3629] data within a text message).';
+        else if (event.code === 1008)
+          reason =
+            'An endpoint is terminating the connection because it has received a message that "violates its policy". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.';
+        else if (event.code === 1009)
+          reason =
+            'An endpoint is terminating the connection because it has received a message that is too big for it to process.';
+        else if (event.code === 1010)
+          reason =
+            "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. <br /> Specifically, the extensions that are needed are: " +
+            event.reason;
+        else if (event.code === 1011)
+          reason =
+            'A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.';
+        else if (event.code === 1015)
+          reason =
+            "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
+        else reason = 'Unknown reason';
+        return reason;
       }
-      catch (error) {
-        if (error.name === 'ConstraintNotSatisfiedError') {
-          const v = constraints.video;
-          this.mediaError =`The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
-        } else if (error.name === 'PermissionDeniedError') {
-          this.mediaError ='Permissions have not been granted to use your camera and ' +
-            'microphone, you need to allow the page access to your devices in ' +
-            'order for the demo to work.';
-        } else {
-          this.mediaError = `getUserMedia error: ${error.name}`;
-        }
-      }
-    }
 
-    _onDisconnect() {
-      console.log("Stop Socket Connection")
-
-      qencodeWebRTC.webSocket.send(JSON.stringify({
-        id: window.connectionData.id,
-        peer_id: window.connectionData.peerId,
-        command: 'stop',
-      }));
-      this.disconnectStarted = true; // todo possibly redundant, maybe use webSocketReadyState "closing"
-
-      setTimeout(function () {
-        qencodeWebRTC.webSocket.send('');
-      }, 1000);
-    }
-
-    _onInput(e) {
-      this.serverUrl = e.target.value;
-    }
-
-    _websocketCloseEventToErrorMessage(event) {
-      let reason;
-      if (event.code === 1000)
-        reason = "Normal closure, meaning that the purpose for which the connection was established has been fulfilled.";
-      else if (event.code === 1001)
-        reason = "An endpoint is \"going away\", such as a server going down or a browser having navigated away from a page.";
-      else if (event.code === 1002)
-        reason = "An endpoint is terminating the connection due to a protocol error";
-      else if (event.code === 1003)
-        reason = "An endpoint is terminating the connection because it has received a type of data it cannot accept (e.g., an endpoint that understands only text data MAY send this if it receives a binary message).";
-      else if (event.code === 1004)
-        reason = "Reserved. The specific meaning might be defined in the future.";
-      else if (event.code === 1005)
-        reason = "No status code was actually present.";
-      else if (event.code === 1006)
-        reason = "The connection was closed abnormally, e.g., without sending or receiving a Close control frame";
-      else if (event.code === 1007)
-        reason = "An endpoint is terminating the connection because it has received data within a message that was not consistent with the type of the message (e.g., non-UTF-8 [http://tools.ietf.org/html/rfc3629] data within a text message).";
-      else if (event.code === 1008)
-        reason = "An endpoint is terminating the connection because it has received a message that \"violates its policy\". This reason is given either if there is no other sutible reason, or if there is a need to hide specific details about the policy.";
-      else if (event.code === 1009)
-        reason = "An endpoint is terminating the connection because it has received a message that is too big for it to process.";
-      else if (event.code === 1010)
-        reason = "An endpoint (client) is terminating the connection because it has expected the server to negotiate one or more extension, but the server didn't return them in the response message of the WebSocket handshake. <br /> Specifically, the extensions that are needed are: " + event.reason;
-      else if (event.code === 1011)
-        reason = "A server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request.";
-      else if (event.code === 1015)
-        reason = "The connection was closed due to a failure to perform a TLS handshake (e.g., the server certificate can't be verified).";
-      else
-        reason = "Unknown reason";
-      return reason;
-    }
-
-    render() {
-      return html`
-        <div class="main-container">
-          <form @submit=${this._onConnect} class="web-socket-url">
-            <div>
-              <label for="videoSource">Video source:</label>
-              <select
-                id="videoSource"
-                .value=${this.selectedDeviceId}
-                @change=${this._selectVideoDevice}
-                ?disabled=${this.videoDevices.length < 2}
-              >
-                ${
-                  this.videoDevices.map( (device, index) => (
-                    html`<option value="${device.deviceId}">
+      render() {
+        return html`
+          <div class="main-container">
+            <form @submit=${this._onConnect} class="web-socket-url">
+              <div>
+                <label for="videoSource">Video source:</label>
+                <select
+                  id="videoSource"
+                  .value=${this.selectedDeviceId}
+                  @change=${this._selectVideoDevice}
+                  ?disabled=${this.videoDevices.length < 2}
+                >
+                  ${this.videoDevices.map(
+                    (device, index) =>
+                      html`<option value="${device.deviceId}">
                         ${device.label || `camera ${index + 1}`}
                       </option>`
-                  ))
-                }
-              </select>
-            </div>
-            <div>
-              <label for="webSocketUrl">Server URL: </label>
-              <input
-                id="webSocketUrl"
-                type="text"
-                placeholder="wss://live-7f9...d7a.qencode.com:3334/qlive/04a2...32b"
-                .value=${this.serverUrl}
-                @input=${this._onInput}
-              />
-            </div>
-          </form>
-          <div class="buttons-container">
-            ${ this.mainButton() }
-          </div>
-          ${ this.webSocketActive && false ? html`<p>WebSocket state: ${ html`${ this.webSocketReadyState }` }</p>` : null }
-          ${
-            this.log ? html`<p id='log'>
-              ${ this.log }
-            </p>` : null
-          }
-          ${
-            this.dimensions ? html`
-              <p id='dimensions'>
-                ${ this.dimensions }
-              </p>
-            ` : null
-          }
-          ${
-            this.iceConnectionState ? html`
-              <p class="state" id='iceState'>
-                ICE State: ${ this.iceConnectionState }
-              </p>
-            ` : null
-          }
-          ${
-            !this.retryProcessActive && this.disconnectStarted ?
-              html`<p class="state" id='closingMessage'>Closing connection...</p>`
-              : null
-          }
-          ${
-            this.error ? html`
-              <p class="error" id='errorMsg'>${ this.error }</p>
-            ` : null
-          }
-          ${
-          !this.retryProcessActive && this.isConnectionClosed ?
-              html`
-                <p class="error">
-                  Peer Connection is closed.
-                <p/>
-              `
-              : null
-          }
-          ${
-          !this.retryProcessActive && this.mediaError ?
-              html`
-                <p class="error" id='errorMsg2'>
-                  ${ this.mediaError }
-                </p>
-              ` : null
-          }
-          ${
-            !this.retryProcessActive && this.webSocketCloseError ?
-              html`
-                <p class="error" id='socketError'>
-                  ${ this.webSocketCloseError }
-                </p>
-              ` : null
-          }
-        </div>
-      `;
-    }
-    // todo not sure if really in message "Peer Connection is closed..." we need to use iceConnectionState.
+                  )}
+                </select>
+              </div>
+              <div>
+                <label for="webSocketUrl">Server URL: </label>
+                <input
+                  id="webSocketUrl"
+                  type="text"
+                  placeholder="wss://live-7f9...d7a.qencode.com:3334/qlive/04a2...32b"
+                  .value=${this.serverUrl}
+                  @input=${this._onInput}
+                />
+              </div>
+            </form>
+            <div class="buttons-container">${this.mainButton()}</div>
+            ${this.webSocketActive && false
+              ? html`<p>WebSocket state: ${html`${this.webSocketReadyState}`}</p>`
+              : null}
+            ${this.log ? html`<p id="log">${this.log}</p>` : null}
+            ${this.dimensions ? html` <p id="dimensions">${this.dimensions}</p> ` : null}
+            ${this.connectionState
+              ? html`
+                  <p class="state" id="iceState">PeerConnection State: ${this.connectionState}</p>
+                `
+              : null}
+            ${!this.retryProcessActive && this.disconnectStarted
+              ? html`<p class="state" id="closingMessage">Closing connection...</p>`
+              : null}
+            ${this.error ? html` <p class="error" id="errorMsg">${this.error}</p> ` : null}
+            ${!this.retryProcessActive && this.isConnectionClosed
+              ? html`
+                  <p class="error">Peer Connection is closed.</p>
 
-    mainButton() {
-      if (this.isConnected) {
-        return html`
-          <button
+                  <p />
+                `
+              : null}
+            ${!this.retryProcessActive && this.mediaError
+              ? html` <p class="error" id="errorMsg2">${this.mediaError}</p> `
+              : null}
+            ${!this.retryProcessActive && this.webSocketCloseError
+              ? html` <p class="error" id="socketError">${this.webSocketCloseError}</p> `
+              : null}
+          </div>
+        `;
+      }
+      // todo not sure if really in message "Peer Connection is closed..." we need to use iceConnectionState.
+
+      mainButton() {
+        if (this.isConnected) {
+          return html` <button
             id="disconect"
             class="stop"
-            ?disabled=${this.disconnectStarted || this.retryProcessActive}
+            ?disabled=${this.disconnectStarted || this.retryProcessActive || this.isOffline}
             @click=${this._onDisconnect}
           >
-
-            ${ this.disconnectStarted ? 'Stopping Stream' : 'Stop Stream' }
-          </button>`
-      } else {
-        return html`
-          <button
-            id="connect"
-            ?disabled=${this.connectStarted || this.retryProcessActive}
-            @click=${this._onConnect}
-          >
-            ${ this.connectStarted ? 'Starting Stream' : `Start Stream` }
-          </button>
-        `
+            ${this.isOffline
+              ? 'Browser is offline'
+              : this.disconnectStarted
+                ? 'Stopping Stream'
+                : 'Stop Stream'}
+          </button>`;
+        } else {
+          // console.table( {
+          //   connectStarted: this.connectStarted,
+          //   disconnectStarted: this.disconnectStarted,
+          //   retryProcessActive: this.retryProcessActive,
+          //   connectionState: this.connectionState,
+          // })
+          return html`
+            <button
+              id="connect"
+              ?disabled=${this.connectStarted ||
+              this.disconnectStarted ||
+              this.retryProcessActive ||
+              this.isOffline ||
+              ['new', 'connecting'].includes(this.connectionState)}
+              @click=${this._onConnect}
+            >
+              ${this.isOffline
+                ? 'Browser is offline'
+                : this.connectStarted
+                  ? 'Starting Stream'
+                  : `Start Stream`}
+            </button>
+          `;
+        }
       }
     }
-  }
 
-  customElements.define('webcam-test-rtc', WebcamTestRtc);
-</script>
-<body>
-<div class="container">
-  <h1>Client webcam</h1>
+    customElements.define('webcam-test-rtc', WebcamTestRtc);
+  </script>
+  <body>
+    <div class="container">
+      <h1>Client webcam</h1>
 
-  <video id="userCam" autoplay playsinline muted></video>
-  <webcam-test-rtc/>
-</div>
+      <video id="userCam" autoplay playsinline muted></video>
+      <webcam-test-rtc />
+    </div>
 
-<script src="./js/QencodeWebRTC.min.js"></script>
-<script>
+    <script src="./js/QencodeWebRTC.min.js"></script>
+    <script>
+      let constraints = (window.constraints = {
+        audio: true,
+        video: { width: 1280, height: 720 },
+      });
 
-  let constraints = window.constraints = {
-    audio: true,
-    video: { width: 1280, height: 720 }
-  };
-
-  const qencodeWebRTC = QencodeWebRTC.create();
-  window.qencodeWebRTC = qencodeWebRTC;
-  qencodeWebRTC.attachMedia(document.getElementById('userCam'));
-
-</script>
-</body>
-
+      const qencodeWebRTC = QencodeWebRTC.create();
+      window.qencodeWebRTC = qencodeWebRTC;
+      qencodeWebRTC.attachMedia(document.getElementById('userCam'));
+    </script>
+  </body>
 </html>
