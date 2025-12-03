@@ -388,21 +388,14 @@ function addMethod(instance) {
         disconnected
       ) {
         instance.isManualStop = false;
-        instance.closePeerConnection();
         instance.retriesUsed += 1;
         console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
+        
+        instance.closePeerConnection();
+        instance.closeWebSocket();
 
-        // Close the failed WebSocket before retrying
-        if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
-          instance.webSocket.onerror = null; // Remove handlers to prevent stale events
-          instance.webSocket.onclose = null;
-          instance.webSocket.onmessage = null;
-          instance.webSocket.onopen = null;
-          instance.webSocket.close();
-        }
         instance.error = null;
         instance.webSocketCloseEvent = null;
-        instance.peerConnection = null;
 
         try {
           await delayedCall(initWebSocket, [], instance.retryDelay);
