@@ -379,6 +379,7 @@ function addMethod(instance) {
         instance.retriesUsed < instance.retryMaxCount &&
         disconnected
       ) {
+        instance.isManualStop = false;
         instance.closePeerConnection();
         instance.retriesUsed += 1;
         console.info(
