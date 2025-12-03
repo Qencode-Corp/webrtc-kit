@@ -345,6 +345,67 @@ function addMethod(instance) {
     });
     instance.offerRequestCount += 1;
   }
+  
+  async function addRetryToQueue() {
+    if (instance.reconnectWebSocketPromise) {
+      await instance.reconnectWebSocketPromise;
+    }
+    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay);
+    await instance.reconnectWebSocketPromise;
+    instance.reconnectWebSocketPromise = null;
+  }
+  
+  async function reconnectWebSocket() {
+    await waitForOnline();
+    instance.connectStarted = true;
+    
+    const promise = new Promise(async function (resolve) {
+      let disconnected = true;
+      if (instance.peerConnection) {
+        if (
+          !['failed', 'disconnected', 'closed'].includes(
+            instance.peerConnection.iceConnectionState
+          )
+        ) {
+          disconnected = false;
+        }
+      }
+      if (
+        Number.isFinite(instance.retryDelay) &&
+        Number.isFinite(instance.retryMaxCount) &&
+        instance.retriesUsed < instance.retryMaxCount &&
+        disconnected
+      ) {
+        instance.retriesUsed += 1;
+        console.info(
+          `online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`
+        );
+        
+        // Close the failed WebSocket before retrying
+        if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
+          instance.webSocket.onerror = null; // Remove handlers to prevent stale events
+          instance.webSocket.onclose = null;
+          instance.webSocket.onmessage = null;
+          instance.webSocket.onopen = null;
+          instance.webSocket.close();
+        }
+        instance.error = null;
+        instance.webSocketCloseEvent = null;
+        instance.peerConnection = null;
+        
+        try {
+          await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+        } catch (e) {
+        } finally {
+          instance.connectStarted = false;
+          resolve();
+        }
+      }
+      resolve();
+    });
+    
+    return promise;
+  }
 
   function initWebSocket(connectionUrl) {
     if (!connectionUrl) {
@@ -404,68 +465,7 @@ function addMethod(instance) {
         }
       }
     };
-
-    async function addRetryToQueue() {
-      if (instance.reconnectWebSocketPromise) {
-        await instance.reconnectWebSocketPromise;
-      }
-      instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay);
-      await instance.reconnectWebSocketPromise;
-      instance.reconnectWebSocketPromise = null;
-    }
-
-    async function reconnectWebSocket() {
-      await waitForOnline();
-      instance.connectStarted = true;
-
-      const promise = new Promise(async function (resolve) {
-        let disconnected = true;
-        if (instance.peerConnection) {
-          if (
-            !['failed', 'disconnected', 'closed'].includes(
-              instance.peerConnection.iceConnectionState
-            )
-          ) {
-            disconnected = false;
-          }
-        }
-        if (
-          Number.isFinite(instance.retryDelay) &&
-          Number.isFinite(instance.retryMaxCount) &&
-          instance.retriesUsed < instance.retryMaxCount &&
-          disconnected
-        ) {
-          instance.retriesUsed += 1;
-          console.info(
-            `online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`
-          );
-
-          // Close the failed WebSocket before retrying
-          if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
-            instance.webSocket.onerror = null; // Remove handlers to prevent stale events
-            instance.webSocket.onclose = null;
-            instance.webSocket.onmessage = null;
-            instance.webSocket.onopen = null;
-            instance.webSocket.close();
-          }
-          instance.error = null;
-          instance.webSocketCloseEvent = null;
-          instance.peerConnection = null;
-
-          try {
-            await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
-          } catch (e) {
-          } finally {
-            instance.connectStarted = false;
-            resolve();
-          }
-        }
-        resolve();
-      });
-
-      return promise;
-    }
-
+    
     /* For reliability it is recommended to check for error with event code in onclose instead. */
     webSocket.onerror = (e) => console.log('webSocket.onerror', e);
 
