@@ -351,18 +351,22 @@ function addMethod(instance) {
     if (instance.isManualStop) return;
 
     if (instance.reconnectWebSocketPromise) {
+      // Just hitch a ride on the existing attempt and exit.
       await instance.reconnectWebSocketPromise;
-      // [FIX] Re-check after waiting. User might have stopped stream during the wait.
-      if (instance.isManualStop) return;
+      return;
     }
 
-    instance.reconnectWebSocketPromise = delayedCall(
-      reconnectWebSocket,
-      [],
-      delay ?? instance.retryDelay
-    );
+    const retryDelay = delay ?? instance.retryDelay;
+
+    instance.reconnectWebSocketPromise = (async () => {
+      try {
+        await delayedCall(reconnectWebSocket, [], retryDelay);
+      } finally {
+        instance.reconnectWebSocketPromise = null;
+      }
+    })();
+
     await instance.reconnectWebSocketPromise;
-    instance.reconnectWebSocketPromise = null;
   }
 
   async function reconnectWebSocket() {
@@ -390,7 +394,7 @@ function addMethod(instance) {
         instance.isManualStop = false;
         instance.retriesUsed += 1;
         console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
-        
+
         instance.closePeerConnection();
         instance.closeWebSocket();
 
@@ -714,14 +718,14 @@ function addMethod(instance) {
       instance.peerConnection = null;
     }
   };
-  
+
   instance.closeWebSocket = function () {
     if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
       // [FIX] Clear callback early to prevent retry trigger in onclose
       instance.webSocket.onclose = null;
       instance.webSocket.onerror = null;
       instance.webSocket.onmessage = null;
-      
+
       if (instance.connectionData) {
         sendMessage(instance.webSocket, {
           id: instance.connectionData.id,
@@ -729,26 +733,26 @@ function addMethod(instance) {
           command: 'stop',
         });
       }
-      
+
       instance.webSocket.close();
       instance.webSocket = null;
     }
-  }
-  
+  };
+
   instance.closeVideoAudioStreams = function () {
     if (instance.stream) {
       instance.stream.getTracks().forEach((track) => {
         track.stop();
         instance.stream.removeTrack(track);
       });
-      
+
       if (instance.videoElement) {
         instance.videoElement.srcObject = null;
       }
-      
+
       instance.stream = null;
     }
-  }
+  };
 
   instance.remove = function () {
     instance.isManualStop = true;
