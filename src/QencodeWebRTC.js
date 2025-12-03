@@ -365,6 +365,9 @@ function addMethod(instance) {
     await waitForOnline();
     instance.connectStarted = true;
     
+    // [FIX] Abort if user stopped stream while we were waiting for internet
+    if (instance.isManualStop) return;
+    
     const promise = new Promise(async function (resolve) {
       let disconnected = true;
       if (instance.peerConnection) {
