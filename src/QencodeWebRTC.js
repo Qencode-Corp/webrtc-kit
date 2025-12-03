@@ -719,6 +719,24 @@ function addMethod(instance) {
       instance.peerConnection = null;
     }
   };
+  
+  instance.closeWebSocket = function () {
+    if (instance.webSocket) {
+      // [FIX] Prevent retry trigger in onclose
+      instance.webSocket.onclose = null;
+      instance.webSocket.onerror = null;
+      instance.webSocket.onmessage = null;
+      
+      sendMessage(instance.webSocket, {
+        id: window.connectionData.id,
+        peer_id: window.connectionData.peerId,
+        command: 'stop',
+      });
+      
+      instance.webSocket.close();
+      instance.webSocket = null;
+    }
+  }
 
   instance.remove = function () {
     instance.isManualStop = true;
@@ -739,23 +757,7 @@ function addMethod(instance) {
       instance.stream = null;
     }
 
-    // release websocket
-    if (instance.webSocket) {
-      // [FIX] Prevent retry trigger in onclose
-      instance.webSocket.onclose = null;
-      instance.webSocket.onerror = null;
-      instance.webSocket.onmessage = null;
-
-      sendMessage(instance.webSocket, {
-        id: window.connectionData.id,
-        peer_id: window.connectionData.peerId,
-        command: 'stop',
-      });
-
-      instance.webSocket.close();
-      instance.webSocket = null;
-    }
-
+    instance.closeWebSocket();
     console.info(logEventHeader, 'Removed');
   };
 }
