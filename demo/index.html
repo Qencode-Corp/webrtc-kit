@@ -361,7 +361,7 @@
 
       _onDisconnect() {
         console.log('Stop Socket Connection');
-
+        qencodeWebRTC.isManualStop = true;
         qencodeWebRTC.webSocket.send(
           JSON.stringify({
             id: window.connectionData.id,

@@ -150,6 +150,7 @@ function initConfig(instance) {
   instance.videoElement = null;
   instance.webSocket = null;
   instance.webSocketCloseEvent = null;
+  instance.isManualStop = false;
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -691,6 +692,7 @@ function addMethod(instance) {
     }
 
     instance.retriesUsed = 0;
+    instance.isManualStop = false;
     initWebSocket(connectionUrl);
   };
   
