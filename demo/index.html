@@ -204,7 +204,7 @@
             const peerConnection = window.qencodeWebRTC.peerConnection;
             const isConnected = peerConnection && peerConnection.connectionState === 'connected';
             this.isConnected = isConnected;
-            this.isConnectionClosed =
+            this.isConnectionClosed = !peerConnection ||
               (peerConnection && peerConnection.connectionState === 'failed') ||
               (peerConnection && peerConnection.connectionState === 'closed');
 
