@@ -714,6 +714,7 @@ function addMethod(instance) {
   }
 
   instance.remove = function () {
+    instance.isManualStop = true;
     instance.closePeerConnection();
 
     // release video, audio stream
