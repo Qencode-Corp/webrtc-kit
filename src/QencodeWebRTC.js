@@ -394,7 +394,7 @@ function addMethod(instance) {
         instance.peerConnection = null;
         
         try {
-          await delayedCall(initWebSocket, [connectionUrl], instance.retryDelay);
+          await delayedCall(initWebSocket, [instance.connectionUrl], instance.retryDelay);
         } catch (e) {
         } finally {
           instance.connectStarted = false;
