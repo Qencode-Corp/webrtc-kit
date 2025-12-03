@@ -399,7 +399,7 @@ function addMethod(instance) {
         instance.peerConnection = null;
         
         try {
-          await delayedCall(initWebSocket, [instance.connectionUrl], instance.retryDelay);
+          await delayedCall(initWebSocket, [], instance.retryDelay);
         } catch (e) {
         } finally {
           instance.connectStarted = false;
@@ -412,17 +412,15 @@ function addMethod(instance) {
     return promise;
   }
 
-  function initWebSocket(connectionUrl) {
-    if (!connectionUrl) {
+  function initWebSocket() {
+    if (!instance.connectionUrl) {
       errorHandler('connectionUrl is required');
       return;
     }
-
-    instance.connectionUrl = connectionUrl;
-
+    
     let webSocket = null;
     try {
-      webSocket = new WebSocket(connectionUrl);
+      webSocket = new WebSocket(instance.connectionUrl);
     } catch (error) {
       errorHandler(error);
       return;
@@ -687,7 +685,7 @@ function addMethod(instance) {
   };
 
   instance.startStreaming = function (connectionUrl, connectionConfig) {
-    connectionUrl += '?direction=send&transport=tcp';
+    instance.connectionUrl += '?direction=send&transport=tcp';
     console.info(logEventHeader, 'Start Streaming');
 
     if (connectionConfig) {
@@ -696,7 +694,7 @@ function addMethod(instance) {
 
     instance.retriesUsed = 0;
     instance.isManualStop = false;
-    initWebSocket(connectionUrl);
+    initWebSocket();
   };
   
   instance.closePeerConnection = function () {
