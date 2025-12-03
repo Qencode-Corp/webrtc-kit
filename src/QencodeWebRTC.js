@@ -378,44 +378,48 @@ function addMethod(instance) {
         };
 
         webSocket.onmessage = async function (e) {
-            let message = JSON.parse(e.data);
+                let message = JSON.parse(e.data);
 
-            if (message.error) {
-                console.error('webSocket.onmessage', message.error);
-                errorHandler(message.error);
-                instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay); /* Runs in cases like switching Wi-Fi networks. */
-                await instance.reconnectWebSocketPromise;
-                instance.reconnectWebSocketPromise = null;
-                return;
-            }
-
-            if (message.command === 'offer') {
-                // OME returns offer. Start create peer connection.
-                try {
-                  await createPeerConnection(
-                    message.id,
-                    message.peer_id,
-                    message.sdp,
-                    message.candidates,
-                    message.ice_servers
-                  );
-
-                  instance.offerRequestCount = 0;
-                  instance.connectStarted = false;
-                } catch (e) {
-                  instance.connectStarted = false;
-                  console.log('createPeerConnection error', e);
-                  
-                  if (instance.offerRequestCount < 3) {
-                    requestOffer();
-                  } else {
-                    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
-                    await instance.reconnectWebSocketPromise;
-                    instance.reconnectWebSocketPromise = null;
-                  }
+                if (message.error) {
+                    console.error('webSocket.onmessage', message.error);
+                    await addRetryToQueue();
+                    return;
                 }
+
+                if (message.command === 'offer') {
+                    // OME returns offer. Start create peer connection.
+                    try {
+                      await createPeerConnection(
+                        message.id,
+                        message.peer_id,
+                        message.sdp,
+                        message.candidates,
+                        message.ice_servers
+                      );
+
+                      instance.offerRequestCount = 0;
+                      instance.connectStarted = false;
+                    } catch (e) {
+                      instance.connectStarted = false;
+                      console.log('createPeerConnection error', e);
+                      
+                      if (instance.offerRequestCount < 3) {
+                        requestOffer();
+                      } else {
+                        await addRetryToQueue();
+                      }
+                    }
             }
         };
+        
+        async function addRetryToQueue() {
+          if (instance.reconnectWebSocketPromise) {
+            await instance.reconnectWebSocketPromise;
+          }
+          instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
+          await instance.reconnectWebSocketPromise;
+          instance.reconnectWebSocketPromise = null;
+        }
         
         async function reconnectWebSocket() {
           await waitForOnline();
@@ -474,17 +478,15 @@ function addMethod(instance) {
         webSocket.onerror = (e) => console.log('webSocket.onerror', e);
 
         webSocket.onclose = async function (event) {
-            console.log('Connection closed', event);
-            instance.webSocketCloseEvent = event;
-            // Check if the close was clean (1000) or caused by an issue
-            if (event.code !== 1000) {
-              instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay)
-              await instance.reconnectWebSocketPromise;
-              instance.reconnectWebSocketPromise = null;
-            } else {
-              console.log("Connection closed normally.");
-            }
-            instance.connectStarted = false;
+                console.log('Connection closed', event);
+                instance.webSocketCloseEvent = event;
+                // Check if the close was clean (1000) or caused by an issue
+                if (event.code !== 1000) {
+                  await addRetryToQueue();
+                } else {
+                  console.log("Connection closed normally.");
+                }
+                instance.connectStarted = false;
         };
     }
     
