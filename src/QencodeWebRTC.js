@@ -346,11 +346,11 @@ function addMethod(instance) {
     instance.offerRequestCount += 1;
   }
   
-  async function addRetryToQueue() {
+  async function addRetryToQueue(delay) {
     if (instance.reconnectWebSocketPromise) {
       await instance.reconnectWebSocketPromise;
     }
-    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], instance.retryDelay);
+    instance.reconnectWebSocketPromise = delayedCall(reconnectWebSocket, [], delay ?? instance.retryDelay);
     await instance.reconnectWebSocketPromise;
     instance.reconnectWebSocketPromise = null;
   }
@@ -482,6 +482,20 @@ function addMethod(instance) {
       instance.connectStarted = false;
     };
   }
+  
+  function initRetryAfterLongEnoughIceDisconnect(timeout = 3000) {
+    if (!instance.iceDisconnectTimeoutId) {
+      instance.iceDisconnectTimeoutId = setTimeout(function () {
+        if (['failed', 'disconnected'].includes(instance.peerConnection.iceConnectionState)) {
+          addRetryToQueue(0);
+        }
+      }, timeout);
+    }
+  }
+  
+  function cancelRetryAfterLongEnoughIceDisconnect() {
+    clearTimeout(instance.iceDisconnectTimeoutId);
+  }
 
   async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
     window.connectionData = {
@@ -588,15 +602,21 @@ function addMethod(instance) {
 
       console.info(logHeader, 'ICE State', '[' + state + ']');
       instance.iceLastEvent = e;
+      
+      if (state === 'failed') {
+        initRetryAfterLongEnoughIceDisconnect();
+      }
+      else if (state === 'disconnected') {
+        initRetryAfterLongEnoughIceDisconnect();
+      } else {
+        cancelRetryAfterLongEnoughIceDisconnect();
+      }
     };
 
     peerConnection.onconnectionstatechange = async function (e) {
       let state = peerConnection.connectionState;
-
-      if (state === 'failed' || state === 'disconnected') {
-        instance.closePeerConnection();
-        await delayedCall(requestOffer, [], 2000);
-      }
+      
+      /* A happy ending! */
       if (state === 'connected') {
         instance.error = null;
         instance.webSocketCloseEvent = null;
