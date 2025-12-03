@@ -501,6 +501,7 @@ function addMethod(instance) {
 
   function cancelRetryAfterLongEnoughIceDisconnect() {
     clearTimeout(instance.iceDisconnectTimeoutId);
+    instance.iceDisconnectTimeoutId = null;
   }
 
   async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
