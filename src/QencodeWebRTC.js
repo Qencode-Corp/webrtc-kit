@@ -604,10 +604,10 @@ function addMethod(instance) {
       console.info(logHeader, 'ICE State', '[' + state + ']');
       instance.iceLastEvent = e;
       
-      if (state === 'failed') {
+      if (state === 'failed' && !instance.isManualStop) {
         initRetryAfterLongEnoughIceDisconnect();
       }
-      else if (state === 'disconnected') {
+      else if (state === 'disconnected' && !instance.isManualStop) {
         initRetryAfterLongEnoughIceDisconnect();
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
