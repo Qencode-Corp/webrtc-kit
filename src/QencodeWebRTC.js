@@ -505,7 +505,7 @@ function addMethod(instance) {
   }
 
   async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
-    window.connectionData = {
+    instance.connectionData = {
       id,
       peerId,
     };
@@ -717,16 +717,18 @@ function addMethod(instance) {
   
   instance.closeWebSocket = function () {
     if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
-      // [FIX] Prevent retry trigger in onclose
+      // [FIX] Clear callback early to prevent retry trigger in onclose
       instance.webSocket.onclose = null;
       instance.webSocket.onerror = null;
       instance.webSocket.onmessage = null;
       
-      sendMessage(instance.webSocket, {
-        id: window.connectionData.id,
-        peer_id: window.connectionData.peerId,
-        command: 'stop',
-      });
+      if (instance.connectionData) {
+        sendMessage(instance.webSocket, {
+          id: instance.connectionData.id,
+          peer_id: instance.connectionData.peerId,
+          command: 'stop',
+        });
+      }
       
       instance.webSocket.close();
       instance.webSocket = null;
