@@ -733,6 +733,11 @@ function addMethod(instance) {
 
     // release websocket
     if (instance.webSocket) {
+      // [FIX] Prevent retry trigger in onclose
+      instance.webSocket.onclose = null;
+      instance.webSocket.onerror = null;
+      instance.webSocket.onmessage = null;
+      
       sendMessage(instance.webSocket, {
         id: window.connectionData.id,
         peer_id: window.connectionData.peerId,
