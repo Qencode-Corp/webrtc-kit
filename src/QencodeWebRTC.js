@@ -93,9 +93,10 @@ function removeFormat(sdp, formatNumber) {
 
 async function getStreamForDeviceCheck() {
   // High resolution video constraints makes browser to get maximum resolution of video device.
+  // Using 'ideal' instead of exact values for better compatibility with different cameras.
   const constraints = {
     audio: { deviceId: undefined },
-    video: { deviceId: undefined, width: 1920, height: 1080 },
+    video: { deviceId: undefined, width: { ideal: 1920 }, height: { ideal: 1080 } },
   };
 
   return await navigator.mediaDevices.getUserMedia(constraints);
