@@ -363,19 +363,14 @@
 
       _onDisconnect() {
         console.log('Stop Socket Connection');
-        qencodeWebRTC.isManualStop = true;
-        qencodeWebRTC.webSocket.send(
-          JSON.stringify({
-            id: window.connectionData.id,
-            peer_id: window.connectionData.peerId,
-            command: 'stop',
-          })
-        );
         this.disconnectStarted = true; // todo possibly redundant, maybe use webSocketReadyState "closing"
-
-        setTimeout(function () {
-          qencodeWebRTC.webSocket.send('');
-        }, 1000);
+        qencodeWebRTC.isManualStop = true;
+        qencodeWebRTC.closePeerConnection();
+        qencodeWebRTC.closeWebSocket();
+        // What was the point of this???
+        // setTimeout(function () {
+        //   qencodeWebRTC.webSocket.send('');
+        // }, 1000);
       }
 
       _onInput(e) {
