@@ -93,9 +93,10 @@ function removeFormat(sdp, formatNumber) {
 
 async function getStreamForDeviceCheck() {
   // High resolution video constraints makes browser to get maximum resolution of video device.
+  // Using 'ideal' instead of exact values for better compatibility with different cameras.
   const constraints = {
     audio: { deviceId: undefined },
-    video: { deviceId: undefined, width: 1920, height: 1080 },
+    video: { deviceId: undefined, width: { ideal: 1920 }, height: { ideal: 1080 } },
   };
 
   return await navigator.mediaDevices.getUserMedia(constraints);
@@ -138,22 +139,32 @@ function gotDevices(deviceInfos) {
   return devices;
 }
 
-function initConfig(instance) {
-  instance.connectionConfig = {};
-  instance.connectionUrl = null;
-  instance.connectStarted = false;
-  instance.error = null;
-  instance.offerRequestCount = 0;
-  instance.peerConnection = null;
-  instance.retriesUsed = 0;
-  instance.stream = null;
-  instance.videoElement = null;
-  instance.webSocket = null;
-  instance.webSocketCloseEvent = null;
-  instance.isManualStop = false;
-}
+function initConfig(config) {
+  let instance = {
+    retryMaxCount: 2,
+    retryDelay: 2000,
+    connectionConfig: {},
+    connectionUrl: null,
+    connectStarted: false,
+    error: null,
+    offerRequestCount: 0,
+    peerConnection: null,
+    retriesUsed: 0,
+    stream: null,
+    videoElement: null,
+    webSocket: null,
+    webSocketCloseEvent: null,
+    isManualStop: false,
+  };
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  if (config && config.callbacks) {
+    instance.callbacks = config.callbacks;
+  } else {
+    instance.callbacks = {};
+  }
+
+  return instance;
+}
 
 function waitForOnline() {
   if (navigator.onLine) {
@@ -263,6 +274,13 @@ function appendFmtp(fmtpStr, sdp) {
 function addMethod(instance) {
   function errorHandler(error) {
     instance.error = error;
+    if (typeof instance.callbacks?.error === 'function') {
+      try {
+        instance.callbacks.error(error);
+      } catch (callbackError) {
+        console.error(logHeader, 'Error in error callback', callbackError);
+      }
+    }
   }
 
   function getUserMedia(constraints) {
@@ -485,6 +503,13 @@ function addMethod(instance) {
         console.log('Connection closed normally.');
       }
       instance.connectStarted = false;
+      if (!instance.isManualStop && instance.callbacks.connectionClosed) {
+        try {
+          instance.callbacks.connectionClosed('websocket', event);
+        } catch (callbackError) {
+          console.error(logHeader, 'Error in connectionClosed callback', callbackError);
+        }
+      }
     };
   }
 
@@ -620,6 +645,34 @@ function addMethod(instance) {
         initRetryAfterLongEnoughIceDisconnect();
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
+      }
+      
+      if (instance.callbacks.iceStateChange) {
+        try {
+          instance.callbacks.iceStateChange(state);
+        } catch (callbackError) {
+          console.error(logHeader, 'Error in iceStateChange callback', callbackError);
+        }
+      }
+
+      if (state === 'connected') {
+        if (instance.callbacks.connected) {
+          try {
+            instance.callbacks.connected(e);
+          } catch (callbackError) {
+            console.error(logHeader, 'Error in connected callback', callbackError);
+          }
+        }
+      }
+
+      if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+        if (instance.callbacks.connectionClosed) {
+          try {
+            instance.callbacks.connectionClosed('ice', e);
+          } catch (callbackError) {
+            console.error(logHeader, 'Error in connectionClosed callback', callbackError);
+          }
+        }
       }
     };
 
@@ -764,13 +817,8 @@ function addMethod(instance) {
 }
 
 // static methods
-QencodeWebRTC.create = function () {
-  let instance = {
-    retryMaxCount: 2,
-    retryDelay: 2000,
-  };
-
-  initConfig(instance);
+QencodeWebRTC.create = function (config = {}) {
+  const instance = initConfig(config);
   addMethod(instance);
 
   return instance;

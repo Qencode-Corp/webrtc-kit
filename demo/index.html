@@ -542,6 +542,22 @@
         audio: true,
         video: { width: 1280, height: 720 },
       });
+      const config = {
+        callbacks: {
+          error: function (error) {
+            console.log('error')
+          },
+          connected: function (event) {
+            console.log("connected")
+          },
+          connectionClosed: function (type, event) {
+            console.log('connection closed')
+          },
+          iceStateChange: function (state) {
+            console.log('iceStateChange')
+          }
+        }
+      };
 
       const qencodeWebRTC = QencodeWebRTC.create();
       window.qencodeWebRTC = qencodeWebRTC;

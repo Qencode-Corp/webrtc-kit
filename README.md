@@ -37,7 +37,6 @@ qencodeWebRTC.getUserMedia({
   - `instance.getUserMedia()`
 - [`Streaming APIs`](#)
   - `instance.startStreaming()`
-  - `instance.stopStreaming()`
 
 ### Initialization and destroying instance
 
