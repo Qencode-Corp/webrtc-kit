@@ -139,22 +139,32 @@ function gotDevices(deviceInfos) {
   return devices;
 }
 
-function initConfig(instance) {
-  instance.connectionConfig = {};
-  instance.connectionUrl = null;
-  instance.connectStarted = false;
-  instance.error = null;
-  instance.offerRequestCount = 0;
-  instance.peerConnection = null;
-  instance.retriesUsed = 0;
-  instance.stream = null;
-  instance.videoElement = null;
-  instance.webSocket = null;
-  instance.webSocketCloseEvent = null;
-  instance.isManualStop = false;
+function initConfig(config) {
+  let instance = {
+    retryMaxCount: 2,
+    retryDelay: 2000,
+    connectionConfig: {},
+    connectionUrl: null,
+    connectStarted: false,
+    error: null,
+    offerRequestCount: 0,
+    peerConnection: null,
+    retriesUsed: 0,
+    stream: null,
+    videoElement: null,
+    webSocket: null,
+    webSocketCloseEvent: null,
+    isManualStop: false,
+  };
+  
+  if (config && config.callbacks) {
+    instance.callbacks = config.callbacks;
+  } else {
+    instance.callbacks = {};
+  }
+  
+  return instance;
 }
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function waitForOnline() {
   if (navigator.onLine) {
@@ -769,13 +779,7 @@ function addMethod(instance) {
 
 // static methods
 QencodeWebRTC.create = function (config = {}) {
-  let instance = {
-    retryMaxCount: 2,
-    retryDelay: 2000,
-    config,
-  };
-
-  initConfig(instance);
+  const instance = initConfig(config);
   addMethod(instance);
 
   return instance;
