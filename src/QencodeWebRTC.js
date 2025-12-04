@@ -274,8 +274,12 @@ function appendFmtp(fmtpStr, sdp) {
 function addMethod(instance) {
   function errorHandler(error) {
     instance.error = error;
-    if (typeof instance.config?.callbacks?.error === 'function') {
-      instance.config.callbacks.error(error);
+    if (typeof instance.callbacks?.error === 'function') {
+      try {
+        instance.callbacks.error(error);
+      } catch (callbackError) {
+        console.error(logHeader, 'Error in error callback', callbackError);
+      }
     }
   }
 
@@ -500,7 +504,11 @@ function addMethod(instance) {
       }
       instance.connectStarted = false;
       if (!instance.isManualStop && instance.callbacks.connectionClosed) {
-        instance.callbacks.connectionClosed('websocket', event);
+        try {
+          instance.callbacks.connectionClosed('websocket', event);
+        } catch (callbackError) {
+          console.error(logHeader, 'Error in connectionClosed callback', callbackError);
+        }
       }
     };
   }
@@ -640,18 +648,30 @@ function addMethod(instance) {
       }
       
       if (instance.callbacks.iceStateChange) {
-        instance.callbacks.iceStateChange(state);
+        try {
+          instance.callbacks.iceStateChange(state);
+        } catch (callbackError) {
+          console.error(logHeader, 'Error in iceStateChange callback', callbackError);
+        }
       }
 
       if (state === 'connected') {
         if (instance.callbacks.connected) {
-          instance.callbacks.connected(e);
+          try {
+            instance.callbacks.connected(e);
+          } catch (callbackError) {
+            console.error(logHeader, 'Error in connected callback', callbackError);
+          }
         }
       }
 
       if (state === 'failed' || state === 'disconnected' || state === 'closed') {
         if (instance.callbacks.connectionClosed) {
-          instance.callbacks.connectionClosed('ice', e);
+          try {
+            instance.callbacks.connectionClosed('ice', e);
+          } catch (callbackError) {
+            console.error(logHeader, 'Error in connectionClosed callback', callbackError);
+          }
         }
       }
     };
