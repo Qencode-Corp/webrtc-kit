@@ -638,6 +638,10 @@ function addMethod(instance) {
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
       }
+      
+      if (instance.callbacks.iceStateChange) {
+        instance.callbacks.iceStateChange(state);
+      }
 
       if (state === 'connected') {
         if (instance.callbacks.connected) {
