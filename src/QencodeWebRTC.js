@@ -264,6 +264,9 @@ function appendFmtp(fmtpStr, sdp) {
 function addMethod(instance) {
   function errorHandler(error) {
     instance.error = error;
+    if (typeof instance.config?.callbacks?.error === 'function') {
+      instance.config.callbacks.error(error);
+    }
   }
 
   function getUserMedia(constraints) {
@@ -765,10 +768,11 @@ function addMethod(instance) {
 }
 
 // static methods
-QencodeWebRTC.create = function () {
+QencodeWebRTC.create = function (config = {}) {
   let instance = {
     retryMaxCount: 2,
     retryDelay: 2000,
+    config,
   };
 
   initConfig(instance);
