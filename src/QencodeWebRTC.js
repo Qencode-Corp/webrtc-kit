@@ -499,6 +499,10 @@ function addMethod(instance) {
         console.log('Connection closed normally.');
       }
       instance.connectStarted = false;
+      
+      if (instance.callbacks.connectionClosed) {
+        instance.callbacks.connectionClosed('websocket', event);
+      }
     };
   }
 
