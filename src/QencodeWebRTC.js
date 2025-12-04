@@ -156,13 +156,13 @@ function initConfig(config) {
     webSocketCloseEvent: null,
     isManualStop: false,
   };
-  
+
   if (config && config.callbacks) {
     instance.callbacks = config.callbacks;
   } else {
     instance.callbacks = {};
   }
-  
+
   return instance;
 }
 
@@ -634,6 +634,18 @@ function addMethod(instance) {
         initRetryAfterLongEnoughIceDisconnect();
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
+      }
+
+      if (state === 'connected') {
+        if (instance.callbacks.connected) {
+          instance.callbacks.connected(e);
+        }
+      }
+
+      if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+        if (instance.callbacks.connectionClosed) {
+          instance.callbacks.connectionClosed('ice', e);
+        }
       }
     };
 
