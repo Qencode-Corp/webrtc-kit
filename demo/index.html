@@ -542,8 +542,7 @@
         audio: true,
         video: { width: 1280, height: 720 },
       });
-
-      const qencodeWebRTC = QencodeWebRTC.create({
+      const config = {
         callbacks: {
           error: function (error) {
             console.log('error')
@@ -558,8 +557,9 @@
             console.log('iceStateChange')
           }
         }
-      }
-      );
+      };
+
+      const qencodeWebRTC = QencodeWebRTC.create();
       window.qencodeWebRTC = qencodeWebRTC;
       qencodeWebRTC.attachMedia(document.getElementById('userCam'));
     </script>
