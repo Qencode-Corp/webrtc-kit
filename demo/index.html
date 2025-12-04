@@ -543,7 +543,23 @@
         video: { width: 1280, height: 720 },
       });
 
-      const qencodeWebRTC = QencodeWebRTC.create();
+      const qencodeWebRTC = QencodeWebRTC.create({
+        callbacks: {
+          error: function (error) {
+            console.log('error')
+          },
+          connected: function (event) {
+            console.log("connected")
+          },
+          connectionClosed: function (type, event) {
+            console.log('connection closed')
+          },
+          iceStateChange: function (state) {
+            console.log('iceStateChange')
+          }
+        }
+      }
+      );
       window.qencodeWebRTC = qencodeWebRTC;
       qencodeWebRTC.attachMedia(document.getElementById('userCam'));
     </script>
