@@ -504,73 +504,87 @@ function addMethod(instance) {
   // Switch only the camera (video sender) without touching microphone / audio sender.
   // This is the "no interruption" path for camera switching mid-call.
   async function switchCamera(deviceId, extraVideoConstraints = {}) {
-    // Build constraints: spread extraVideoConstraints first, then set deviceId to ensure it takes precedence
-    const constraints = {
-      video: {
-        ...extraVideoConstraints,
-        // deviceId parameter always takes precedence over any deviceId in extraVideoConstraints
-        deviceId: deviceId ? { exact: deviceId } : undefined,
-      },
-      audio: false,
+    // [FIX] Define default constraints to enforce 16:9 (HD) aspect ratio.
+    // Without this, browsers often revert to 640x480 (4:3) when a deviceId is specified alone.
+    const defaultConstraints = {
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      // Optional: explicit aspect ratio if width/height aren't enough
+      // aspectRatio: { ideal: 1.7777777778 }
     };
     
-    const newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
-    console.info(logHeader, 'Received Media Stream From Camera Switch', newCamStream);
+    // Merge strategy: Defaults < User Constraints < Mandatory Device ID
+    const finalVideoConstraints = {
+      ...defaultConstraints,
+      ...extraVideoConstraints,
+      deviceId: deviceId ? { exact: deviceId } : undefined,
+    };
     
-    const oldStream = instance.stream;
+    const constraints = {
+      video: finalVideoConstraints,
+      audio: false, // Keep audio false to avoid cutting off the microphone
+    };
     
-    const hasActiveConnection =
-      instance.peerConnection &&
-      !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
-      !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+    console.info(logHeader, 'Switching camera with constraints:', constraints);
     
-    if (!hasActiveConnection || !oldStream) {
-      // If not connected yet, just set stream and return
-      instance.stream = newCamStream;
+    try {
+      const newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.info(logHeader, 'Received Media Stream From Camera Switch', newCamStream);
+      
+      const oldStream = instance.stream;
+      
+      const hasActiveConnection =
+        instance.peerConnection &&
+        !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
+        !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+      
+      if (!hasActiveConnection || !oldStream) {
+        instance.stream = newCamStream;
+        const elem = instance.videoElement;
+        if (elem) {
+          elem.srcObject = newCamStream;
+          elem.onloadedmetadata = function (e) {
+            elem.play();
+          };
+        }
+        return newCamStream;
+      }
+      
+      const rep = await replaceTracksInPeerConnection(newCamStream);
+      
+      if (rep.replacedVideo) {
+        oldStream.getVideoTracks().forEach((t) => t.stop());
+      }
+      
+      const composed = new MediaStream();
+      
+      if (rep.newVideoTrack) {
+        composed.addTrack(rep.newVideoTrack);
+      } else if (oldStream.getVideoTracks()[0]) {
+        composed.addTrack(oldStream.getVideoTracks()[0]);
+      }
+      
+      const existingAudio = oldStream.getAudioTracks()[0];
+      if (existingAudio) {
+        composed.addTrack(existingAudio);
+      }
+      
+      instance.stream = composed;
+      
       const elem = instance.videoElement;
       if (elem) {
-        elem.srcObject = newCamStream;
+        elem.srcObject = composed;
         elem.onloadedmetadata = function (e) {
           elem.play();
         };
       }
-      return newCamStream;
+      
+      return composed;
+    } catch (error) {
+      console.error(logHeader, 'Failed to switch camera', error);
+      throw error;
     }
-    
-    const rep = await replaceTracksInPeerConnection(newCamStream);
-    
-    // Only stop old VIDEO tracks (never stop mic here)
-    if (rep.replacedVideo) {
-      oldStream.getVideoTracks().forEach((t) => t.stop());
-    }
-    
-    const composed = new MediaStream();
-    
-    if (rep.newVideoTrack) {
-      composed.addTrack(rep.newVideoTrack);
-    } else if (oldStream.getVideoTracks()[0]) {
-      composed.addTrack(oldStream.getVideoTracks()[0]);
-    }
-    
-    // Preserve existing audio track
-    const existingAudio = oldStream.getAudioTracks()[0];
-    if (existingAudio) {
-      composed.addTrack(existingAudio);
-    }
-    
-    instance.stream = composed;
-    
-    const elem = instance.videoElement;
-    if (elem) {
-      elem.srcObject = composed;
-      elem.onloadedmetadata = function (e) {
-        elem.play();
-      };
-    }
-    
-    return composed;
   }
-  
   
   
   function requestOffer() {
