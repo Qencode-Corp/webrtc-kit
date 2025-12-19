@@ -295,7 +295,17 @@
       _selectVideoDevice(e) {
         this.selectedDeviceId = e.target.value;
         this._rebuildConstraints();
-        this._initStream();
+
+        const hasActiveConnection =
+          qencodeWebRTC.peerConnection &&
+          !['closed', 'failed'].includes(qencodeWebRTC.peerConnection.connectionState) &&
+          !['closed', 'failed'].includes(qencodeWebRTC.peerConnection.iceConnectionState);
+
+        if (hasActiveConnection) {
+          qencodeWebRTC.switchCamera(this.selectedDeviceId)
+        } else {
+          this._initStream();
+        }
       }
 
       async _initDevices() {
