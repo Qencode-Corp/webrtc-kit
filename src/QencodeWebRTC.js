@@ -504,10 +504,12 @@ function addMethod(instance) {
   // Switch only the camera (video sender) without touching microphone / audio sender.
   // This is the "no interruption" path for camera switching mid-call.
   async function switchCamera(deviceId, extraVideoConstraints = {}) {
+    // Build constraints: spread extraVideoConstraints first, then set deviceId to ensure it takes precedence
     const constraints = {
       video: {
-        deviceId: deviceId ? { exact: deviceId } : undefined,
         ...extraVideoConstraints,
+        // deviceId parameter always takes precedence over any deviceId in extraVideoConstraints
+        deviceId: deviceId ? { exact: deviceId } : undefined,
       },
       audio: false,
     };
