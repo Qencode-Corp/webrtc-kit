@@ -324,7 +324,7 @@ function addMethod(instance) {
     // you must implement SDP renegotiation here. sender.replaceTrack only works
     // if a sender for that media type already exists.
   }
-
+  
   function getUserMedia(constraints) {
     if (!constraints) {
       constraints = {
@@ -336,7 +336,7 @@ function addMethod(instance) {
         },
       };
     }
-
+    
     return navigator.mediaDevices
       .getUserMedia(constraints)
       .then(async function (stream) {
@@ -366,7 +366,7 @@ function addMethod(instance) {
         // Update instance stream to the new one
         instance.stream = stream;
         let elem = instance.videoElement;
-
+        
         // Attach stream to video element when video element is provided.
         if (elem) {
           elem.srcObject = stream;
@@ -374,18 +374,14 @@ function addMethod(instance) {
             elem.play();
           };
         }
-
-        return new Promise(function (resolve) {
-          resolve(stream);
-        });
+        
+        return stream;
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Input Device", error);
         errorHandler(error);
-
-        return new Promise(function (resolve, reject) {
-          reject(error);
-        });
+        // Ensure the promise rejects so the caller knows it failed
+        throw error;
       });
   }
 
