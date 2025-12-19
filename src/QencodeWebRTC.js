@@ -282,34 +282,35 @@ function addMethod(instance) {
       }
     }
   }
-
+  
   async function replaceTracksInPeerConnection(newStream) {
     if (!instance.peerConnection || !newStream) {
       return;
     }
-
+    
     const senders = instance.peerConnection.getSenders();
     const newTracks = newStream.getTracks();
-
+    
     // Map track kinds to their new tracks
     const newVideoTrack = newTracks.find((track) => track.kind === 'video');
     const newAudioTrack = newTracks.find((track) => track.kind === 'audio');
-
+    
     // Replace tracks in existing senders
     for (const sender of senders) {
-      const track = sender.track;
-      if (!track) continue;
-
-      if (track.kind === 'video' && newVideoTrack) {
+      if (!sender.track) continue; // Skip senders that are already empty
+      
+      if (sender.track.kind === 'video' && newVideoTrack) {
         try {
+          // Replace the video track seamlessly
           await sender.replaceTrack(newVideoTrack);
           console.info(logHeader, 'Replaced video track in peer connection');
         } catch (error) {
           console.error(logHeader, 'Error replacing video track', error);
           errorHandler(error);
         }
-      } else if (track.kind === 'audio' && newAudioTrack) {
+      } else if (sender.track.kind === 'audio' && newAudioTrack) {
         try {
+          // Replace the audio track seamlessly
           await sender.replaceTrack(newAudioTrack);
           console.info(logHeader, 'Replaced audio track in peer connection');
         } catch (error) {
@@ -318,31 +319,10 @@ function addMethod(instance) {
         }
       }
     }
-
-    // If new stream has tracks that don't exist in peer connection, add them
-    const existingTrackKinds = senders
-      .map((sender) => sender.track?.kind)
-      .filter(Boolean);
-
-    if (newVideoTrack && !existingTrackKinds.includes('video')) {
-      try {
-        instance.peerConnection.addTrack(newVideoTrack, newStream);
-        console.info(logHeader, 'Added new video track to peer connection');
-      } catch (error) {
-        console.error(logHeader, 'Error adding video track', error);
-        errorHandler(error);
-      }
-    }
-
-    if (newAudioTrack && !existingTrackKinds.includes('audio')) {
-      try {
-        instance.peerConnection.addTrack(newAudioTrack, newStream);
-        console.info(logHeader, 'Added new audio track to peer connection');
-      } catch (error) {
-        console.error(logHeader, 'Error adding audio track', error);
-        errorHandler(error);
-      }
-    }
+    
+    // Note: If you need to support adding new tracks (e.g. Audio -> Audio+Video),
+    // you must implement SDP renegotiation here. sender.replaceTrack only works
+    // if a sender for that media type already exists.
   }
 
   function getUserMedia(constraints) {
