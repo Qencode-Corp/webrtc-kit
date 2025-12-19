@@ -509,8 +509,8 @@ function addMethod(instance) {
     const defaultConstraints = {
       width: { ideal: 1920 },
       height: { ideal: 1080 },
-      // Optional: explicit aspect ratio if width/height aren't enough
-      // aspectRatio: { ideal: 1.7777777778 }
+      // Explicitly specify aspect ratio if width/height aren't enough. Looks important in practice.
+      aspectRatio: { ideal: 1.7777777778 }
     };
     
     // Merge strategy: Defaults < User Constraints < Mandatory Device ID
