@@ -283,6 +283,68 @@ function addMethod(instance) {
     }
   }
 
+  async function replaceTracksInPeerConnection(newStream) {
+    if (!instance.peerConnection || !newStream) {
+      return;
+    }
+
+    const senders = instance.peerConnection.getSenders();
+    const newTracks = newStream.getTracks();
+
+    // Map track kinds to their new tracks
+    const newVideoTrack = newTracks.find((track) => track.kind === 'video');
+    const newAudioTrack = newTracks.find((track) => track.kind === 'audio');
+
+    // Replace tracks in existing senders
+    for (const sender of senders) {
+      const track = sender.track;
+      if (!track) continue;
+
+      if (track.kind === 'video' && newVideoTrack) {
+        try {
+          await sender.replaceTrack(newVideoTrack);
+          console.info(logHeader, 'Replaced video track in peer connection');
+        } catch (error) {
+          console.error(logHeader, 'Error replacing video track', error);
+          errorHandler(error);
+        }
+      } else if (track.kind === 'audio' && newAudioTrack) {
+        try {
+          await sender.replaceTrack(newAudioTrack);
+          console.info(logHeader, 'Replaced audio track in peer connection');
+        } catch (error) {
+          console.error(logHeader, 'Error replacing audio track', error);
+          errorHandler(error);
+        }
+      }
+    }
+
+    // If new stream has tracks that don't exist in peer connection, add them
+    const existingTrackKinds = senders
+      .map((sender) => sender.track?.kind)
+      .filter(Boolean);
+
+    if (newVideoTrack && !existingTrackKinds.includes('video')) {
+      try {
+        instance.peerConnection.addTrack(newVideoTrack, newStream);
+        console.info(logHeader, 'Added new video track to peer connection');
+      } catch (error) {
+        console.error(logHeader, 'Error adding video track', error);
+        errorHandler(error);
+      }
+    }
+
+    if (newAudioTrack && !existingTrackKinds.includes('audio')) {
+      try {
+        instance.peerConnection.addTrack(newAudioTrack, newStream);
+        console.info(logHeader, 'Added new audio track to peer connection');
+      } catch (error) {
+        console.error(logHeader, 'Error adding audio track', error);
+        errorHandler(error);
+      }
+    }
+  }
+
   function getUserMedia(constraints) {
     if (!constraints) {
       constraints = {
@@ -297,8 +359,26 @@ function addMethod(instance) {
 
     return navigator.mediaDevices
       .getUserMedia(constraints)
-      .then(function (stream) {
+      .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
+
+        // If there's an active peer connection, replace tracks instead of creating new stream
+        const hasActiveConnection =
+          instance.peerConnection &&
+          !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
+          !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+
+        if (hasActiveConnection && instance.stream) {
+          // Stop old tracks
+          const oldTracks = instance.stream.getTracks();
+          oldTracks.forEach((track) => {
+            track.stop();
+          });
+
+          // Replace tracks in peer connection
+          await replaceTracksInPeerConnection(stream);
+        }
+
         instance.stream = stream;
         let elem = instance.videoElement;
 
@@ -331,8 +411,26 @@ function addMethod(instance) {
 
     return navigator.mediaDevices
       .getDisplayMedia(constraints)
-      .then(function (stream) {
+      .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
+
+        // If there's an active peer connection, replace tracks instead of creating new stream
+        const hasActiveConnection =
+          instance.peerConnection &&
+          !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
+          !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+
+        if (hasActiveConnection && instance.stream) {
+          // Stop old tracks
+          const oldTracks = instance.stream.getTracks();
+          oldTracks.forEach((track) => {
+            track.stop();
+          });
+
+          // Replace tracks in peer connection
+          await replaceTracksInPeerConnection(stream);
+        }
+
         instance.stream = stream;
         let elem = instance.videoElement;
 
