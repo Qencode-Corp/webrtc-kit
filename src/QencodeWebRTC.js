@@ -384,56 +384,51 @@ function addMethod(instance) {
         throw error;
       });
   }
-
+  
   function getDisplayMedia(constraints) {
     if (!constraints) {
       constraints = {};
     }
-
+    
     return navigator.mediaDevices
       .getDisplayMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-
-        // If there's an active peer connection, replace tracks instead of creating new stream
+        
         const hasActiveConnection =
           instance.peerConnection &&
           !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
           !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
-
-        if (hasActiveConnection && instance.stream) {
-          // Stop old tracks
-          const oldTracks = instance.stream.getTracks();
+        
+        const oldStream = instance.stream;
+        
+        if (hasActiveConnection && oldStream) {
+          // 1. Replace tracks first
+          await replaceTracksInPeerConnection(stream);
+          
+          // 2. Stop old tracks after
+          const oldTracks = oldStream.getTracks();
           oldTracks.forEach((track) => {
             track.stop();
           });
-
-          // Replace tracks in peer connection
-          await replaceTracksInPeerConnection(stream);
         }
-
+        
         instance.stream = stream;
         let elem = instance.videoElement;
-
-        // Attach stream to video element when video element is provided.
+        
         if (elem) {
           elem.srcObject = stream;
           elem.onloadedmetadata = function (e) {
             elem.play();
           };
         }
-
-        return new Promise(function (resolve) {
-          resolve(stream);
-        });
+        
+        return stream;
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Display", error);
         errorHandler(error);
-
-        return new Promise(function (resolve, reject) {
-          reject(error);
-        });
+        throw error;
       });
   }
 
