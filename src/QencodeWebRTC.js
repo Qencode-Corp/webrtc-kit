@@ -341,24 +341,29 @@ function addMethod(instance) {
       .getUserMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
-
-        // If there's an active peer connection, replace tracks instead of creating new stream
+        
+        // Check for active connection
         const hasActiveConnection =
           instance.peerConnection &&
           !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
           !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
-
-        if (hasActiveConnection && instance.stream) {
-          // Stop old tracks
-          const oldTracks = instance.stream.getTracks();
+        
+        // Capture the OLD stream before we update the instance variable
+        const oldStream = instance.stream;
+        
+        if (hasActiveConnection && oldStream) {
+          // 1. IMPORTANT: Replace tracks FIRST while old tracks are still active
+          await replaceTracksInPeerConnection(stream);
+          
+          // 2. Stop old tracks AFTER the replacement is done
+          // This prevents black frames or "stream ended" signals during switch
+          const oldTracks = oldStream.getTracks();
           oldTracks.forEach((track) => {
             track.stop();
           });
-
-          // Replace tracks in peer connection
-          await replaceTracksInPeerConnection(stream);
         }
-
+        
+        // Update instance stream to the new one
         instance.stream = stream;
         let elem = instance.videoElement;
 
