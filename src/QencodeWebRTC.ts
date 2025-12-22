@@ -578,6 +578,8 @@ function addMethod(instance: QencodeWebRtcInstance) {
     const defaultConstraints = {
       width: { ideal: 1920 },
       height: { ideal: 1080 },
+      // Explicitly specify aspect ratio if width/height aren't enough. Looks important in practice.
+      aspectRatio: { ideal: 1.7777777778 },
     };
 
     const finalVideoConstraints = {
