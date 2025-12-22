@@ -860,8 +860,8 @@ function addMethod(instance: QencodeWebRtcInstance) {
     instance.iceDisconnectTimeoutId = null;
   }
 
-  async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
-    console.table({
+  async function createPeerConnection(id: number, peerId: number, offer, candidates, iceServers) {
+    console.log({
       id,
       peerId,
       offer,
