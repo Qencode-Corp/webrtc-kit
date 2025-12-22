@@ -360,11 +360,8 @@ function addMethod(instance) {
       .getUserMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
-
-        const hasActiveConnection =
-          instance.peerConnection &&
-          !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
-          !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+        
+        const hasActiveConnection = instance.hasActiveConnection();
 
         const oldStream = instance.stream;
 
@@ -436,11 +433,8 @@ function addMethod(instance) {
       .getDisplayMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-
-        const hasActiveConnection =
-          instance.peerConnection &&
-          !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
-          !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+        
+        const hasActiveConnection = instance.hasActiveConnection();
 
         const oldStream = instance.stream;
 
@@ -533,10 +527,7 @@ function addMethod(instance) {
 
       const oldStream = instance.stream;
 
-      const hasActiveConnection =
-        instance.peerConnection &&
-        !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
-        !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
+      const hasActiveConnection = instance.hasActiveConnection();
 
       if (!hasActiveConnection || !oldStream) {
         instance.stream = newCamStream;
