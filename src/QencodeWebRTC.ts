@@ -485,7 +485,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
 
-        await replaceStream(stream);
+        return await replaceStream(stream);
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Input Device", error);
@@ -558,7 +558,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       .getDisplayMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-        await replaceStream(stream);
+        return await replaceStream(stream);
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Display", error);
