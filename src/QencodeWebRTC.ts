@@ -619,7 +619,9 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
     if (!hasActiveConnection || !oldStream) {
       // Stop ONLY the old camera tracks to release hardware
-      oldStream?.getVideoTracks?.().forEach((track) => track.stop());
+      if (oldStream) {
+        oldStream.getVideoTracks().forEach((track) => track.stop());
+      }
 
       // Build a composed stream
       const composed = new MediaStream();
