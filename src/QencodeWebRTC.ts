@@ -592,9 +592,10 @@ function addMethod(instance: QencodeWebRtcInstance) {
     };
 
     console.info(logHeader, 'Switching camera with constraints:', constraints);
+    let newCamStream;
 
     try {
-      const newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
+      newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
       console.info(logHeader, 'Received Media Stream From Camera Switch', newCamStream);
 
       const oldStream = instance.stream;
@@ -649,6 +650,11 @@ function addMethod(instance: QencodeWebRtcInstance) {
       return composed;
     } catch (error) {
       console.error(logHeader, 'Failed to switch camera', error);
+      // Ensure the new stream is released if the switch failed
+      if (newCamStream) {
+        newCamStream.getTracks().forEach((track) => track.stop());
+      }
+
       throw error;
     }
   }
