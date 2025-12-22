@@ -185,6 +185,8 @@
         qencodeWebRTC.switchCamera(this.selectedDeviceId);
         this._startLoop();
         this._initOnlineOfflineListeners();
+        const video = document.querySelector('#userCam');
+        video.dataset.initialized = true;
       }
 
       disconnectedCallback() {
