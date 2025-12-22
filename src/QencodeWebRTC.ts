@@ -861,6 +861,13 @@ function addMethod(instance: QencodeWebRtcInstance) {
   }
 
   async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
+    console.table({
+      id,
+      peerId,
+      offer,
+      candidates,
+      iceServers,
+    });
     instance.connectionData = {
       id,
       peerId,
