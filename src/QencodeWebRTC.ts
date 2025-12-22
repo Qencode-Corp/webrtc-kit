@@ -118,6 +118,21 @@ function removeFormat(sdp, formatNumber) {
   return joinSdpLines(newLines);
 }
 
+async function getStreamForDeviceCheck() {
+  // High resolution video constraints makes browser to get maximum resolution of video device.
+  // Using 'ideal' instead of exact values for better compatibility with different cameras.
+  const constraints = {
+    audio: { deviceId: undefined },
+    video: { deviceId: undefined, width: { ideal: 1920 }, height: { ideal: 1080 } },
+  };
+
+  return await navigator.mediaDevices.getUserMedia(constraints);
+}
+
+async function getDevices() {
+  return await navigator.mediaDevices.enumerateDevices();
+}
+
 function gotDevices(deviceInfos: MediaDeviceInfo[]): Devices {
   let devices = {
     audioinput: [],
@@ -1158,19 +1173,8 @@ QencodeWebRTC.create = function (config: CreateConfig = {}) {
 };
 
 QencodeWebRTC.getDevices = async function (): Promise<Devices> {
-  try {
-    // 1. Request minimal access to trigger the permission prompt
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-
-    // 2. IMMEDIATELY stop the tracks to turn off the camera light and release hardware
-    stream.getTracks().forEach((track) => track.stop());
-  } catch (err) {
-    console.warn('User denied permissions or device not found', err);
-    // Even if they denied it, we can still return the list (it will just have empty labels)
-  }
-
-  // 3. Now enumerate devices safely
-  const deviceInfos = await navigator.mediaDevices.enumerateDevices();
+  await getStreamForDeviceCheck();
+  const deviceInfos = await getDevices();
   return gotDevices(deviceInfos);
 };
 
