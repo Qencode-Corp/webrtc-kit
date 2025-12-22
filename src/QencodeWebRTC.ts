@@ -432,6 +432,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
     let replacedVideo = false;
     let replacedAudio = false;
 
+    // replaceTracksInPeerConnection gracefully handles the missing audio track in the new stream by skipping the audio replacement logic. This ensures that the microphone input is never interrupted, which is a common pain point in WebRTC implementations.
     if (newVideoTrack && videoSender) {
       try {
         await videoSender.replaceTrack(newVideoTrack);
