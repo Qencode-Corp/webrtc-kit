@@ -548,6 +548,62 @@ function addMethod(instance: QencodeWebRtcInstance) {
         throw error;
       });
   }
+
+  async function replaceStream(stream: MediaStream) {
+    const hasActiveConnection = instance.hasActiveConnection();
+    const oldStream = instance.stream;
+
+    if (hasActiveConnection && oldStream) {
+      const rep = await replaceTracksInPeerConnection(stream);
+
+      if (rep.replacedVideo) {
+        oldStream.getVideoTracks().forEach((t) => t.stop());
+      }
+      if (rep.replacedAudio) {
+        oldStream.getAudioTracks().forEach((t) => t.stop());
+      }
+
+      // Compose: screen video + keep existing mic if screen share has no audio
+      const composed = new MediaStream();
+
+      if (rep.newVideoTrack) {
+        composed.addTrack(rep.newVideoTrack);
+      } else if (oldStream.getVideoTracks()[0]) {
+        composed.addTrack(oldStream.getVideoTracks()[0]);
+      }
+
+      if (rep.newAudioTrack) {
+        composed.addTrack(rep.newAudioTrack);
+      } else if (oldStream.getAudioTracks()[0]) {
+        composed.addTrack(oldStream.getAudioTracks()[0]);
+      }
+
+      instance.stream = composed;
+
+      const elem = instance.videoElement;
+      if (elem) {
+        elem.srcObject = composed;
+        elem.onloadedmetadata = function (e) {
+          elem.play();
+        };
+      }
+
+      return composed;
+    }
+
+    instance.stream = stream;
+    const elem = instance.videoElement;
+
+    if (elem) {
+      elem.srcObject = stream;
+      elem.onloadedmetadata = function (e) {
+        elem.play();
+      };
+    }
+
+    return stream;
+  }
+
   function getDisplayMedia(constraints) {
     if (!constraints) {
       constraints = {};
@@ -557,60 +613,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       .getDisplayMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-
-        const hasActiveConnection = instance.hasActiveConnection();
-
-        const oldStream = instance.stream;
-
-        if (hasActiveConnection && oldStream) {
-          const rep = await replaceTracksInPeerConnection(stream);
-
-          if (rep.replacedVideo) {
-            oldStream.getVideoTracks().forEach((t) => t.stop());
-          }
-          if (rep.replacedAudio) {
-            oldStream.getAudioTracks().forEach((t) => t.stop());
-          }
-
-          // Compose: screen video + keep existing mic if screen share has no audio
-          const composed = new MediaStream();
-
-          if (rep.newVideoTrack) {
-            composed.addTrack(rep.newVideoTrack);
-          } else if (oldStream.getVideoTracks()[0]) {
-            composed.addTrack(oldStream.getVideoTracks()[0]);
-          }
-
-          if (rep.newAudioTrack) {
-            composed.addTrack(rep.newAudioTrack);
-          } else if (oldStream.getAudioTracks()[0]) {
-            composed.addTrack(oldStream.getAudioTracks()[0]);
-          }
-
-          instance.stream = composed;
-
-          const elem = instance.videoElement;
-          if (elem) {
-            elem.srcObject = composed;
-            elem.onloadedmetadata = function (e) {
-              elem.play();
-            };
-          }
-
-          return composed;
-        }
-
-        instance.stream = stream;
-        const elem = instance.videoElement;
-
-        if (elem) {
-          elem.srcObject = stream;
-          elem.onloadedmetadata = function (e) {
-            elem.play();
-          };
-        }
-
-        return stream;
+        await replaceStream(stream);
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Display", error);
