@@ -605,19 +605,31 @@ function addMethod(instance: QencodeWebRtcInstance) {
     const hasActiveConnection = instance.hasActiveConnection();
 
     if (!hasActiveConnection || !oldStream) {
-      // Stop existing tracks to release hardware
-      if (oldStream) {
-        oldStream.getTracks().forEach((track) => track.stop());
+      // Grab existing audio (if any) before touching tracks
+      const oldAudioTrack = oldStream?.getAudioTracks?.()[0] ?? null;
+
+      // Stop ONLY the old camera tracks to release hardware
+      oldStream?.getVideoTracks?.().forEach((track) => track.stop());
+
+      // Build a composed stream: new video + existing audio
+      const composed = new MediaStream();
+
+      const newVideoTrack = newCamStream.getVideoTracks()[0];
+      if (newVideoTrack) {
+        composed.addTrack(newVideoTrack);
       }
-      instance.stream = newCamStream;
-      const elem = instance.videoElement;
-      if (elem) {
-        elem.srcObject = newCamStream;
-        elem.onloadedmetadata = function (e) {
-          elem.play();
-        };
+
+      if (oldAudioTrack) {
+        composed.addTrack(oldAudioTrack);
       }
-      return newCamStream;
+
+      instance.stream = composed;
+
+      if (instance.videoElement) {
+        instance.videoElement.srcObject = composed;
+      }
+
+      return composed;
     }
     try {
       const rep = await replaceTracksInPeerConnection(newCamStream);
