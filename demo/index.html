@@ -272,14 +272,20 @@
       }
 
       _displayMediaError(error) {
-        if (error.name === 'ConstraintNotSatisfiedError') {
-          // We can no longer read 'exact' from a global variable since the class manages it.
-          this.mediaError = `The requested resolution is not supported by your device.`;
-        } else if (error.name === 'PermissionDeniedError') {
+        // 1. Handle Permission Errors (Standard & Legacy)
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
           this.mediaError =
             'Permissions have not been granted to use your camera and ' +
-            'microphone. Please allow access to proceed.';
-        } else {
+            'microphone. You need to allow the page access to your devices in ' +
+            'order for the demo to work.';
+        }
+        // 2. Handle Constraint Errors (Standard & Legacy)
+        else if (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError') {
+          // [FIX] Removed reference to constraints.video.width.exact which is now undefined
+          this.mediaError = `The requested resolution is not supported by your device.`;
+        }
+        // 3. Fallback for other errors
+        else {
           this.mediaError = `getUserMedia error: ${error.name}`;
         }
       }
