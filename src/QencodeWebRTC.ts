@@ -125,8 +125,10 @@ async function getStreamForDeviceCheck() {
     audio: { deviceId: undefined },
     video: { deviceId: undefined, width: { ideal: 1920 }, height: { ideal: 1080 } },
   };
-
-  return await navigator.mediaDevices.getUserMedia(constraints);
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  // [FIX] Stop tracks immediately to release the camera for the actual app
+  stream.getTracks().forEach((track) => track.stop());
+  return stream;
 }
 
 async function getDevices() {
