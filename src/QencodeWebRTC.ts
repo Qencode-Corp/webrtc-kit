@@ -601,8 +601,10 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
     let newCamStream: MediaStream;
     try {
+      instance.getUserMediaError = null;
       newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (e) {
+      instance.getUserMediaError = e;
       // Fallback: relax constraints (prevents “camera switch randomly fails”)
       const fallback = {
         video: deviceId ? { deviceId: { exact: deviceId } } : true,
