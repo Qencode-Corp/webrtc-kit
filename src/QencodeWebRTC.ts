@@ -597,16 +597,16 @@ function addMethod(instance: QencodeWebRtcInstance) {
       newCamStream = await navigator.mediaDevices.getUserMedia(fallback as any);
     }
 
-      const oldStream = instance.stream;
+    const oldStream = instance.stream;
 
-      const hasActiveConnection = instance.hasActiveConnection();
+    const hasActiveConnection = instance.hasActiveConnection();
 
-      if (!hasActiveConnection || !oldStream) {
+    if (!hasActiveConnection || !oldStream) {
         // Stop existing tracks to release hardware
         if (oldStream) {
           oldStream.getTracks().forEach((track) => track.stop());
         }
-        instance.stream = newCamStream;
+      instance.stream = newCamStream;
         const elem = instance.videoElement;
         if (elem) {
           elem.srcObject = newCamStream;
@@ -614,16 +614,16 @@ function addMethod(instance: QencodeWebRtcInstance) {
             elem.play();
           };
         }
-        return newCamStream;
-      }
-
-      const rep = await replaceTracksInPeerConnection(newCamStream);
+      return newCamStream;
+    }
+    try {
+    const rep = await replaceTracksInPeerConnection(newCamStream);
 
       if (rep.replacedVideo) {
         oldStream.getVideoTracks().forEach((t) => t.stop());
       }
 
-      const composed = new MediaStream();
+    const composed = new MediaStream();
 
       if (rep.newVideoTrack) {
         composed.addTrack(rep.newVideoTrack);
@@ -631,12 +631,12 @@ function addMethod(instance: QencodeWebRtcInstance) {
         composed.addTrack(oldStream.getVideoTracks()[0]);
       }
 
-      const existingAudio = oldStream.getAudioTracks()[0];
+    const existingAudio = oldStream.getAudioTracks()[0];
       if (existingAudio) {
         composed.addTrack(existingAudio);
       }
 
-      instance.stream = composed;
+    instance.stream = composed;
 
       const elem = instance.videoElement;
       if (elem) {
@@ -646,13 +646,13 @@ function addMethod(instance: QencodeWebRtcInstance) {
         };
       }
 
-      return composed;
+    return composed;
     } catch (error) {
       console.error(logHeader, 'Failed to switch camera', error);
       // Ensure the new stream is released if the switch failed
       if (newCamStream) {
         newCamStream.getTracks().forEach((track) => track.stop());
-      }
+  }
 
       throw error;
     }
