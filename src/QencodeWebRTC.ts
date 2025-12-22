@@ -128,7 +128,7 @@ async function getDevices() {
   return await navigator.mediaDevices.enumerateDevices();
 }
 
-function gotDevices(deviceInfos) {
+function gotDevices(deviceInfos: MediaDeviceInfo[]) {
   let devices = {
     audioinput: [],
     audiooutput: [],
@@ -161,8 +161,16 @@ function gotDevices(deviceInfos) {
   return devices;
 }
 
+interface QencodeWebRtcInstance {
+  connectionUrl: string;
+  stream?: MediaStream;
+  peerConnection?: RTCPeerConnection;
+  webSocket?: WebSocket;
+  isManualStop: boolean;
+}
+
 function initConfig(config) {
-  let instance = {
+  let instance: QencodeWebRtcInstance = {
     retryMaxCount: 2,
     retryDelay: 2000,
     connectionConfig: {},
@@ -293,7 +301,7 @@ function appendFmtp(fmtpStr, sdp) {
   return joinSdpLines(lines);
 }
 
-function addMethod(instance) {
+function addMethod(instance: QencodeWebRtcInstance) {
   function errorHandler(error) {
     instance.error = error;
     if (typeof instance.callbacks?.error === 'function') {
@@ -382,7 +390,7 @@ function addMethod(instance) {
       .getUserMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
-        
+
         const hasActiveConnection = instance.hasActiveConnection();
 
         const oldStream = instance.stream;
@@ -455,7 +463,7 @@ function addMethod(instance) {
       .getDisplayMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-        
+
         const hasActiveConnection = instance.hasActiveConnection();
 
         const oldStream = instance.stream;
@@ -519,7 +527,7 @@ function addMethod(instance) {
 
   // Switch only the camera (video sender) without touching microphone / audio sender.
   // This is the "no interruption" path for camera switching mid-call.
-  async function switchCamera(deviceId, extraVideoConstraints = {}) {
+  async function switchCamera(deviceId: string, extraVideoConstraints = {}) {
     // [FIX] Define default constraints to enforce 16:9 (HD) aspect ratio.
     // Without this, browsers often revert to 640x480 (4:3) when a deviceId is specified alone.
     const defaultConstraints = {
@@ -989,7 +997,7 @@ function addMethod(instance) {
   instance.switchCamera = function (deviceId, extraVideoConstraints) {
     return switchCamera(deviceId, extraVideoConstraints);
   };
-  
+
   instance.hasActiveConnection = function () {
     return (
       instance.peerConnection &&
@@ -998,7 +1006,7 @@ function addMethod(instance) {
     );
   };
 
-  instance.startStreaming = function (connectionUrl, connectionConfig) {
+  instance.startStreaming = function (connectionUrl: string, connectionConfig) {
     instance.connectionUrl = connectionUrl + '?direction=send&transport=tcp';
     console.info(logEventHeader, 'Start Streaming');
 
