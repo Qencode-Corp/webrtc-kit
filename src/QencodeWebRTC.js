@@ -976,6 +976,14 @@ function addMethod(instance) {
   instance.switchCamera = function (deviceId, extraVideoConstraints) {
     return switchCamera(deviceId, extraVideoConstraints);
   };
+  
+  instance.hasActiveConnection = function () {
+    return (
+      instance.peerConnection &&
+      !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
+      !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState)
+    );
+  };
 
   instance.startStreaming = function (connectionUrl, connectionConfig) {
     instance.connectionUrl = connectionUrl + '?direction=send&transport=tcp';
