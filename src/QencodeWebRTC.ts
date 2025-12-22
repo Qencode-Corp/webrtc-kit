@@ -485,62 +485,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
 
-        const hasActiveConnection = instance.hasActiveConnection();
-
-        const oldStream = instance.stream;
-
-        if (hasActiveConnection && oldStream) {
-          // Replace first, stop after (and only what we actually replaced)
-          const rep = await replaceTracksInPeerConnection(stream);
-
-          if (rep.replacedVideo) {
-            oldStream.getVideoTracks().forEach((t) => t.stop());
-          }
-          if (rep.replacedAudio) {
-            oldStream.getAudioTracks().forEach((t) => t.stop());
-          }
-
-          // Keep instance.stream representing what we are sending:
-          // new tracks when provided, otherwise preserve existing kind.
-          const composed = new MediaStream();
-
-          if (rep.newVideoTrack) {
-            composed.addTrack(rep.newVideoTrack);
-          } else if (oldStream.getVideoTracks()[0]) {
-            composed.addTrack(oldStream.getVideoTracks()[0]);
-          }
-
-          if (rep.newAudioTrack) {
-            composed.addTrack(rep.newAudioTrack);
-          } else if (oldStream.getAudioTracks()[0]) {
-            composed.addTrack(oldStream.getAudioTracks()[0]);
-          }
-
-          instance.stream = composed;
-
-          const elem = instance.videoElement;
-          if (elem) {
-            elem.srcObject = composed;
-            elem.onloadedmetadata = function (e) {
-              elem.play();
-            };
-          }
-
-          return composed;
-        }
-
-        // No active connection yet: just set stream as-is
-        instance.stream = stream;
-        const elem = instance.videoElement;
-
-        if (elem) {
-          elem.srcObject = stream;
-          elem.onloadedmetadata = function (e) {
-            elem.play();
-          };
-        }
-
-        return stream;
+        await replaceStream(stream);
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Input Device", error);
