@@ -572,15 +572,12 @@ function addMethod(instance: QencodeWebRtcInstance) {
   }
 
   // Switch only the camera (video sender) without touching microphone / audio sender.
-  // This is the "no interruption" path for camera switching mid-call.
+  // It handles initial setup by requesting audio if no existing audio track is found.
   async function switchCamera(deviceId: string) {
     // [FIX] Define default constraints to enforce 16:9 (HD) aspect ratio.
-    // Without this, browsers often revert to 640x480 (4:3) when a deviceId is specified alone.
     const defaultConstraints = {
       width: { ideal: 1920 },
       height: { ideal: 1080 },
-      // Explicitly specify aspect ratio if width/height aren't enough. Looks important in practice.
-      // aspectRatio: { ideal: 1.7777777778 },
     };
 
     const finalVideoConstraints = {
@@ -589,29 +586,38 @@ function addMethod(instance: QencodeWebRtcInstance) {
     };
     console.log('finalVideoConstraints', finalVideoConstraints);
 
-    const constraints = { video: finalVideoConstraints, audio: false };
+    // 1. Move oldStream retrieval UP to check for existing audio
+    const oldStream = instance.stream;
+    const oldAudioTrack = oldStream?.getAudioTracks?.()[0] ?? null;
+
+    // 2. Determine if we need to request audio (Initial Setup vs Camera Switch)
+    const shouldRequestAudio = !oldAudioTrack;
+
+    // 3. Update constraints to request audio only if we don't have it
+    const constraints = {
+      video: finalVideoConstraints,
+      audio: shouldRequestAudio,
+    };
 
     let newCamStream: MediaStream;
     try {
       newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (e) {
       // Fallback: relax constraints (prevents “camera switch randomly fails”)
-      const fallback = { video: deviceId ? { deviceId: { exact: deviceId } } : true, audio: false };
+      const fallback = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        audio: shouldRequestAudio, // Apply audio logic to fallback too
+      };
       newCamStream = await navigator.mediaDevices.getUserMedia(fallback as any);
     }
-
-    const oldStream = instance.stream;
 
     const hasActiveConnection = instance.hasActiveConnection();
 
     if (!hasActiveConnection || !oldStream) {
-      // Grab existing audio (if any) before touching tracks
-      const oldAudioTrack = oldStream?.getAudioTracks?.()[0] ?? null;
-
       // Stop ONLY the old camera tracks to release hardware
       oldStream?.getVideoTracks?.().forEach((track) => track.stop());
 
-      // Build a composed stream: new video + existing audio
+      // Build a composed stream
       const composed = new MediaStream();
 
       const newVideoTrack = newCamStream.getVideoTracks()[0];
@@ -619,8 +625,19 @@ function addMethod(instance: QencodeWebRtcInstance) {
         composed.addTrack(newVideoTrack);
       }
 
-      if (oldAudioTrack) {
+      // 4. Logic to add the correct audio track
+      if (shouldRequestAudio) {
+        // Case A: Initial Setup - Use the NEW audio track we just requested
+        const newAudioTrack = newCamStream.getAudioTracks()[0];
+        if (newAudioTrack) {
+          composed.addTrack(newAudioTrack);
+        }
+      } else if (oldAudioTrack) {
+        // Case B: Switching - Keep the OLD audio track (seamless switch)
         composed.addTrack(oldAudioTrack);
+
+        // Important: If we requested audio: false, newCamStream has no audio tracks,
+        // so we don't need to stop anything there.
       }
 
       instance.stream = composed;
@@ -631,13 +648,14 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
       return composed;
     }
+
+    // --- Active Connection Logic (unchanged behavior) ---
     try {
       const rep = await replaceTracksInPeerConnection(newCamStream);
 
       if (rep.replacedVideo) {
         oldStream.getVideoTracks().forEach((t) => t.stop());
       } else {
-        // That check is the big one. It prevents the “local preview shows new camera, remote still sees old camera” split-reality bug.
         newCamStream.getTracks().forEach((t) => t.stop());
         return oldStream;
       }
@@ -650,6 +668,10 @@ function addMethod(instance: QencodeWebRtcInstance) {
         composed.addTrack(oldStream.getVideoTracks()[0]);
       }
 
+      // We continue to use the existing audio for the local stream object
+      // Note: If we added audio in 'shouldRequestAudio' mode while connected,
+      // it won't be sent to the peer without renegotiation (replaceTrack fails for missing senders).
+      // But this path is rarely hit for "Initial Setup" since !hasActiveConnection is usually true then.
       const existingAudio = oldStream.getAudioTracks()[0];
       if (existingAudio) {
         composed.addTrack(existingAudio);
@@ -668,7 +690,6 @@ function addMethod(instance: QencodeWebRtcInstance) {
       return composed;
     } catch (error) {
       console.error(logHeader, 'Failed to switch camera', error);
-      // Ensure the new stream is released if the switch failed
       if (newCamStream) {
         newCamStream.getTracks().forEach((track) => track.stop());
       }
@@ -1077,9 +1098,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
     return getDisplayMedia(constraints);
   };
 
-  instance.switchCamera = function (
-    deviceId: string,
-  ) {
+  instance.switchCamera = function (deviceId: string) {
     return switchCamera(deviceId);
   };
 
