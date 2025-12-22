@@ -588,6 +588,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       ...extraVideoConstraints,
       ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
     };
+    console.log('finalVideoConstraints', finalVideoConstraints);
 
     const constraints = { video: finalVideoConstraints, audio: false };
 
