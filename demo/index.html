@@ -183,7 +183,7 @@
           const params = new URLSearchParams(location.search);
           this.serverUrl = params.get('u');
           await this._initDevices();
-          qencodeWebRTC.switchCamera(this.selectedDeviceId);
+          qencodeWebRTC.switchToCamera(this.selectedDeviceId);
           this._startLoop();
           this._initOnlineOfflineListeners();
           const video = document.querySelector('#userCam');
@@ -334,7 +334,7 @@
       _selectVideoDevice(e) {
         this.selectedDeviceId = e.target.value;
         // this._rebuildConstraints();
-        qencodeWebRTC.switchCamera(this.selectedDeviceId);
+        qencodeWebRTC.switchToCamera(this.selectedDeviceId);
       }
 
       async _initDevices() {

@@ -256,7 +256,7 @@ interface QencodeWebRtcInstance {
   attachMedia(videoElement: HTMLVideoElement): void;
   getUserMedia(constraints?: MediaStreamConstraints): Promise<MediaStream>;
   getDisplayMedia(constraints?: DisplayMediaStreamConstraints): Promise<MediaStream>;
-  switchCamera(
+  switchToCamera(
     deviceId: string,
     extraVideoConstraints?: MediaTrackConstraints
   ): Promise<MediaStream>;
@@ -575,7 +575,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
   // Switch only the camera (video sender) without touching microphone / audio sender.
   // It handles initial setup by requesting audio if no existing audio track is found.
-  async function switchCamera(deviceId: string) {
+  async function switchToCamera(deviceId: string) {
     // [FIX] Define default constraints to enforce 16:9 (HD) aspect ratio.
     const defaultConstraints = {
       width: { ideal: 1920 },
@@ -1114,8 +1114,8 @@ function addMethod(instance: QencodeWebRtcInstance) {
     return getDisplayMedia(constraints);
   };
 
-  instance.switchCamera = function (deviceId: string) {
-    return switchCamera(deviceId);
+  instance.switchToCamera = function (deviceId: string) {
+    return switchToCamera(deviceId);
   };
 
   instance.hasActiveConnection = function () {
