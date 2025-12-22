@@ -43,6 +43,18 @@ const config = [
       libraryTarget: 'umd',
       libraryExport: 'default',
     },
+    resolve: {
+      extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+      ],
+    },
     devtool: 'source-map',
     plugins: [new CopyToDemoPlugin()],
   },
