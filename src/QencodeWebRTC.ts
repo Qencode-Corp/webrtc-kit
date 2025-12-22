@@ -166,6 +166,22 @@ function gotDevices(deviceInfos: MediaDeviceInfo[]): Devices {
   return devices;
 }
 
+interface Candidate {
+  sdpMLineIndex: number;
+  candidate: string;
+}
+
+interface IceServer {
+  credential: string;
+  urls: string[];
+  user_name: string;
+}
+
+interface Offer {
+  sdp: string;
+  type: 'offer';
+}
+
 interface ConnectionConfig {
   iceServers?: RTCIceServer[];
   iceTransportPolicy?: RTCIceTransportPolicy;
@@ -860,7 +876,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
     instance.iceDisconnectTimeoutId = null;
   }
 
-  async function createPeerConnection(id: number, peerId: number, offer, candidates, iceServers) {
+  async function createPeerConnection(id: number, peerId: number, offer: Offer, candidates: Candidate[], iceServers: IceServer[]) {
     console.log({
       id,
       peerId,
@@ -873,7 +889,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       peerId,
     };
 
-    let peerConnectionConfig = {};
+    let peerConnectionConfig: RTCConfiguration = {};
 
     if (instance.connectionConfig.iceServers) {
       // first priority using ice servers from local config.
