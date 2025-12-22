@@ -179,14 +179,18 @@
 
       async connectedCallback() {
         await super.connectedCallback();
-        const params = new URLSearchParams(location.search);
-        this.serverUrl = params.get('u');
-        await this._initDevices();
-        qencodeWebRTC.switchCamera(this.selectedDeviceId);
-        this._startLoop();
-        this._initOnlineOfflineListeners();
-        const video = document.querySelector('#userCam');
-        video.dataset.initialized = true;
+        try {
+          const params = new URLSearchParams(location.search);
+          this.serverUrl = params.get('u');
+          await this._initDevices();
+          qencodeWebRTC.switchCamera(this.selectedDeviceId);
+          this._startLoop();
+          this._initOnlineOfflineListeners();
+          const video = document.querySelector('#userCam');
+          video.dataset.initialized = true;
+        } catch (e) {
+           this._displayMediaError(e);
+        }
       }
 
       disconnectedCallback() {
@@ -251,18 +255,7 @@
             }
             const getUserMediaError = window.qencodeWebRTC.getUserMediaError;
             if (getUserMediaError) {
-              let error = getUserMediaError;
-              if (error.name === 'ConstraintNotSatisfiedError') {
-                const v = constraints.video;
-                this.mediaError = `The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
-              } else if (error.name === 'PermissionDeniedError') {
-                this.mediaError =
-                  'Permissions have not been granted to use your camera and ' +
-                  'microphone, you need to allow the page access to your devices in ' +
-                  'order for the demo to work.';
-              } else {
-                this.mediaError = `getUserMedia error: ${error.name}`;
-              }
+              this._displayMediaError(getUserMediaError);
             }
           }
           if (time % 3 === 0 && window.qencodeWebRTC) {
@@ -276,6 +269,20 @@
         };
 
         this._rafId = requestAnimationFrame(tick);
+      }
+
+      _displayMediaError(error) {
+        if (error.name === 'ConstraintNotSatisfiedError') {
+          const v = constraints.video;
+          this.mediaError = `The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
+        } else if (error.name === 'PermissionDeniedError') {
+          this.mediaError =
+            'Permissions have not been granted to use your camera and ' +
+            'microphone, you need to allow the page access to your devices in ' +
+            'order for the demo to work.';
+        } else {
+          this.mediaError = `getUserMedia error: ${error.name}`;
+        }
       }
 
       _clearErrors() {
