@@ -1079,9 +1079,8 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
   instance.switchCamera = function (
     deviceId: string,
-    extraVideoConstraints?: MediaTrackConstraints
   ) {
-    return switchCamera(deviceId, extraVideoConstraints);
+    return switchCamera(deviceId);
   };
 
   instance.hasActiveConnection = function () {
