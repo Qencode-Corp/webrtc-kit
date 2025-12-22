@@ -507,6 +507,7 @@
               this.disconnectStarted ||
               this.retryProcessActive ||
               this.isOffline ||
+              this.mediaError ||
               ['new', 'connecting'].includes(this.connectionState)}
               @click=${this._onConnect}
             >
