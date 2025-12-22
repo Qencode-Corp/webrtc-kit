@@ -16,14 +16,14 @@ function generateDomainFromUrl(url) {
   if ((match = url.match(/^(?:wss?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\=]+)/im))) {
     result = match[1];
   }
-  
+
   return result;
 }
 
 function findIp(string) {
   let result = '';
   let match;
-  
+
   if (
     (match = string.match(
       new RegExp(
@@ -34,7 +34,7 @@ function findIp(string) {
   ) {
     result = match[0];
   }
-  
+
   return result;
 }
 
@@ -61,24 +61,24 @@ function joinSdpLines(lines) {
 function getFormatNumber(sdp, format) {
   const lines = splitSdpLines(sdp);
   let formatNumber = -1;
-  
+
   for (let i = 0; i < lines.length - 1; i++) {
     lines[i] = lines[i].toLowerCase();
-    
+
     if (lines[i].indexOf('a=rtpmap') > -1 && lines[i].indexOf(format.toLowerCase()) > -1) {
       // parsing "a=rtpmap:100 H264/90000" line
       formatNumber = lines[i].split(' ')[0].split(':')[1];
       break;
     }
   }
-  
+
   return formatNumber;
 }
 
 function removeFormat(sdp, formatNumber) {
   let newLines = [];
   let lines = splitSdpLines(sdp);
-  
+
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].indexOf('m=video') === 0) {
       newLines.push(lines[i].replace(' ' + formatNumber + '', ''));
@@ -87,7 +87,7 @@ function removeFormat(sdp, formatNumber) {
       newLines.push(lines[i]);
     }
   }
-  
+
   return joinSdpLines(newLines);
 }
 
@@ -98,7 +98,7 @@ async function getStreamForDeviceCheck() {
     audio: { deviceId: undefined },
     video: { deviceId: undefined, width: { ideal: 1920 }, height: { ideal: 1080 } },
   };
-  
+
   return await navigator.mediaDevices.getUserMedia(constraints);
 }
 
@@ -113,14 +113,14 @@ function gotDevices(deviceInfos) {
     videoinput: [],
     other: [],
   };
-  
+
   for (let i = 0; i !== deviceInfos.length; ++i) {
     const deviceInfo = deviceInfos[i];
-    
+
     let info = {};
-    
+
     info.deviceId = deviceInfo.deviceId;
-    
+
     if (deviceInfo.kind === 'audioinput') {
       info.label = deviceInfo.label || `microphone ${devices.audioinput.length + 1}`;
       devices.audioinput.push(info);
@@ -135,7 +135,7 @@ function gotDevices(deviceInfos) {
       devices.other.push(info);
     }
   }
-  
+
   return devices;
 }
 
@@ -156,13 +156,13 @@ function initConfig(config) {
     webSocketCloseEvent: null,
     isManualStop: false,
   };
-  
+
   if (config && config.callbacks) {
     instance.callbacks = config.callbacks;
   } else {
     instance.callbacks = {};
   }
-  
+
   return instance;
 }
 
@@ -170,7 +170,7 @@ function waitForOnline() {
   if (navigator.onLine) {
     return Promise.resolve();
   }
-  
+
   return new Promise((resolve) => {
     console.log('Offline. Waiting for connection...');
     // Use { once: true } to auto-remove the listener after it fires
@@ -197,7 +197,7 @@ function delayedCall(fn, args, delay) {
 function setBitrateLimit(sdp, media, bitrate) {
   let lines = splitSdpLines(sdp);
   let line = -1;
-  
+
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].indexOf('m=' + media) === 0) {
       line = i;
@@ -208,57 +208,57 @@ function setBitrateLimit(sdp, media, bitrate) {
     // Could not find the m line for media
     return sdp;
   }
-  
+
   // Pass the m line
   line++;
-  
+
   // Skip i and c lines
   while (lines[line].indexOf('i=') === 0 || lines[line].indexOf('c=') === 0) {
     line++;
   }
-  
+
   // If we're on a b line, replace it
   if (lines[line].indexOf('b') === 0) {
     lines[line] = 'b=AS:' + bitrate;
-    
+
     return joinSdpLines(lines);
   }
-  
+
   // Add a new b line
   let newLines = lines.slice(0, line);
-  
+
   newLines.push('b=AS:' + bitrate);
   newLines = newLines.concat(lines.slice(line, lines.length));
-  
+
   return joinSdpLines(newLines);
 }
 
 function appendFmtp(fmtpStr, sdp) {
   const lines = splitSdpLines(sdp);
   const payloads = [];
-  
+
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].indexOf('m=video') === 0) {
       let tokens = lines[i].split(' ');
-      
+
       for (let j = 3; j < tokens.length; j++) {
         payloads.push(tokens[j]);
       }
-      
+
       break;
     }
   }
-  
+
   for (let i = 0; i < payloads.length; i++) {
     let fmtpLineFound = false;
-    
+
     for (let j = 0; j < lines.length; j++) {
       if (lines[j].indexOf('a=fmtp:' + payloads[i]) === 0) {
         fmtpLineFound = true;
         lines[j] += ';' + fmtpStr;
       }
     }
-    
+
     if (!fmtpLineFound) {
       for (let j = 0; j < lines.length; j++) {
         if (lines[j].indexOf('a=rtpmap:' + payloads[i]) === 0) {
@@ -267,7 +267,7 @@ function appendFmtp(fmtpStr, sdp) {
       }
     }
   }
-  
+
   return joinSdpLines(lines);
 }
 
@@ -293,21 +293,21 @@ function addMethod(instance) {
         newAudioTrack: null,
       };
     }
-    
+
     const pc = instance.peerConnection;
     const newVideoTrack = newStream.getVideoTracks()[0] || null;
     const newAudioTrack = newStream.getAudioTracks()[0] || null;
-    
+
     const senders = pc.getSenders();
     const videoSender = senders.find((s) => s.track && s.track.kind === 'video') || null;
     const audioSender = senders.find((s) => s.track && s.track.kind === 'audio') || null;
-    
+
     const oldVideoTrack = videoSender?.track || null;
     const oldAudioTrack = audioSender?.track || null;
-    
+
     let replacedVideo = false;
     let replacedAudio = false;
-    
+
     if (newVideoTrack && videoSender) {
       try {
         await videoSender.replaceTrack(newVideoTrack);
@@ -321,7 +321,7 @@ function addMethod(instance) {
       // sender.replaceTrack only works if a sender for that media type already exists.
       console.warn(logHeader, 'No video sender found; cannot replaceTrack without renegotiation.');
     }
-    
+
     if (newAudioTrack && audioSender) {
       try {
         await audioSender.replaceTrack(newAudioTrack);
@@ -334,7 +334,7 @@ function addMethod(instance) {
     } else if (newAudioTrack && !audioSender) {
       console.warn(logHeader, 'No audio sender found; cannot replaceTrack without renegotiation.');
     }
-    
+
     return {
       replacedVideo,
       replacedAudio,
@@ -355,48 +355,48 @@ function addMethod(instance) {
         },
       };
     }
-    
+
     return navigator.mediaDevices
       .getUserMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
-        
+
         const hasActiveConnection =
           instance.peerConnection &&
           !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
           !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
-        
+
         const oldStream = instance.stream;
-        
+
         if (hasActiveConnection && oldStream) {
           // Replace first, stop after (and only what we actually replaced)
           const rep = await replaceTracksInPeerConnection(stream);
-          
+
           if (rep.replacedVideo) {
             oldStream.getVideoTracks().forEach((t) => t.stop());
           }
           if (rep.replacedAudio) {
             oldStream.getAudioTracks().forEach((t) => t.stop());
           }
-          
+
           // Keep instance.stream representing what we are sending:
           // new tracks when provided, otherwise preserve existing kind.
           const composed = new MediaStream();
-          
+
           if (rep.newVideoTrack) {
             composed.addTrack(rep.newVideoTrack);
           } else if (oldStream.getVideoTracks()[0]) {
             composed.addTrack(oldStream.getVideoTracks()[0]);
           }
-          
+
           if (rep.newAudioTrack) {
             composed.addTrack(rep.newAudioTrack);
           } else if (oldStream.getAudioTracks()[0]) {
             composed.addTrack(oldStream.getAudioTracks()[0]);
           }
-          
+
           instance.stream = composed;
-          
+
           const elem = instance.videoElement;
           if (elem) {
             elem.srcObject = composed;
@@ -404,21 +404,21 @@ function addMethod(instance) {
               elem.play();
             };
           }
-          
+
           return composed;
         }
-        
+
         // No active connection yet: just set stream as-is
         instance.stream = stream;
         const elem = instance.videoElement;
-        
+
         if (elem) {
           elem.srcObject = stream;
           elem.onloadedmetadata = function (e) {
             elem.play();
           };
         }
-        
+
         return stream;
       })
       .catch(function (error) {
@@ -431,46 +431,46 @@ function addMethod(instance) {
     if (!constraints) {
       constraints = {};
     }
-    
+
     return navigator.mediaDevices
       .getDisplayMedia(constraints)
       .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-        
+
         const hasActiveConnection =
           instance.peerConnection &&
           !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
           !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
-        
+
         const oldStream = instance.stream;
-        
+
         if (hasActiveConnection && oldStream) {
           const rep = await replaceTracksInPeerConnection(stream);
-          
+
           if (rep.replacedVideo) {
             oldStream.getVideoTracks().forEach((t) => t.stop());
           }
           if (rep.replacedAudio) {
             oldStream.getAudioTracks().forEach((t) => t.stop());
           }
-          
+
           // Compose: screen video + keep existing mic if screen share has no audio
           const composed = new MediaStream();
-          
+
           if (rep.newVideoTrack) {
             composed.addTrack(rep.newVideoTrack);
           } else if (oldStream.getVideoTracks()[0]) {
             composed.addTrack(oldStream.getVideoTracks()[0]);
           }
-          
+
           if (rep.newAudioTrack) {
             composed.addTrack(rep.newAudioTrack);
           } else if (oldStream.getAudioTracks()[0]) {
             composed.addTrack(oldStream.getAudioTracks()[0]);
           }
-          
+
           instance.stream = composed;
-          
+
           const elem = instance.videoElement;
           if (elem) {
             elem.srcObject = composed;
@@ -478,20 +478,20 @@ function addMethod(instance) {
               elem.play();
             };
           }
-          
+
           return composed;
         }
-        
+
         instance.stream = stream;
         const elem = instance.videoElement;
-        
+
         if (elem) {
           elem.srcObject = stream;
           elem.onloadedmetadata = function (e) {
             elem.play();
           };
         }
-        
+
         return stream;
       })
       .catch(function (error) {
@@ -500,7 +500,7 @@ function addMethod(instance) {
         throw error;
       });
   }
-  
+
   // Switch only the camera (video sender) without touching microphone / audio sender.
   // This is the "no interruption" path for camera switching mid-call.
   async function switchCamera(deviceId, extraVideoConstraints = {}) {
@@ -510,34 +510,34 @@ function addMethod(instance) {
       width: { ideal: 1920 },
       height: { ideal: 1080 },
       // Explicitly specify aspect ratio if width/height aren't enough. Looks important in practice.
-      aspectRatio: { ideal: 1.7777777778 }
+      aspectRatio: { ideal: 1.7777777778 },
     };
-    
+
     // Merge strategy: Defaults < User Constraints < Mandatory Device ID
     const finalVideoConstraints = {
       ...defaultConstraints,
       ...extraVideoConstraints,
       deviceId: deviceId ? { exact: deviceId } : undefined,
     };
-    
+
     const constraints = {
       video: finalVideoConstraints,
       audio: false, // Keep audio false to avoid cutting off the microphone
     };
-    
+
     console.info(logHeader, 'Switching camera with constraints:', constraints);
-    
+
     try {
       const newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
       console.info(logHeader, 'Received Media Stream From Camera Switch', newCamStream);
-      
+
       const oldStream = instance.stream;
-      
+
       const hasActiveConnection =
         instance.peerConnection &&
         !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
         !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState);
-      
+
       if (!hasActiveConnection || !oldStream) {
         instance.stream = newCamStream;
         const elem = instance.videoElement;
@@ -549,28 +549,28 @@ function addMethod(instance) {
         }
         return newCamStream;
       }
-      
+
       const rep = await replaceTracksInPeerConnection(newCamStream);
-      
+
       if (rep.replacedVideo) {
         oldStream.getVideoTracks().forEach((t) => t.stop());
       }
-      
+
       const composed = new MediaStream();
-      
+
       if (rep.newVideoTrack) {
         composed.addTrack(rep.newVideoTrack);
       } else if (oldStream.getVideoTracks()[0]) {
         composed.addTrack(oldStream.getVideoTracks()[0]);
       }
-      
+
       const existingAudio = oldStream.getAudioTracks()[0];
       if (existingAudio) {
         composed.addTrack(existingAudio);
       }
-      
+
       instance.stream = composed;
-      
+
       const elem = instance.videoElement;
       if (elem) {
         elem.srcObject = composed;
@@ -578,33 +578,32 @@ function addMethod(instance) {
           elem.play();
         };
       }
-      
+
       return composed;
     } catch (error) {
       console.error(logHeader, 'Failed to switch camera', error);
       throw error;
     }
   }
-  
-  
+
   function requestOffer() {
     sendMessage(instance.webSocket, {
       command: 'request_offer',
     });
     instance.offerRequestCount += 1;
   }
-  
+
   async function addRetryToQueue(delay) {
     if (instance.isManualStop) return;
-    
+
     if (instance.reconnectWebSocketPromise) {
       // Just hitch a ride on the existing attempt and exit.
       await instance.reconnectWebSocketPromise;
       return;
     }
-    
+
     const retryDelay = delay ?? instance.retryDelay;
-    
+
     instance.reconnectWebSocketPromise = (async () => {
       try {
         await delayedCall(reconnectWebSocket, [], retryDelay);
@@ -612,17 +611,17 @@ function addMethod(instance) {
         instance.reconnectWebSocketPromise = null;
       }
     })();
-    
+
     await instance.reconnectWebSocketPromise;
   }
-  
+
   async function reconnectWebSocket() {
     await waitForOnline();
     instance.connectStarted = true;
-    
+
     // [FIX] Abort if user stopped stream while we were waiting for internet
     if (instance.isManualStop) return;
-    
+
     const promise = new Promise(async function (resolve) {
       let disconnected = true;
       if (instance.peerConnection) {
@@ -641,13 +640,13 @@ function addMethod(instance) {
         instance.isManualStop = false;
         instance.retriesUsed += 1;
         console.info(`online=${navigator.onLine}. Starting retry attempt ${instance.retriesUsed}`);
-        
+
         instance.closePeerConnection();
         instance.closeWebSocket();
-        
+
         instance.error = null;
         instance.webSocketCloseEvent = null;
-        
+
         try {
           await delayedCall(initWebSocket, [], instance.retryDelay);
         } catch (e) {
@@ -658,16 +657,16 @@ function addMethod(instance) {
       }
       resolve();
     });
-    
+
     return promise;
   }
-  
+
   function initWebSocket() {
     if (!instance.connectionUrl) {
       errorHandler('connectionUrl is required');
       return;
     }
-    
+
     let webSocket = null;
     try {
       webSocket = new WebSocket(instance.connectionUrl);
@@ -675,24 +674,24 @@ function addMethod(instance) {
       errorHandler(error);
       return;
     }
-    
+
     instance.webSocket = webSocket;
-    
+
     webSocket.onopen = function () {
       instance.retriesUsed = 0;
       instance.offerRequestCount = 0;
       requestOffer();
     };
-    
+
     webSocket.onmessage = async function (e) {
       let message = JSON.parse(e.data);
-      
+
       if (message.error) {
         console.error('webSocket.onmessage', message.error);
         await addRetryToQueue();
         return;
       }
-      
+
       if (message.command === 'offer') {
         // OME returns offer. Start create peer connection.
         try {
@@ -703,13 +702,13 @@ function addMethod(instance) {
             message.candidates,
             message.ice_servers
           );
-          
+
           instance.offerRequestCount = 0;
           instance.connectStarted = false;
         } catch (e) {
           instance.connectStarted = false;
           console.log('createPeerConnection error', e);
-          
+
           if (instance.offerRequestCount < 3) {
             requestOffer();
           } else {
@@ -718,10 +717,10 @@ function addMethod(instance) {
         }
       }
     };
-    
+
     /* For reliability it is recommended to check for error with event code in onclose instead. */
     webSocket.onerror = (e) => console.log('webSocket.onerror', e);
-    
+
     webSocket.onclose = async function (event) {
       console.log('Connection closed', event);
       instance.webSocketCloseEvent = event;
@@ -741,12 +740,12 @@ function addMethod(instance) {
       }
     };
   }
-  
+
   function initRetryAfterLongEnoughIceDisconnect(timeout = 3000) {
     if (!instance.iceDisconnectTimeoutId) {
       instance.iceDisconnectTimeoutId = setTimeout(function () {
         if (instance.isManualStop) return;
-        
+
         if (
           instance.peerConnection &&
           ['failed', 'disconnected'].includes(instance.peerConnection.iceConnectionState)
@@ -756,63 +755,63 @@ function addMethod(instance) {
       }, timeout);
     }
   }
-  
+
   function cancelRetryAfterLongEnoughIceDisconnect() {
     clearTimeout(instance.iceDisconnectTimeoutId);
     instance.iceDisconnectTimeoutId = null;
   }
-  
+
   async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
     instance.connectionData = {
       id,
       peerId,
     };
-    
+
     let peerConnectionConfig = {};
-    
+
     if (instance.connectionConfig.iceServers) {
       // first priority using ice servers from local config.
       peerConnectionConfig.iceServers = instance.connectionConfig.iceServers;
-      
+
       if (instance.connectionConfig.iceTransportPolicy) {
         peerConnectionConfig.iceTransportPolicy = instance.connectionConfig.iceTransportPolicy;
       }
     } else if (iceServers) {
       // second priority using ice servers from ome and force using TCP
       peerConnectionConfig.iceServers = [];
-      
+
       for (let i = 0; i < iceServers.length; i++) {
         let iceServer = iceServers[i];
         let regIceServer = {};
         regIceServer.urls = iceServer.urls;
         let hasWebSocketUrl = false;
         let webSocketUrl = generateDomainFromUrl(instance.connectionUrl);
-        
+
         for (let j = 0; j < regIceServer.urls.length; j++) {
           let serverUrl = regIceServer.urls[j];
-          
+
           if (serverUrl.indexOf(webSocketUrl) > -1) {
             hasWebSocketUrl = true;
             break;
           }
         }
-        
+
         if (!hasWebSocketUrl) {
           if (regIceServer.urls.length > 0) {
             let cloneIceServer = regIceServer.urls[0];
             let ip = findIp(cloneIceServer);
-            
+
             if (webSocketUrl && ip) {
               regIceServer.urls.push(cloneIceServer.replace(ip, webSocketUrl));
             }
           }
         }
-        
+
         regIceServer.username = iceServer.user_name;
         regIceServer.credential = iceServer.credential;
         peerConnectionConfig.iceServers.push(regIceServer);
       }
-      
+
       peerConnectionConfig.iceTransportPolicy = 'relay';
     } else {
       // last priority using default ice servers.
@@ -820,35 +819,35 @@ function addMethod(instance) {
         peerConnectionConfig.iceTransportPolicy = instance.iceTransportPolicy;
       }
     }
-    
+
     console.info(logHeader, 'Create Peer Connection With Config', peerConnectionConfig);
-    
+
     let peerConnection = new RTCPeerConnection(peerConnectionConfig);
     instance.peerConnection = peerConnection;
-    
+
     // set local stream
     instance.stream.getTracks().forEach(function (track) {
       console.info(logHeader, 'Add Track To Peer Connection', track);
       peerConnection.addTrack(track, instance.stream);
     });
-    
+
     if (checkIOSVersion() >= 15) {
       const formatNumber = getFormatNumber(offer.sdp, 'H264');
-      
+
       if (formatNumber > 0) {
         offer.sdp = removeFormat(offer.sdp, formatNumber);
       }
     }
-    
+
     if (instance.connectionConfig.maxVideoBitrate) {
       // if bandwith limit is set. modify sdp from ome to limit acceptable bandwidth of ome
       offer.sdp = setBitrateLimit(offer.sdp, 'video', instance.connectionConfig.maxVideoBitrate);
     }
-    
+
     if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
       offer.sdp = appendFmtp(instance.connectionConfig.sdp.appendFmtp, offer.sdp);
     }
-    
+
     // Set up event handlers BEFORE setRemoteDescription to avoid missing events
     peerConnection.onicecandidate = function (e) {
       if (e.candidate && e.candidate.candidate) {
@@ -861,13 +860,13 @@ function addMethod(instance) {
         });
       }
     };
-    
+
     peerConnection.oniceconnectionstatechange = function (e) {
       let state = peerConnection.iceConnectionState;
-      
+
       console.info(logHeader, 'ICE State', '[' + state + ']');
       instance.iceLastEvent = e;
-      
+
       if (state === 'failed' && !instance.isManualStop) {
         initRetryAfterLongEnoughIceDisconnect();
       } else if (state === 'disconnected' && !instance.isManualStop) {
@@ -875,7 +874,7 @@ function addMethod(instance) {
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
       }
-      
+
       if (instance.callbacks.iceStateChange) {
         try {
           instance.callbacks.iceStateChange(state);
@@ -883,7 +882,7 @@ function addMethod(instance) {
           console.error(logHeader, 'Error in iceStateChange callback', callbackError);
         }
       }
-      
+
       if (state === 'connected') {
         if (instance.callbacks.connected) {
           try {
@@ -893,7 +892,7 @@ function addMethod(instance) {
           }
         }
       }
-      
+
       if (state === 'failed' || state === 'disconnected' || state === 'closed') {
         if (instance.callbacks.connectionClosed) {
           try {
@@ -904,10 +903,10 @@ function addMethod(instance) {
         }
       }
     };
-    
+
     peerConnection.onconnectionstatechange = async function (e) {
       let state = peerConnection.connectionState;
-      
+
       /* A happy ending! */
       if (state === 'connected') {
         instance.error = null;
@@ -915,29 +914,29 @@ function addMethod(instance) {
         instance.reconnectWebSocketPromise = null;
       }
     };
-    
+
     await peerConnection.setRemoteDescription(offer);
     const answer = await peerConnection.createAnswer();
-    
+
     if (checkIOSVersion() >= 15) {
       const formatNumber = getFormatNumber(answer.sdp, 'H264');
-      
+
       if (formatNumber > 0) {
         answer.sdp = removeFormat(answer.sdp, formatNumber);
       }
     }
-    
+
     if (instance.connectionConfig.sdp && instance.connectionConfig.sdp.appendFmtp) {
       answer.sdp = appendFmtp(instance.connectionConfig.sdp.appendFmtp, answer.sdp);
     }
-    
+
     await peerConnection.setLocalDescription(answer);
-    
+
     // Add remote ICE candidates after setRemoteDescription completes
     if (candidates) {
       await addIceCandidate(peerConnection, candidates);
     }
-    
+
     sendMessage(instance.webSocket, {
       id: id,
       peer_id: peerId,
@@ -945,12 +944,12 @@ function addMethod(instance) {
       sdp: answer,
     });
   }
-  
+
   async function addIceCandidate(peerConnection, candidates) {
     for (let i = 0; i < candidates.length; i++) {
       if (candidates[i] && candidates[i].candidate) {
         let basicCandidate = candidates[i];
-        
+
         try {
           await peerConnection.addIceCandidate(new RTCIceCandidate(basicCandidate));
         } catch (error) {
@@ -960,37 +959,37 @@ function addMethod(instance) {
       }
     }
   }
-  
+
   // instance methods
   instance.attachMedia = function (videoElement) {
     instance.videoElement = videoElement;
   };
-  
+
   instance.getUserMedia = function (constraints) {
     return getUserMedia(constraints);
   };
-  
+
   instance.getDisplayMedia = function (constraints) {
     return getDisplayMedia(constraints);
   };
-  
+
   instance.switchCamera = function (deviceId, extraVideoConstraints) {
     return switchCamera(deviceId, extraVideoConstraints);
   };
-  
+
   instance.startStreaming = function (connectionUrl, connectionConfig) {
     instance.connectionUrl = connectionUrl + '?direction=send&transport=tcp';
     console.info(logEventHeader, 'Start Streaming');
-    
+
     if (connectionConfig) {
       instance.connectionConfig = connectionConfig;
     }
-    
+
     instance.retriesUsed = 0;
     instance.isManualStop = false;
     initWebSocket();
   };
-  
+
   instance.closePeerConnection = function () {
     cancelRetryAfterLongEnoughIceDisconnect();
     // first release peer connection with ome
@@ -999,19 +998,19 @@ function addMethod(instance) {
       instance.peerConnection.getSenders().forEach(function (sender) {
         instance.peerConnection.removeTrack(sender);
       });
-      
+
       instance.peerConnection.close();
       instance.peerConnection = null;
     }
   };
-  
+
   instance.closeWebSocket = function () {
     if (instance.webSocket && instance.webSocket.readyState !== WebSocket.CLOSED) {
       // [FIX] Clear callback early to prevent retry trigger in onclose
       instance.webSocket.onclose = null;
       instance.webSocket.onerror = null;
       instance.webSocket.onmessage = null;
-      
+
       if (instance.connectionData) {
         sendMessage(instance.webSocket, {
           id: instance.connectionData.id,
@@ -1019,27 +1018,27 @@ function addMethod(instance) {
           command: 'stop',
         });
       }
-      
+
       instance.webSocket.close();
       instance.webSocket = null;
     }
   };
-  
+
   instance.closeVideoAudioStreams = function () {
     if (instance.stream) {
       instance.stream.getTracks().forEach((track) => {
         track.stop();
         instance.stream.removeTrack(track);
       });
-      
+
       if (instance.videoElement) {
         instance.videoElement.srcObject = null;
       }
-      
+
       instance.stream = null;
     }
   };
-  
+
   instance.remove = function () {
     instance.isManualStop = true;
     instance.closePeerConnection();
@@ -1053,7 +1052,7 @@ function addMethod(instance) {
 QencodeWebRTC.create = function (config = {}) {
   const instance = initConfig(config);
   addMethod(instance);
-  
+
   return instance;
 };
 

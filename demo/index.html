@@ -302,7 +302,7 @@
           !['closed', 'failed'].includes(qencodeWebRTC.peerConnection.iceConnectionState);
 
         if (hasActiveConnection) {
-          qencodeWebRTC.switchCamera(this.selectedDeviceId)
+          qencodeWebRTC.switchCamera(this.selectedDeviceId);
         } else {
           this._initStream();
         }
@@ -555,18 +555,18 @@
       const config = {
         callbacks: {
           error: function (error) {
-            console.log('error')
+            console.log('error');
           },
           connected: function (event) {
-            console.log("connected")
+            console.log('connected');
           },
           connectionClosed: function (type, event) {
-            console.log('connection closed')
+            console.log('connection closed');
           },
           iceStateChange: function (state) {
-            console.log('iceStateChange')
-          }
-        }
+            console.log('iceStateChange');
+          },
+        },
       };
 
       const qencodeWebRTC = QencodeWebRTC.create();
