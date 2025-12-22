@@ -608,13 +608,22 @@ function addMethod(instance: QencodeWebRtcInstance) {
       instance.getUserMediaError = null;
       newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (e) {
-      instance.getUserMediaError = e;
-      // Fallback: relax constraints (prevents “camera switch randomly fails”)
+      // Don't set the global error yet. Only set it if fallback fails too.
+      console.warn('High-res constraints failed, trying fallback...', e);
+
       const fallback = {
         video: deviceId ? { deviceId: { exact: deviceId } } : true,
-        audio: shouldRequestAudio, // Apply audio logic to fallback too
+        audio: shouldRequestAudio,
       };
-      newCamStream = await navigator.mediaDevices.getUserMedia(fallback as any);
+
+      try {
+        newCamStream = await navigator.mediaDevices.getUserMedia(fallback as any);
+        // Fallback succeeded! We can ignore the previous error.
+      } catch (fallbackError) {
+        // [FIX] Fallback failed too. NOW we report the error to the UI.
+        instance.getUserMediaError = fallbackError;
+        throw fallbackError;
+      }
     }
 
     const hasActiveConnection = instance.hasActiveConnection();
