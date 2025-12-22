@@ -625,9 +625,9 @@ function addMethod(instance: QencodeWebRtcInstance) {
       if (rep.replacedVideo) {
         oldStream.getVideoTracks().forEach((t) => t.stop());
       } else {
-        // Clean up the newly opened camera since we’re not using it
+        // That check is the big one. It prevents the “local preview shows new camera, remote still sees old camera” split-reality bug.
         newCamStream.getTracks().forEach((t) => t.stop());
-        return;
+        return oldStream;
       }
 
       const composed = new MediaStream();
