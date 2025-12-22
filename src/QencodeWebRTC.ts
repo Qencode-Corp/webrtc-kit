@@ -406,7 +406,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       }
     }
   }
-  async function replaceTracksInPeerConnection(newStream) {
+  async function replaceTracksInPeerConnection(newStream: MediaStream) {
     if (!instance.peerConnection || !newStream) {
       return {
         replacedVideo: false,
@@ -468,7 +468,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
       newAudioTrack,
     };
   }
-  function getUserMedia(constraints) {
+  function getUserMedia(constraints): Promise<MediaStream> {
     if (!constraints) {
       constraints = {
         video: {
