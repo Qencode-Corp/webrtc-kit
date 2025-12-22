@@ -309,14 +309,11 @@
       }
 
       async _initDevices() {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-          this.videoDevices = videoDevices;
-          if (videoDevices.length > 0) {
-            this.selectedDeviceId = videoDevices[0]?.deviceId;
-          }
-        } catch (e) {}
+        const videoDevices = await QencodeWebRTC.getDevices()?.videoinput || [];
+        this.videoDevices = videoDevices;
+        if (videoDevices.length > 0) {
+          this.selectedDeviceId = videoDevices[0]?.deviceId;
+        }
       }
 
       _rebuildConstraints() {
