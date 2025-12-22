@@ -3,14 +3,36 @@ const QencodeWebRTC = {};
 const logHeader = 'QencodeWebRTC.js :';
 const logEventHeader = 'QencodeWebRTC.js :';
 
+type WebSocketMessage =
+  | {
+      command: 'request_offer';
+    }
+  | {
+      id: string;
+      peer_id: string | number; // todo clarify
+      command: 'candidate';
+      candidates: RTCIceCandidate[];
+    }
+  | {
+      id: string;
+      peer_id: string | number; // todo clarify
+      command: 'answer';
+      sdp: RTCSessionDescriptionInit;
+    }
+  | {
+      id: string;
+      peer_id: string | number; // todo clarify
+      command: 'stop';
+    };
+
 // private methods
-function sendMessage(webSocket, message) {
+function sendMessage(webSocket: WebSocket, message: WebSocketMessage) {
   if (webSocket && webSocket.readyState === WebSocket.OPEN) {
     webSocket.send(JSON.stringify(message));
   }
 }
 
-function generateDomainFromUrl(url) {
+function generateDomainFromUrl(url: string) {
   let result = '';
   let match;
   if ((match = url.match(/^(?:wss?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\=]+)/im))) {
@@ -20,7 +42,7 @@ function generateDomainFromUrl(url) {
   return result;
 }
 
-function findIp(string) {
+function findIp(string: string) {
   let result = '';
   let match;
 
@@ -48,12 +70,12 @@ function checkIOSVersion() {
 }
 
 // SDP helper functions to properly handle CRLF line endings (RFC 4566)
-function splitSdpLines(sdp) {
+function splitSdpLines(sdp: string) {
   // Normalize line endings: split on \r\n or \n, and remove trailing \r from each line
   return sdp.split(/\r?\n/).map((line) => line.replace(/\r$/, ''));
 }
 
-function joinSdpLines(lines) {
+function joinSdpLines(lines: string[]) {
   // Join with CRLF as required by SDP specification (RFC 4566)
   return lines.join('\r\n');
 }
@@ -584,7 +606,7 @@ function addMethod(instance) {
     instance.offerRequestCount += 1;
   }
 
-  async function addRetryToQueue(delay) {
+  async function addRetryToQueue(delay?: number) {
     if (instance.isManualStop) return;
 
     if (instance.reconnectWebSocketPromise) {
@@ -952,7 +974,7 @@ function addMethod(instance) {
   }
 
   // instance methods
-  instance.attachMedia = function (videoElement) {
+  instance.attachMedia = function (videoElement: HTMLVideoElement) {
     instance.videoElement = videoElement;
   };
 
