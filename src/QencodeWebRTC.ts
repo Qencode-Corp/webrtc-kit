@@ -573,7 +573,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
   // Switch only the camera (video sender) without touching microphone / audio sender.
   // This is the "no interruption" path for camera switching mid-call.
-  async function switchCamera(deviceId: string, extraVideoConstraints = {}) {
+  async function switchCamera(deviceId: string) {
     // [FIX] Define default constraints to enforce 16:9 (HD) aspect ratio.
     // Without this, browsers often revert to 640x480 (4:3) when a deviceId is specified alone.
     const defaultConstraints = {
@@ -585,7 +585,6 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
     const finalVideoConstraints = {
       ...defaultConstraints,
-      ...extraVideoConstraints,
       ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
     };
     console.log('finalVideoConstraints', finalVideoConstraints);
