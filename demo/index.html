@@ -273,13 +273,12 @@
 
       _displayMediaError(error) {
         if (error.name === 'ConstraintNotSatisfiedError') {
-          const v = constraints.video;
-          this.mediaError = `The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
+          // We can no longer read 'exact' from a global variable since the class manages it.
+          this.mediaError = `The requested resolution is not supported by your device.`;
         } else if (error.name === 'PermissionDeniedError') {
           this.mediaError =
             'Permissions have not been granted to use your camera and ' +
-            'microphone, you need to allow the page access to your devices in ' +
-            'order for the demo to work.';
+            'microphone. Please allow access to proceed.';
         } else {
           this.mediaError = `getUserMedia error: ${error.name}`;
         }
