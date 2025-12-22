@@ -649,7 +649,6 @@ function addMethod(instance: QencodeWebRtcInstance) {
       return composed;
     }
 
-    // --- Active Connection Logic (unchanged behavior) ---
     try {
       const rep = await replaceTracksInPeerConnection(newCamStream);
 

@@ -237,6 +237,16 @@
             this.webSocketActive = !!webSocket;
             const webSocketReadyState = webSocketReadyStates[webSocket?.readyState];
             this.webSocketReadyState = webSocketReadyState;
+
+            const stream = window.qencodeWebRTC.stream;
+            if (stream) {
+              const videoTracks = stream.getVideoTracks();
+
+              let height = videoTracks[0].getSettings().height;
+              let width = videoTracks[0].getSettings().width;
+
+              this.dimensions = `Video dimensions: ${width}x${height}px`;
+            }
           }
           if (time % 3 === 0 && window.qencodeWebRTC) {
             this.retryProcessActive =
