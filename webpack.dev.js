@@ -27,7 +27,7 @@ class CopyToDemoPlugin {
 const config = [
   {
     mode: 'development',
-    entry: './src/QencodeWebRTC.js',
+    entry: './src/QencodeWebRTC.ts',
     output: {
       path: path.resolve(__dirname + '/dist'),
       filename: 'QencodeWebRTC.js',
