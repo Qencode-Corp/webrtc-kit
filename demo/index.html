@@ -182,7 +182,7 @@
         const params = new URLSearchParams(location.search);
         this.serverUrl = params.get('u');
         await this._initDevices();
-        await this._initStream();
+        await this._getUserMedia();
         this._startLoop();
         this._initOnlineOfflineListeners();
       }
@@ -304,7 +304,7 @@
         if (hasActiveConnection) {
           qencodeWebRTC.switchCamera(this.selectedDeviceId);
         } else {
-          this._initStream();
+          this._getUserMedia();
         }
       }
 
@@ -332,23 +332,14 @@
         constraints = window.constraints = newConstraints;
       }
 
-      async _initStream() {
-        // Stop existing stream tracks before getting a new stream
-        if (qencodeWebRTC.stream) {
-          qencodeWebRTC.stream.getTracks().forEach((track) => track.stop());
-        }
-
+      async _getUserMedia() {
         try {
-          /* need to use qencodeWebRTC.getUserMedia instead of navigator.mediaDevices.getUserMedia to avoid errors about empty "stream" property on instance. */
           const stream = await qencodeWebRTC.getUserMedia(window.constraints);
           const video = document.querySelector('#userCam');
           const videoTracks = stream.getVideoTracks();
           console.log('Got stream with constraints:', constraints);
           console.log(`Using video device: ${videoTracks[0].label}`);
 
-          this.log = `Using video device: ${videoTracks[0].label}`;
-          window.stream = stream; // make variable available to browser console
-          video.srcObject = stream;
           video.dataset.initialized = true;
 
           let height = videoTracks[0].getSettings().height;
