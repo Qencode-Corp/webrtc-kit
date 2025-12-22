@@ -580,24 +580,22 @@ function addMethod(instance: QencodeWebRtcInstance) {
       aspectRatio: { ideal: 1.7777777778 },
     };
 
-    // Merge strategy: Defaults < User Constraints < Mandatory Device ID
     const finalVideoConstraints = {
       ...defaultConstraints,
       ...extraVideoConstraints,
-      deviceId: deviceId ? { exact: deviceId } : undefined,
+      ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
     };
 
-    const constraints = {
-      video: finalVideoConstraints,
-      audio: false, // Keep audio false to avoid cutting off the microphone
-    };
+    const constraints = { video: finalVideoConstraints, audio: false };
 
-    console.info(logHeader, 'Switching camera with constraints:', constraints);
-    let newCamStream;
-
+    let newCamStream: MediaStream;
     try {
       newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.info(logHeader, 'Received Media Stream From Camera Switch', newCamStream);
+    } catch (e) {
+      // Fallback: relax constraints (prevents “camera switch randomly fails”)
+      const fallback = { video: deviceId ? { deviceId: { exact: deviceId } } : true, audio: false };
+      newCamStream = await navigator.mediaDevices.getUserMedia(fallback as any);
+    }
 
       const oldStream = instance.stream;
 
