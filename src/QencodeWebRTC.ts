@@ -254,7 +254,10 @@ interface QencodeWebRtcInstance {
   attachMedia(videoElement: HTMLVideoElement): void;
   getUserMedia(constraints?: MediaStreamConstraints): Promise<MediaStream>;
   getDisplayMedia(constraints?: DisplayMediaStreamConstraints): Promise<MediaStream>;
-  switchCamera(deviceId: string, extraVideoConstraints?: MediaTrackConstraints): Promise<MediaStream>;
+  switchCamera(
+    deviceId: string,
+    extraVideoConstraints?: MediaTrackConstraints
+  ): Promise<MediaStream>;
   hasActiveConnection(): boolean;
   startStreaming(connectionUrl: string, connectionConfig?: ConnectionConfig): void;
   closePeerConnection(): void;
@@ -602,28 +605,32 @@ function addMethod(instance: QencodeWebRtcInstance) {
     const hasActiveConnection = instance.hasActiveConnection();
 
     if (!hasActiveConnection || !oldStream) {
-        // Stop existing tracks to release hardware
-        if (oldStream) {
-          oldStream.getTracks().forEach((track) => track.stop());
-        }
+      // Stop existing tracks to release hardware
+      if (oldStream) {
+        oldStream.getTracks().forEach((track) => track.stop());
+      }
       instance.stream = newCamStream;
-        const elem = instance.videoElement;
-        if (elem) {
-          elem.srcObject = newCamStream;
-          elem.onloadedmetadata = function (e) {
-            elem.play();
-          };
-        }
+      const elem = instance.videoElement;
+      if (elem) {
+        elem.srcObject = newCamStream;
+        elem.onloadedmetadata = function (e) {
+          elem.play();
+        };
+      }
       return newCamStream;
     }
     try {
-    const rep = await replaceTracksInPeerConnection(newCamStream);
+      const rep = await replaceTracksInPeerConnection(newCamStream);
 
       if (rep.replacedVideo) {
         oldStream.getVideoTracks().forEach((t) => t.stop());
+      } else {
+        // Clean up the newly opened camera since we’re not using it
+        newCamStream.getTracks().forEach((t) => t.stop());
+        return;
       }
 
-    const composed = new MediaStream();
+      const composed = new MediaStream();
 
       if (rep.newVideoTrack) {
         composed.addTrack(rep.newVideoTrack);
@@ -631,12 +638,12 @@ function addMethod(instance: QencodeWebRtcInstance) {
         composed.addTrack(oldStream.getVideoTracks()[0]);
       }
 
-    const existingAudio = oldStream.getAudioTracks()[0];
+      const existingAudio = oldStream.getAudioTracks()[0];
       if (existingAudio) {
         composed.addTrack(existingAudio);
       }
 
-    instance.stream = composed;
+      instance.stream = composed;
 
       const elem = instance.videoElement;
       if (elem) {
@@ -646,13 +653,13 @@ function addMethod(instance: QencodeWebRtcInstance) {
         };
       }
 
-    return composed;
+      return composed;
     } catch (error) {
       console.error(logHeader, 'Failed to switch camera', error);
       // Ensure the new stream is released if the switch failed
       if (newCamStream) {
         newCamStream.getTracks().forEach((track) => track.stop());
-  }
+      }
 
       throw error;
     }
@@ -833,7 +840,13 @@ function addMethod(instance: QencodeWebRtcInstance) {
     instance.iceDisconnectTimeoutId = null;
   }
 
-  async function createPeerConnection(id: number, peerId: number, offer: Offer, candidates: Candidate[], iceServers: IceServer[]) {
+  async function createPeerConnection(
+    id: number,
+    peerId: number,
+    offer: Offer,
+    candidates: Candidate[],
+    iceServers: IceServer[]
+  ) {
     console.log({
       id,
       peerId,
@@ -1052,7 +1065,10 @@ function addMethod(instance: QencodeWebRtcInstance) {
     return getDisplayMedia(constraints);
   };
 
-  instance.switchCamera = function (deviceId: string, extraVideoConstraints?: MediaTrackConstraints) {
+  instance.switchCamera = function (
+    deviceId: string,
+    extraVideoConstraints?: MediaTrackConstraints
+  ) {
     return switchCamera(deviceId, extraVideoConstraints);
   };
 
