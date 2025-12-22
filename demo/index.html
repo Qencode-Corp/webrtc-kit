@@ -309,7 +309,8 @@
       }
 
       async _initDevices() {
-        const videoDevices = await QencodeWebRTC.getDevices()?.videoinput || [];
+        const allDevices = await QencodeWebRTC.getDevices();
+        const videoDevices = allDevices.videoinput || [];
         this.videoDevices = videoDevices;
         if (videoDevices.length > 0) {
           this.selectedDeviceId = videoDevices[0]?.deviceId;
