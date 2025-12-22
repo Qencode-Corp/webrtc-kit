@@ -1,4 +1,9 @@
-const QencodeWebRTC = {};
+interface QencodeWebRTCStatic {
+  create(config?: CreateConfig): QencodeWebRtcInstance;
+  getDevices(): Promise<Devices>;
+}
+
+const QencodeWebRTC: QencodeWebRTCStatic = {} as QencodeWebRTCStatic;
 
 const logHeader = 'QencodeWebRTC.js :';
 const logEventHeader = 'QencodeWebRTC.js :';
@@ -128,7 +133,7 @@ async function getDevices() {
   return await navigator.mediaDevices.enumerateDevices();
 }
 
-function gotDevices(deviceInfos: MediaDeviceInfo[]) {
+function gotDevices(deviceInfos: MediaDeviceInfo[]): Devices {
   let devices = {
     audioinput: [],
     audiooutput: [],
@@ -161,15 +166,88 @@ function gotDevices(deviceInfos: MediaDeviceInfo[]) {
   return devices;
 }
 
-interface QencodeWebRtcInstance {
-  connectionUrl: string;
-  stream?: MediaStream;
-  peerConnection?: RTCPeerConnection;
-  webSocket?: WebSocket;
-  isManualStop: boolean;
+interface ConnectionConfig {
+  iceServers?: RTCIceServer[];
+  iceTransportPolicy?: RTCIceTransportPolicy;
+  maxVideoBitrate?: number;
+  sdp?: {
+    appendFmtp?: string;
+  };
 }
 
-function initConfig(config) {
+interface ConnectionData {
+  id: string;
+  peerId: string | number;
+}
+
+interface Callbacks {
+  error?: (error: any) => void;
+  connected?: (event: Event) => void;
+  connectionClosed?: (source: 'websocket' | 'ice', event: Event | CloseEvent) => void;
+  iceStateChange?: (state: RTCIceConnectionState) => void;
+}
+
+interface CreateConfig {
+  callbacks?: Callbacks;
+}
+
+interface DeviceInfo {
+  deviceId: string;
+  label: string;
+}
+
+interface Devices {
+  audioinput: DeviceInfo[];
+  audiooutput: DeviceInfo[];
+  videoinput: DeviceInfo[];
+  other: DeviceInfo[];
+}
+
+interface QencodeWebRtcInstance {
+  // Configuration properties
+  retryMaxCount: number;
+  retryDelay: number;
+  connectionConfig: ConnectionConfig;
+  connectionUrl: string | null;
+  iceTransportPolicy?: RTCIceTransportPolicy;
+
+  // State properties
+  connectStarted: boolean;
+  error: any;
+  offerRequestCount: number;
+  retriesUsed: number;
+  isManualStop: boolean;
+
+  // Connection properties
+  peerConnection: RTCPeerConnection | null;
+  webSocket: WebSocket | null;
+  webSocketCloseEvent: CloseEvent | null;
+  connectionData?: ConnectionData;
+
+  // Media properties
+  stream: MediaStream | null;
+  videoElement: HTMLVideoElement | null;
+
+  // Internal state
+  iceDisconnectTimeoutId?: NodeJS.Timeout | null;
+  reconnectWebSocketPromise?: Promise<void> | null;
+  iceLastEvent?: Event;
+  callbacks: Callbacks;
+
+  // Methods
+  attachMedia(videoElement: HTMLVideoElement): void;
+  getUserMedia(constraints?: MediaStreamConstraints): Promise<MediaStream>;
+  getDisplayMedia(constraints?: DisplayMediaStreamConstraints): Promise<MediaStream>;
+  switchCamera(deviceId: string, extraVideoConstraints?: MediaTrackConstraints): Promise<MediaStream>;
+  hasActiveConnection(): boolean;
+  startStreaming(connectionUrl: string, connectionConfig?: ConnectionConfig): void;
+  closePeerConnection(): void;
+  closeWebSocket(): void;
+  closeVideoAudioStreams(): void;
+  remove(): void;
+}
+
+function initConfig(config?: CreateConfig) {
   let instance: QencodeWebRtcInstance = {
     retryMaxCount: 2,
     retryDelay: 2000,
@@ -986,15 +1064,15 @@ function addMethod(instance: QencodeWebRtcInstance) {
     instance.videoElement = videoElement;
   };
 
-  instance.getUserMedia = function (constraints) {
+  instance.getUserMedia = function (constraints?: MediaStreamConstraints) {
     return getUserMedia(constraints);
   };
 
-  instance.getDisplayMedia = function (constraints) {
+  instance.getDisplayMedia = function (constraints?: DisplayMediaStreamConstraints) {
     return getDisplayMedia(constraints);
   };
 
-  instance.switchCamera = function (deviceId, extraVideoConstraints) {
+  instance.switchCamera = function (deviceId: string, extraVideoConstraints?: MediaTrackConstraints) {
     return switchCamera(deviceId, extraVideoConstraints);
   };
 
@@ -1006,7 +1084,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
     );
   };
 
-  instance.startStreaming = function (connectionUrl: string, connectionConfig) {
+  instance.startStreaming = function (connectionUrl: string, connectionConfig?: ConnectionConfig) {
     instance.connectionUrl = connectionUrl + '?direction=send&transport=tcp';
     console.info(logEventHeader, 'Start Streaming');
 
@@ -1078,14 +1156,14 @@ function addMethod(instance: QencodeWebRtcInstance) {
 }
 
 // static methods
-QencodeWebRTC.create = function (config = {}) {
+QencodeWebRTC.create = function (config: CreateConfig = {}) {
   const instance = initConfig(config);
   addMethod(instance);
 
   return instance;
 };
 
-QencodeWebRTC.getDevices = async function () {
+QencodeWebRTC.getDevices = async function (): Promise<Devices> {
   await getStreamForDeviceCheck();
   const deviceInfos = await getDevices();
   return gotDevices(deviceInfos);
