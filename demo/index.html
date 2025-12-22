@@ -249,6 +249,21 @@
 
               this.dimensions = `Video dimensions: ${width}x${height}px`;
             }
+            const getUserMediaError = window.qencodeWebRTC.getUserMediaError;
+            if (getUserMediaError) {
+              let error = getUserMediaError;
+              if (error.name === 'ConstraintNotSatisfiedError') {
+                const v = constraints.video;
+                this.mediaError = `The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
+              } else if (error.name === 'PermissionDeniedError') {
+                this.mediaError =
+                  'Permissions have not been granted to use your camera and ' +
+                  'microphone, you need to allow the page access to your devices in ' +
+                  'order for the demo to work.';
+              } else {
+                this.mediaError = `getUserMedia error: ${error.name}`;
+              }
+            }
           }
           if (time % 3 === 0 && window.qencodeWebRTC) {
             this.retryProcessActive =
