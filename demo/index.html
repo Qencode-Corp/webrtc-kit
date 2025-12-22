@@ -182,6 +182,7 @@
         const params = new URLSearchParams(location.search);
         this.serverUrl = params.get('u');
         await this._initDevices();
+        qencodeWebRTC.switchCamera(this.selectedDeviceId);
         this._startLoop();
         this._initOnlineOfflineListeners();
       }
