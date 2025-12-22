@@ -325,6 +325,7 @@
         let deviceId = this.selectedDeviceId
           ? {
               exact: this.selectedDeviceId,
+              aspectRatio: { ideal: 1.7777777778 },
             }
           : undefined;
         newConstraints.video.deviceId = deviceId;
