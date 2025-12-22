@@ -602,6 +602,10 @@ function addMethod(instance: QencodeWebRtcInstance) {
       const hasActiveConnection = instance.hasActiveConnection();
 
       if (!hasActiveConnection || !oldStream) {
+        // Stop existing tracks to release hardware
+        if (oldStream) {
+          oldStream.getTracks().forEach((track) => track.stop());
+        }
         instance.stream = newCamStream;
         const elem = instance.videoElement;
         if (elem) {
