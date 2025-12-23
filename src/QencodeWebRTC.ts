@@ -1,16 +1,43 @@
-const QencodeWebRTC = {};
+interface QencodeWebRTCStatic {
+  create(config?: CreateConfig): QencodeWebRtcInstance;
+  getDevices(): Promise<Devices>;
+}
+
+const QencodeWebRTC: QencodeWebRTCStatic = {} as QencodeWebRTCStatic;
 
 const logHeader = 'QencodeWebRTC.js :';
 const logEventHeader = 'QencodeWebRTC.js :';
 
+type WebSocketMessage =
+  | {
+      command: 'request_offer';
+    }
+  | {
+      id: string;
+      peer_id: string | number; // todo clarify
+      command: 'candidate';
+      candidates: RTCIceCandidate[];
+    }
+  | {
+      id: string;
+      peer_id: string | number; // todo clarify
+      command: 'answer';
+      sdp: RTCSessionDescriptionInit;
+    }
+  | {
+      id: string;
+      peer_id: string | number; // todo clarify
+      command: 'stop';
+    };
+
 // private methods
-function sendMessage(webSocket, message) {
+function sendMessage(webSocket: WebSocket, message: WebSocketMessage) {
   if (webSocket && webSocket.readyState === WebSocket.OPEN) {
     webSocket.send(JSON.stringify(message));
   }
 }
 
-function generateDomainFromUrl(url) {
+function generateDomainFromUrl(url: string) {
   let result = '';
   let match;
   if ((match = url.match(/^(?:wss?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\=]+)/im))) {
@@ -20,7 +47,7 @@ function generateDomainFromUrl(url) {
   return result;
 }
 
-function findIp(string) {
+function findIp(string: string) {
   let result = '';
   let match;
 
@@ -48,12 +75,12 @@ function checkIOSVersion() {
 }
 
 // SDP helper functions to properly handle CRLF line endings (RFC 4566)
-function splitSdpLines(sdp) {
+function splitSdpLines(sdp: string) {
   // Normalize line endings: split on \r\n or \n, and remove trailing \r from each line
   return sdp.split(/\r?\n/).map((line) => line.replace(/\r$/, ''));
 }
 
-function joinSdpLines(lines) {
+function joinSdpLines(lines: string[]) {
   // Join with CRLF as required by SDP specification (RFC 4566)
   return lines.join('\r\n');
 }
@@ -98,15 +125,17 @@ async function getStreamForDeviceCheck() {
     audio: { deviceId: undefined },
     video: { deviceId: undefined, width: { ideal: 1920 }, height: { ideal: 1080 } },
   };
-
-  return await navigator.mediaDevices.getUserMedia(constraints);
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  // [FIX] Stop tracks immediately to release the camera for the actual app
+  stream.getTracks().forEach((track) => track.stop());
+  return stream;
 }
 
 async function getDevices() {
   return await navigator.mediaDevices.enumerateDevices();
 }
 
-function gotDevices(deviceInfos) {
+function gotDevices(deviceInfos: MediaDeviceInfo[]): Devices {
   let devices = {
     audioinput: [],
     audiooutput: [],
@@ -139,8 +168,108 @@ function gotDevices(deviceInfos) {
   return devices;
 }
 
-function initConfig(config) {
-  let instance = {
+interface Candidate {
+  sdpMLineIndex: number;
+  candidate: string;
+}
+
+interface IceServer {
+  credential: string;
+  urls: string[];
+  user_name: string;
+}
+
+interface Offer {
+  sdp: string;
+  type: 'offer';
+}
+
+interface ConnectionConfig {
+  iceServers?: RTCIceServer[];
+  iceTransportPolicy?: RTCIceTransportPolicy;
+  maxVideoBitrate?: number;
+  sdp?: {
+    appendFmtp?: string;
+  };
+}
+
+interface ConnectionData {
+  id: string;
+  peerId: string | number;
+}
+
+interface Callbacks {
+  error?: (error: any) => void;
+  connected?: (event: Event) => void;
+  connectionClosed?: (source: 'websocket' | 'ice', event: Event | CloseEvent) => void;
+  iceStateChange?: (state: RTCIceConnectionState) => void;
+}
+
+interface CreateConfig {
+  callbacks?: Callbacks;
+}
+
+interface DeviceInfo {
+  deviceId: string;
+  label: string;
+}
+
+interface Devices {
+  audioinput: DeviceInfo[];
+  audiooutput: DeviceInfo[];
+  videoinput: DeviceInfo[];
+  other: DeviceInfo[];
+}
+
+interface QencodeWebRtcInstance {
+  // Configuration properties
+  retryMaxCount: number;
+  retryDelay: number;
+  connectionConfig: ConnectionConfig;
+  connectionUrl: string | null;
+  iceTransportPolicy?: RTCIceTransportPolicy;
+
+  // State properties
+  connectStarted: boolean;
+  error: any;
+  offerRequestCount: number;
+  retriesUsed: number;
+  isManualStop: boolean;
+
+  // Connection properties
+  peerConnection: RTCPeerConnection | null;
+  webSocket: WebSocket | null;
+  webSocketCloseEvent: CloseEvent | null;
+  connectionData?: ConnectionData;
+
+  // Media properties
+  stream: MediaStream | null;
+  videoElement: HTMLVideoElement | null;
+
+  // Internal state
+  iceDisconnectTimeoutId?: NodeJS.Timeout | null;
+  reconnectWebSocketPromise?: Promise<void> | null;
+  iceLastEvent?: Event;
+  callbacks: Callbacks;
+
+  // Methods
+  attachMedia(videoElement: HTMLVideoElement): void;
+  getUserMedia(constraints?: MediaStreamConstraints): Promise<MediaStream>;
+  getDisplayMedia(constraints?: DisplayMediaStreamConstraints): Promise<MediaStream>;
+  switchToCamera(
+    deviceId: string,
+    extraVideoConstraints?: MediaTrackConstraints
+  ): Promise<MediaStream>;
+  hasActiveConnection(): boolean;
+  startStreaming(connectionUrl: string, connectionConfig?: ConnectionConfig): void;
+  closePeerConnection(): void;
+  closeWebSocket(): void;
+  closeVideoAudioStreams(): void;
+  remove(): void;
+}
+
+function initConfig(config?: CreateConfig) {
+  let instance: QencodeWebRtcInstance = {
     retryMaxCount: 2,
     retryDelay: 2000,
     connectionConfig: {},
@@ -271,7 +400,7 @@ function appendFmtp(fmtpStr, sdp) {
   return joinSdpLines(lines);
 }
 
-function addMethod(instance) {
+function addMethod(instance: QencodeWebRtcInstance) {
   function errorHandler(error) {
     instance.error = error;
     if (typeof instance.callbacks?.error === 'function') {
@@ -282,8 +411,70 @@ function addMethod(instance) {
       }
     }
   }
+  async function replaceTracksInPeerConnection(newStream: MediaStream) {
+    if (!instance.peerConnection || !newStream) {
+      return {
+        replacedVideo: false,
+        replacedAudio: false,
+        oldVideoTrack: null,
+        oldAudioTrack: null,
+        newVideoTrack: null,
+        newAudioTrack: null,
+      };
+    }
 
-  function getUserMedia(constraints) {
+    const pc = instance.peerConnection;
+    const newVideoTrack = newStream.getVideoTracks()[0] || null;
+    const newAudioTrack = newStream.getAudioTracks()[0] || null;
+
+    const senders = pc.getSenders();
+    const videoSender = senders.find((s) => s.track && s.track.kind === 'video') || null;
+    const audioSender = senders.find((s) => s.track && s.track.kind === 'audio') || null;
+
+    const oldVideoTrack = videoSender?.track || null;
+    const oldAudioTrack = audioSender?.track || null;
+
+    let replacedVideo = false;
+    let replacedAudio = false;
+
+    // replaceTracksInPeerConnection gracefully handles the missing audio track in the new stream by skipping the audio replacement logic. This ensures that the microphone input is never interrupted, which is a common pain point in WebRTC implementations.
+    if (newVideoTrack && videoSender) {
+      try {
+        await videoSender.replaceTrack(newVideoTrack);
+        replacedVideo = true;
+        console.info(logHeader, 'Replaced video track in peer connection');
+      } catch (error) {
+        console.error(logHeader, 'Error replacing video track', error);
+        errorHandler(error);
+      }
+    } else if (newVideoTrack && !videoSender) {
+      // sender.replaceTrack only works if a sender for that media type already exists.
+      console.warn(logHeader, 'No video sender found; cannot replaceTrack without renegotiation.');
+    }
+
+    if (newAudioTrack && audioSender) {
+      try {
+        await audioSender.replaceTrack(newAudioTrack);
+        replacedAudio = true;
+        console.info(logHeader, 'Replaced audio track in peer connection');
+      } catch (error) {
+        console.error(logHeader, 'Error replacing audio track', error);
+        errorHandler(error);
+      }
+    } else if (newAudioTrack && !audioSender) {
+      console.warn(logHeader, 'No audio sender found; cannot replaceTrack without renegotiation.');
+    }
+
+    return {
+      replacedVideo,
+      replacedAudio,
+      oldVideoTrack,
+      oldAudioTrack,
+      newVideoTrack,
+      newAudioTrack,
+    };
+  }
+  function getUserMedia(constraints): Promise<MediaStream> {
     if (!constraints) {
       constraints = {
         video: {
@@ -297,31 +488,71 @@ function addMethod(instance) {
 
     return navigator.mediaDevices
       .getUserMedia(constraints)
-      .then(function (stream) {
+      .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Input Device', stream);
-        instance.stream = stream;
-        let elem = instance.videoElement;
 
-        // Attach stream to video element when video element is provided.
-        if (elem) {
-          elem.srcObject = stream;
-          elem.onloadedmetadata = function (e) {
-            elem.play();
-          };
-        }
-
-        return new Promise(function (resolve) {
-          resolve(stream);
-        });
+        return await replaceStream(stream);
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Input Device", error);
         errorHandler(error);
-
-        return new Promise(function (resolve, reject) {
-          reject(error);
-        });
+        throw error;
       });
+  }
+
+  async function replaceStream(stream: MediaStream) {
+    const hasActiveConnection = instance.hasActiveConnection();
+    const oldStream = instance.stream;
+
+    if (hasActiveConnection && oldStream) {
+      const rep = await replaceTracksInPeerConnection(stream);
+
+      if (rep.replacedVideo) {
+        oldStream.getVideoTracks().forEach((t) => t.stop());
+      }
+      if (rep.replacedAudio) {
+        oldStream.getAudioTracks().forEach((t) => t.stop());
+      }
+
+      // Compose: screen video + keep existing mic if screen share has no audio
+      const composed = new MediaStream();
+
+      if (rep.newVideoTrack) {
+        composed.addTrack(rep.newVideoTrack);
+      } else if (oldStream.getVideoTracks()[0]) {
+        composed.addTrack(oldStream.getVideoTracks()[0]);
+      }
+
+      if (rep.newAudioTrack) {
+        composed.addTrack(rep.newAudioTrack);
+      } else if (oldStream.getAudioTracks()[0]) {
+        composed.addTrack(oldStream.getAudioTracks()[0]);
+      }
+
+      instance.stream = composed;
+
+      const elem = instance.videoElement;
+      if (elem) {
+        elem.srcObject = composed;
+        elem.onloadedmetadata = function (e) {
+          elem.play();
+        };
+      }
+
+      return composed;
+    }
+
+    instance.stream = stream;
+    const elem = instance.videoElement;
+
+    if (elem) {
+      elem.srcObject = stream;
+      elem.onloadedmetadata = function (e) {
+        elem.play();
+      };
+    }
+
+    return stream;
   }
 
   function getDisplayMedia(constraints) {
@@ -331,31 +562,156 @@ function addMethod(instance) {
 
     return navigator.mediaDevices
       .getDisplayMedia(constraints)
-      .then(function (stream) {
+      .then(async function (stream) {
         console.info(logHeader, 'Received Media Stream From Display', stream);
-        instance.stream = stream;
-        let elem = instance.videoElement;
-
-        // Attach stream to video element when video element is provided.
-        if (elem) {
-          elem.srcObject = stream;
-          elem.onloadedmetadata = function (e) {
-            elem.play();
-          };
-        }
-
-        return new Promise(function (resolve) {
-          resolve(stream);
-        });
+        return await replaceStream(stream);
       })
       .catch(function (error) {
         console.error(logHeader, "Can't Get Media Stream From Display", error);
         errorHandler(error);
-
-        return new Promise(function (resolve, reject) {
-          reject(error);
-        });
+        throw error;
       });
+  }
+
+  // Switch only the camera (video sender) without touching microphone / audio sender.
+  // It handles initial setup by requesting audio if no existing audio track is found.
+  async function switchToCamera(deviceId: string) {
+    // [FIX] Define default constraints to enforce 16:9 (HD) aspect ratio.
+    const defaultConstraints = {
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      // Explicitly specify aspect ratio if width/height aren't enough. Looks important in practice.
+      aspectRatio: { ideal: 1.7777777778 },
+    };
+
+    const finalVideoConstraints = {
+      ...defaultConstraints,
+      ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+    };
+    console.log('finalVideoConstraints', finalVideoConstraints);
+
+    // 1. Move oldStream retrieval UP to check for existing audio
+    const oldStream = instance.stream;
+    const oldAudioTrack = oldStream?.getAudioTracks?.()[0] ?? null;
+
+    // 2. Determine if we need to request audio (Initial Setup vs Camera Switch)
+    const shouldRequestAudio = !oldAudioTrack;
+
+    // 3. Update constraints to request audio only if we don't have it
+    const constraints = {
+      video: finalVideoConstraints,
+      audio: shouldRequestAudio,
+    };
+
+    let newCamStream: MediaStream;
+    try {
+      instance.getUserMediaError = null;
+      newCamStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (e) {
+      // Don't set the global error yet. Only set it if fallback fails too.
+      console.warn('High-res constraints failed, trying fallback...', e);
+
+      const fallback = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        audio: shouldRequestAudio,
+      };
+
+      try {
+        newCamStream = await navigator.mediaDevices.getUserMedia(fallback as any);
+        // Fallback succeeded! We can ignore the previous error.
+      } catch (fallbackError) {
+        // [FIX] Fallback failed too. NOW we report the error to the UI.
+        instance.getUserMediaError = fallbackError;
+        throw fallbackError;
+      }
+    }
+
+    const hasActiveConnection = instance.hasActiveConnection();
+
+    if (!hasActiveConnection || !oldStream) {
+      // Stop ONLY the old camera tracks to release hardware
+      if (oldStream) {
+        oldStream.getVideoTracks().forEach((track) => track.stop());
+      }
+
+      // Build a composed stream
+      const composed = new MediaStream();
+
+      const newVideoTrack = newCamStream.getVideoTracks()[0];
+      if (newVideoTrack) {
+        composed.addTrack(newVideoTrack);
+      }
+
+      // 4. Logic to add the correct audio track
+      if (shouldRequestAudio) {
+        // Case A: Initial Setup - Use the NEW audio track we just requested
+        const newAudioTrack = newCamStream.getAudioTracks()[0];
+        if (newAudioTrack) {
+          composed.addTrack(newAudioTrack);
+        }
+      } else if (oldAudioTrack) {
+        // Case B: Switching - Keep the OLD audio track (seamless switch)
+        composed.addTrack(oldAudioTrack);
+
+        // Important: If we requested audio: false, newCamStream has no audio tracks,
+        // so we don't need to stop anything there.
+      }
+
+      instance.stream = composed;
+
+      if (instance.videoElement) {
+        instance.videoElement.srcObject = composed;
+      }
+
+      return composed;
+    }
+
+    try {
+      const rep = await replaceTracksInPeerConnection(newCamStream);
+
+      if (rep.replacedVideo) {
+        oldStream.getVideoTracks().forEach((t) => t.stop());
+      } else {
+        newCamStream.getTracks().forEach((t) => t.stop());
+        return oldStream;
+      }
+
+      const composed = new MediaStream();
+
+      if (rep.newVideoTrack) {
+        composed.addTrack(rep.newVideoTrack);
+      } else if (oldStream.getVideoTracks()[0]) {
+        composed.addTrack(oldStream.getVideoTracks()[0]);
+      }
+
+      // We continue to use the existing audio for the local stream object
+      // Note: If we added audio in 'shouldRequestAudio' mode while connected,
+      // it won't be sent to the peer without renegotiation (replaceTrack fails for missing senders).
+      // But this path is rarely hit for "Initial Setup" since !hasActiveConnection is usually true then.
+      const existingAudio = oldStream.getAudioTracks()[0];
+      if (existingAudio) {
+        composed.addTrack(existingAudio);
+      }
+
+      instance.stream = composed;
+
+      const elem = instance.videoElement;
+      if (elem) {
+        elem.srcObject = composed;
+        elem.onloadedmetadata = function (e) {
+          elem.play();
+        };
+      }
+
+      return composed;
+    } catch (error) {
+      console.error(logHeader, 'Failed to switch camera', error);
+      if (newCamStream) {
+        newCamStream.getTracks().forEach((track) => track.stop());
+      }
+
+      throw error;
+    }
   }
 
   function requestOffer() {
@@ -365,7 +721,7 @@ function addMethod(instance) {
     instance.offerRequestCount += 1;
   }
 
-  async function addRetryToQueue(delay) {
+  async function addRetryToQueue(delay?: number) {
     if (instance.isManualStop) return;
 
     if (instance.reconnectWebSocketPromise) {
@@ -533,13 +889,26 @@ function addMethod(instance) {
     instance.iceDisconnectTimeoutId = null;
   }
 
-  async function createPeerConnection(id, peerId, offer, candidates, iceServers) {
+  async function createPeerConnection(
+    id: number,
+    peerId: number,
+    offer: Offer,
+    candidates: Candidate[],
+    iceServers: IceServer[]
+  ) {
+    console.log({
+      id,
+      peerId,
+      offer,
+      candidates,
+      iceServers,
+    });
     instance.connectionData = {
       id,
       peerId,
     };
 
-    let peerConnectionConfig = {};
+    let peerConnectionConfig: RTCConfiguration = {};
 
     if (instance.connectionConfig.iceServers) {
       // first priority using ice servers from local config.
@@ -646,7 +1015,7 @@ function addMethod(instance) {
       } else {
         cancelRetryAfterLongEnoughIceDisconnect();
       }
-      
+
       if (instance.callbacks.iceStateChange) {
         try {
           instance.callbacks.iceStateChange(state);
@@ -733,19 +1102,31 @@ function addMethod(instance) {
   }
 
   // instance methods
-  instance.attachMedia = function (videoElement) {
+  instance.attachMedia = function (videoElement: HTMLVideoElement) {
     instance.videoElement = videoElement;
   };
 
-  instance.getUserMedia = function (constraints) {
+  instance.getUserMedia = function (constraints?: MediaStreamConstraints) {
     return getUserMedia(constraints);
   };
 
-  instance.getDisplayMedia = function (constraints) {
+  instance.getDisplayMedia = function (constraints?: DisplayMediaStreamConstraints) {
     return getDisplayMedia(constraints);
   };
 
-  instance.startStreaming = function (connectionUrl, connectionConfig) {
+  instance.switchToCamera = function (deviceId: string) {
+    return switchToCamera(deviceId);
+  };
+
+  instance.hasActiveConnection = function () {
+    return (
+      instance.peerConnection &&
+      !['closed', 'failed'].includes(instance.peerConnection.connectionState) &&
+      !['closed', 'failed'].includes(instance.peerConnection.iceConnectionState)
+    );
+  };
+
+  instance.startStreaming = function (connectionUrl: string, connectionConfig?: ConnectionConfig) {
     instance.connectionUrl = connectionUrl + '?direction=send&transport=tcp';
     console.info(logEventHeader, 'Start Streaming');
 
@@ -817,14 +1198,15 @@ function addMethod(instance) {
 }
 
 // static methods
-QencodeWebRTC.create = function (config = {}) {
+QencodeWebRTC.create = function (config: CreateConfig = {}) {
+  console.info('QencodeWebRTC ', '2025-12-22');
   const instance = initConfig(config);
   addMethod(instance);
 
   return instance;
 };
 
-QencodeWebRTC.getDevices = async function () {
+QencodeWebRTC.getDevices = async function (): Promise<Devices> {
   await getStreamForDeviceCheck();
   const deviceInfos = await getDevices();
   return gotDevices(deviceInfos);

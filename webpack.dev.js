@@ -27,13 +27,30 @@ class CopyToDemoPlugin {
 const config = [
   {
     mode: 'development',
-    entry: './src/QencodeWebRTC.js',
+    entry: './src/QencodeWebRTC.ts',
     output: {
       path: path.resolve(__dirname + '/dist'),
       filename: 'QencodeWebRTC.js',
       library: 'QencodeWebRTC',
       libraryTarget: 'umd',
       libraryExport: 'default',
+    },
+    resolve: {
+      extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
+            },
+          },
+          exclude: /node_modules/,
+        },
+      ],
     },
     plugins: [new CopyToDemoPlugin()],
   },

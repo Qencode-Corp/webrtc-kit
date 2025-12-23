@@ -179,12 +179,18 @@
 
       async connectedCallback() {
         await super.connectedCallback();
-        const params = new URLSearchParams(location.search);
-        this.serverUrl = params.get('u');
-        await this._initDevices();
-        await this._initStream();
-        this._startLoop();
-        this._initOnlineOfflineListeners();
+        try {
+          const params = new URLSearchParams(location.search);
+          this.serverUrl = params.get('u');
+          await this._initDevices();
+          qencodeWebRTC.switchToCamera(this.selectedDeviceId);
+          this._startLoop();
+          this._initOnlineOfflineListeners();
+          const video = document.querySelector('#userCam');
+          video.dataset.initialized = true;
+        } catch (e) {
+           this._displayMediaError(e);
+        }
       }
 
       disconnectedCallback() {
@@ -237,6 +243,20 @@
             this.webSocketActive = !!webSocket;
             const webSocketReadyState = webSocketReadyStates[webSocket?.readyState];
             this.webSocketReadyState = webSocketReadyState;
+
+            const stream = window.qencodeWebRTC.stream;
+            if (stream) {
+              const videoTracks = stream.getVideoTracks();
+
+              let height = videoTracks[0].getSettings().height;
+              let width = videoTracks[0].getSettings().width;
+
+              this.dimensions = `Video dimensions: ${width}x${height}px`;
+            }
+            const getUserMediaError = window.qencodeWebRTC.getUserMediaError;
+            if (getUserMediaError) {
+              this._displayMediaError(getUserMediaError);
+            }
           }
           if (time % 3 === 0 && window.qencodeWebRTC) {
             this.retryProcessActive =
@@ -249,6 +269,25 @@
         };
 
         this._rafId = requestAnimationFrame(tick);
+      }
+
+      _displayMediaError(error) {
+        // 1. Handle Permission Errors (Standard & Legacy)
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          this.mediaError =
+            'Permissions have not been granted to use your camera and ' +
+            'microphone. You need to allow the page access to your devices in ' +
+            'order for the demo to work.';
+        }
+        // 2. Handle Constraint Errors (Standard & Legacy)
+        else if (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError') {
+          // [FIX] Removed reference to constraints.video.width.exact which is now undefined
+          this.mediaError = `The requested resolution is not supported by your device.`;
+        }
+        // 3. Fallback for other errors
+        else {
+          this.mediaError = `getUserMedia error: ${error.name}`;
+        }
       }
 
       _clearErrors() {
@@ -294,19 +333,17 @@
 
       _selectVideoDevice(e) {
         this.selectedDeviceId = e.target.value;
-        this._rebuildConstraints();
-        this._initStream();
+        // this._rebuildConstraints();
+        qencodeWebRTC.switchToCamera(this.selectedDeviceId);
       }
 
       async _initDevices() {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-          this.videoDevices = videoDevices;
-          if (videoDevices.length > 0) {
-            this.selectedDeviceId = videoDevices[0]?.deviceId;
-          }
-        } catch (e) {}
+        const allDevices = await QencodeWebRTC.getDevices();
+        const videoDevices = allDevices.videoinput || [];
+        this.videoDevices = videoDevices;
+        if (videoDevices.length > 0) {
+          this.selectedDeviceId = videoDevices[0]?.deviceId;
+        }
       }
 
       _rebuildConstraints() {
@@ -324,54 +361,12 @@
         constraints = window.constraints = newConstraints;
       }
 
-      async _initStream() {
-        // Stop existing stream tracks before getting a new stream
-        if (qencodeWebRTC.stream) {
-          qencodeWebRTC.stream.getTracks().forEach((track) => track.stop());
-        }
-
-        try {
-          /* need to use qencodeWebRTC.getUserMedia instead of navigator.mediaDevices.getUserMedia to avoid errors about empty "stream" property on instance. */
-          const stream = await qencodeWebRTC.getUserMedia(window.constraints);
-          const video = document.querySelector('#userCam');
-          const videoTracks = stream.getVideoTracks();
-          console.log('Got stream with constraints:', constraints);
-          console.log(`Using video device: ${videoTracks[0].label}`);
-
-          this.log = `Using video device: ${videoTracks[0].label}`;
-          window.stream = stream; // make variable available to browser console
-          video.srcObject = stream;
-          video.dataset.initialized = true;
-
-          let height = videoTracks[0].getSettings().height;
-          let width = videoTracks[0].getSettings().width;
-
-          this.dimensions = `Video dimensions: ${width}x${height}px`;
-        } catch (error) {
-          if (error.name === 'ConstraintNotSatisfiedError') {
-            const v = constraints.video;
-            this.mediaError = `The resolution ${v.width.exact}x${v.height.exact} px is not supported by your device.`;
-          } else if (error.name === 'PermissionDeniedError') {
-            this.mediaError =
-              'Permissions have not been granted to use your camera and ' +
-              'microphone, you need to allow the page access to your devices in ' +
-              'order for the demo to work.';
-          } else {
-            this.mediaError = `getUserMedia error: ${error.name}`;
-          }
-        }
-      }
-
       _onDisconnect() {
         console.log('Stop Socket Connection');
         this.disconnectStarted = true; // todo possibly redundant, maybe use webSocketReadyState "closing"
         qencodeWebRTC.isManualStop = true;
         qencodeWebRTC.closePeerConnection();
         qencodeWebRTC.closeWebSocket();
-        // What was the point of this???
-        // setTimeout(function () {
-        //   qencodeWebRTC.webSocket.send('');
-        // }, 1000);
       }
 
       _onInput(e) {
@@ -512,6 +507,7 @@
               this.disconnectStarted ||
               this.retryProcessActive ||
               this.isOffline ||
+              this.mediaError ||
               ['new', 'connecting'].includes(this.connectionState)}
               @click=${this._onConnect}
             >
@@ -545,18 +541,18 @@
       const config = {
         callbacks: {
           error: function (error) {
-            console.log('error')
+            console.log('error');
           },
           connected: function (event) {
-            console.log("connected")
+            console.log('connected');
           },
           connectionClosed: function (type, event) {
-            console.log('connection closed')
+            console.log('connection closed');
           },
           iceStateChange: function (state) {
-            console.log('iceStateChange')
-          }
-        }
+            console.log('iceStateChange');
+          },
+        },
       };
 
       const qencodeWebRTC = QencodeWebRTC.create();

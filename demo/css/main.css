@@ -37,3 +37,8 @@ p {
   font-family: arial;
   font-size: 14px;
 }
+
+select,
+option {
+    font-family: sans-serif;
+}
