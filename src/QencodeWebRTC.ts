@@ -1199,7 +1199,7 @@ function addMethod(instance: QencodeWebRtcInstance) {
 
 // static methods
 QencodeWebRTC.create = function (config: CreateConfig = {}) {
-  console.info('QencodeWebRTC ', '2025-12-22');
+  console.info('QencodeWebRTC ', '2026-01-12');
   const instance = initConfig(config);
   addMethod(instance);
   return instance;
