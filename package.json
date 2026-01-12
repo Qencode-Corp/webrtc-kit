@@ -6,7 +6,7 @@
   "scripts": {
     "start": "webpack serve --open --config webpack.dev.js",
     "watch": "webpack watch --config webpack.dev.js",
-    "build": "webpack --config webpack.prod.js && ls -R",
+    "build": "webpack --config webpack.prod.js && cd demo && ls -R",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
