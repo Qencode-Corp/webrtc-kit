@@ -5,7 +5,7 @@ const config = [
     mode: 'production',
     entry: './src/QencodeWebRTC.ts',
     output: {
-      path: path.resolve(__dirname + '/demo/js'),
+      path: path.resolve(__dirname, 'demo', 'js'),
       filename: 'QencodeWebRTC.min.js',
       library: 'QencodeWebRTC',
       libraryTarget: 'umd',
