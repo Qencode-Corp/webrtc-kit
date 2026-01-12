@@ -1,11 +1,18 @@
 const path = require('path');
+const fs = require('fs');
+
+// Ensure output directory exists
+const outputPath = path.resolve(__dirname, 'demo', 'js');
+if (!fs.existsSync(outputPath)) {
+  fs.mkdirSync(outputPath, { recursive: true });
+}
 
 const config = [
   {
     mode: 'production',
     entry: './src/QencodeWebRTC.ts',
     output: {
-      path: path.resolve(__dirname, 'demo', 'js'),
+      path: outputPath,
       filename: 'QencodeWebRTC.min.js',
       library: 'QencodeWebRTC',
       libraryTarget: 'umd',
