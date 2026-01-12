@@ -1202,7 +1202,6 @@ QencodeWebRTC.create = function (config: CreateConfig = {}) {
   console.info('QencodeWebRTC ', '2025-12-22');
   const instance = initConfig(config);
   addMethod(instance);
-
   return instance;
 };
 
