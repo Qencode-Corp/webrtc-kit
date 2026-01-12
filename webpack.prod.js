@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure output directory exists
-const outputPath = path.resolve(__dirname, 'demo', 'js');
+const outputPath = path.resolve(__dirname, 'demo', 'css');
 if (!fs.existsSync(outputPath)) {
   fs.mkdirSync(outputPath, { recursive: true });
 }
