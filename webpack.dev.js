@@ -6,7 +6,7 @@ const config = [
     entry: './src/QencodeWebRTC.ts',
     output: {
       path: path.resolve(__dirname + '/demo/js'),
-      filename: 'QencodeWebRTC.js',
+      filename: 'QencodeWebRTC.min.js',
       library: 'QencodeWebRTC',
       libraryTarget: 'umd',
       libraryExport: 'default',
@@ -27,6 +27,12 @@ const config = [
           exclude: /node_modules/,
         },
       ],
+    },
+    devServer: {
+      contentBase: path.join(__dirname, 'demo'),
+      compress: true,
+      port: 8080,
+      open: 'index.html',
     },
   },
 ];
